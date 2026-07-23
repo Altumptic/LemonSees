@@ -6,20 +6,20 @@
 
 **Моніторинг Linux-серверів і Docker по SSH — без агентів**
 
-[![Release](https://img.shields.io/github/v/release/4am-png/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/4am-png/shok-monitor/releases)
-[![License](https://img.shields.io/github/license/4am-png/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
-[![Platform](https://img.shields.io/badge/Windows-10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/4am-png/shok-monitor/releases)
+[![Release](https://img.shields.io/github/v/release/kiurakku/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
+[![License](https://img.shields.io/github/license/kiurakku/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
+[![Platform](https://img.shields.io/badge/Windows-10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F?style=for-the-badge&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-[![Downloads](https://img.shields.io/github/downloads/4am-png/shok-monitor/total?style=flat-square&logo=github)](https://github.com/4am-png/shok-monitor/releases)
-[![Stars](https://img.shields.io/github/stars/4am-png/shok-monitor?style=flat-square&logo=github)](https://github.com/4am-png/shok-monitor/stargazers)
-[![Issues](https://img.shields.io/github/issues/4am-png/shok-monitor?style=flat-square&logo=github)](https://github.com/4am-png/shok-monitor/issues)
-[![Last commit](https://img.shields.io/github/last-commit/4am-png/shok-monitor?style=flat-square&logo=github)](https://github.com/4am-png/shok-monitor/commits/main)
+[![Downloads](https://img.shields.io/github/downloads/kiurakku/shok-monitor/total?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/releases)
+[![Stars](https://img.shields.io/github/stars/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/stargazers)
+[![Issues](https://img.shields.io/github/issues/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/issues)
+[![Last commit](https://img.shields.io/github/last-commit/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/commits/main)
 
-[⬇️ Завантажити v1.0.0](https://github.com/4am-png/shok-monitor/releases/latest) · [🐛 Повідомити про баг](https://github.com/4am-png/shok-monitor/issues/new) · [📖 Документація](#-швидкий-старт)
+[⬇️ Завантажити v1.0.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Повідомити про баг](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Документація](#-швидкий-старт)
 
 </div>
 
@@ -76,7 +76,7 @@
 
 ### Готовий білд (рекомендовано)
 
-1. Завантаж [`SHOK-v1.0.0-win.zip`](https://github.com/4am-png/shok-monitor/releases/latest) з [Releases](https://github.com/4am-png/shok-monitor/releases)
+1. Завантаж [`SHOK-v1.0.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) з [Releases](https://github.com/kiurakku/shok-monitor/releases)
 2. Розпакуй архів
 3. Запусти `SHOK.exe`
 
@@ -85,7 +85,7 @@
 ### З вихідного коду
 
 ```bash
-git clone https://github.com/4am-png/shok-monitor.git
+git clone https://github.com/kiurakku/shok-monitor.git
 cd shok-monitor
 npm install
 npm run build
@@ -185,6 +185,6 @@ Issues і Pull Requests вітаються! Перед великими змін
 
 **Зроблено з ⚡ для тих, хто любить простий моніторинг без зайвого**
 
-MIT © [4am-png](https://github.com/4am-png)
+MIT © [kiurakku](https://github.com/kiurakku)
 
 </div>
