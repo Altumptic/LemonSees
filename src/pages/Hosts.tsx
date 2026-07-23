@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Cpu, HardDrive, MemoryStick, Server, Pencil, Trash2, Plug } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { fmtUptime, type HostInput, type HostState } from "@/lib/types";
 import {
   PageHeader,
@@ -27,40 +28,44 @@ const EMPTY: HostInput = {
   interval: 5,
 };
 
+const ROW_TINT = "hover:bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]";
+const HEAD_TINT = "bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]";
+
 export default function Hosts() {
   const { hosts } = useAppState();
+  const { t } = useI18n();
   const [editing, setEditing] = useState<HostState | null>(null);
   const [adding, setAdding] = useState(false);
 
   return (
     <>
       <PageHeader
-        eyebrow="Флот"
-        title="Хости"
-        lede="Кожен сервер, доступний по SSH. Ключ або пароль — дані лишаються тільки на цьому ПК."
-        action={<PrimaryButton onClick={() => setAdding(true)}>Додати хост</PrimaryButton>}
+        eyebrow={t("Флот")}
+        title={t("Хости")}
+        lede={t("Кожен сервер, доступний по SSH. Ключ або пароль — дані лишаються тільки на цьому ПК.")}
+        action={<PrimaryButton onClick={() => setAdding(true)}>{t("Додати хост")}</PrimaryButton>}
       />
 
-      <Panel eyebrow={`${hosts.length} серверів`} title="Інвентар флоту">
+      <Panel eyebrow={`${hosts.length} ${t("серверів")}`} title={t("Інвентар флоту")}>
         {hosts.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Поки що порожньо. Натисни «Додати хост» і вкажи адресу сервера.
+            {t("Поки що порожньо. Натисни «Додати хост» і вкажи адресу сервера.")}
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
-            <div className="mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] bg-white/[0.02] px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              <div className="col-span-3">Хост</div>
-              <div className="col-span-2">Статус</div>
-              <div className="col-span-3">CPU / RAM / Диск</div>
-              <div className="col-span-1 text-right">Ктнр</div>
-              <div className="col-span-1 text-right">Аптайм</div>
-              <div className="col-span-2 text-right">Дії</div>
+            <div className={`mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] ${HEAD_TINT} px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground`}>
+              <div className="col-span-3">{t("Хост")}</div>
+              <div className="col-span-2">{t("Статус")}</div>
+              <div className="col-span-3">{t("CPU / RAM / Диск")}</div>
+              <div className="col-span-1 text-right">{t("Ктнр")}</div>
+              <div className="col-span-1 text-right">{t("Аптайм")}</div>
+              <div className="col-span-2 text-right">{t("Дії")}</div>
             </div>
 
             {hosts.map((h) => (
               <div
                 key={h.id}
-                className="grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-3 last:border-b-0 hover:bg-white/[0.02]"
+                className={`grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-3 last:border-b-0 ${ROW_TINT}`}
               >
                 <div className="col-span-3 min-w-0">
                   <div className="flex items-center gap-2">
@@ -74,7 +79,7 @@ export default function Hosts() {
                 <div className="col-span-2 flex items-center gap-2">
                   <StatusDot status={h.status} />
                   <span className="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    {STATUS_LABEL[h.status]}
+                    {t(STATUS_LABEL[h.status])}
                   </span>
                 </div>
                 <div className="col-span-3 grid grid-cols-3 gap-3">
@@ -90,14 +95,14 @@ export default function Hosts() {
                   {h.metrics ? fmtUptime(h.metrics.uptimeSec) : "—"}
                 </div>
                 <div className="col-span-2 flex items-center justify-end gap-1">
-                  <IconBtn title="Редагувати" onClick={() => setEditing(h)}>
+                  <IconBtn title={t("Редагувати")} onClick={() => setEditing(h)}>
                     <Pencil className="h-3 w-3" />
                   </IconBtn>
                   <IconBtn
-                    title="Видалити"
+                    title={t("Видалити")}
                     danger
                     onClick={() => {
-                      if (confirm(`Прибрати хост «${h.name}» з моніторингу?`)) {
+                      if (confirm(`${t("Прибрати хост")} «${h.name}» ${t("з моніторингу?")}`)) {
                         api.deleteHost(h.id).catch((e) => alert(e.message));
                       }
                     }}
@@ -162,6 +167,7 @@ function HostForm({
   editingId: string | null;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState<HostInput>(initial);
   const [busy, setBusy] = useState(false);
   const [testResult, setTestResult] = useState<string>("");
@@ -184,10 +190,10 @@ function HostForm({
 
   const test = async () => {
     setBusy(true);
-    setTestResult("Перевіряю з'єднання…");
+    setTestResult(t("Перевіряю з'єднання…"));
     try {
       const r = await api.testHost(form);
-      setTestResult(r.ok ? `✓ З'єднання ОК · ${r.output.split("\n").pop()}` : "Не вдалося виконати команду");
+      setTestResult(r.ok ? `✓ ${t("З'єднання ОК")} · ${r.output.split("\n").pop()}` : t("Не вдалося виконати команду"));
     } catch (e) {
       setTestResult(`✗ ${(e as Error).message}`);
     } finally {
@@ -196,30 +202,30 @@ function HostForm({
   };
 
   return (
-    <Modal title={editingId ? "Редагувати хост" : "Додати хост"} onClose={onClose}>
+    <Modal title={editingId ? t("Редагувати хост") : t("Додати хост")} onClose={onClose}>
       <div className="grid gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <TextInput label="Назва (як показувати)" value={form.name} onChange={(v) => set("name", v)} placeholder="мій-vps" />
-          <TextInput label="Адреса (IP або домен)" value={form.host} onChange={(v) => set("host", v)} placeholder="203.0.113.10" />
+          <TextInput label={t("Назва (як показувати)")} value={form.name} onChange={(v) => set("name", v)} placeholder="vps-01" />
+          <TextInput label={t("Адреса (IP або домен)")} value={form.host} onChange={(v) => set("host", v)} placeholder="203.0.113.10" />
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <TextInput label="Порт" value={String(form.port)} onChange={(v) => set("port", parseInt(v, 10) || 22)} />
-          <TextInput label="Користувач" value={form.user} onChange={(v) => set("user", v)} placeholder="root" />
+          <TextInput label={t("Порт")} value={String(form.port)} onChange={(v) => set("port", parseInt(v, 10) || 22)} />
+          <TextInput label={t("Користувач")} value={form.user} onChange={(v) => set("user", v)} placeholder="root" />
           <TextInput
-            label="Інтервал, с"
+            label={t("Інтервал, с")}
             value={String(form.interval)}
             onChange={(v) => set("interval", parseInt(v, 10) || 5)}
           />
         </div>
 
         <div>
-          <div className="eyebrow mb-2">Автентифікація</div>
+          <div className="eyebrow mb-2">{t("Автентифікація")}</div>
           <div className="flex gap-2">
             <GhostButton active={form.authType === "key"} onClick={() => set("authType", "key")}>
-              SSH-ключ (радимо)
+              {t("SSH-ключ (радимо)")}
             </GhostButton>
             <GhostButton active={form.authType === "password"} onClick={() => set("authType", "password")}>
-              Пароль
+              {t("Пароль")}
             </GhostButton>
           </div>
         </div>
@@ -227,13 +233,13 @@ function HostForm({
         {form.authType === "key" ? (
           <div className="grid gap-4">
             <TextInput
-              label="Шлях до приватного ключа"
+              label={t("Шлях до приватного ключа")}
               value={form.keyPath}
               onChange={(v) => set("keyPath", v)}
               placeholder="C:\Users\User\.ssh\id_ed25519"
             />
             <TextInput
-              label="Пароль ключа (якщо є)"
+              label={t("Пароль ключа (якщо є)")}
               type="password"
               value={form.passphrase}
               onChange={(v) => set("passphrase", v)}
@@ -241,7 +247,7 @@ function HostForm({
           </div>
         ) : (
           <TextInput
-            label={editingId ? "Пароль (порожньо — лишити старий)" : "Пароль"}
+            label={editingId ? t("Пароль (порожньо — лишити старий)") : t("Пароль")}
             type="password"
             value={form.password}
             onChange={(v) => set("password", v)}
@@ -256,12 +262,12 @@ function HostForm({
 
         <div className="flex items-center justify-between gap-2 border-t border-[var(--hairline)] pt-4">
           <GhostButton onClick={test} disabled={busy}>
-            <Plug className="h-3 w-3" /> Перевірити з'єднання
+            <Plug className="h-3 w-3" /> {t("Перевірити з'єднання")}
           </GhostButton>
           <div className="flex gap-2">
-            <GhostButton onClick={onClose}>Скасувати</GhostButton>
+            <GhostButton onClick={onClose}>{t("Скасувати")}</GhostButton>
             <PrimaryButton onClick={submit} disabled={busy}>
-              {editingId ? "Зберегти" : "Додати"}
+              {editingId ? t("Зберегти") : t("Додати")}
             </PrimaryButton>
           </div>
         </div>

@@ -3,10 +3,12 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { useAppState } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { PageHeader, Panel, GhostButton, statusColor } from "@/components/ui";
 
 export default function TerminalPage() {
   const { hosts } = useAppState();
+  const { t } = useI18n();
   const [hostId, setHostId] = useState<string | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
 
@@ -16,9 +18,9 @@ export default function TerminalPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Оболонка"
-        title="Термінал"
-        lede="Ефемерний shell без агентів. Кожне натискання їде через SSH-тунель; на сервері нічого не зберігається."
+        eyebrow={t("Оболонка")}
+        title={t("Термінал")}
+        lede={t("Ефемерний shell без агентів. Кожне натискання їде через SSH-тунель; на сервері нічого не зберігається.")}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -39,20 +41,20 @@ export default function TerminalPage() {
           </GhostButton>
         ))}
         {hosts.length === 0 && (
-          <span className="text-sm text-muted-foreground">Спершу додай хост на сторінці «Хости».</span>
+          <span className="text-sm text-muted-foreground">{t("Спершу додай хост на сторінці «Хости».")}</span>
         )}
         {activeHost && (
           <span className="ml-auto">
-            <GhostButton onClick={() => setSessionKey((k) => k + 1)}>Нова сесія</GhostButton>
+            <GhostButton onClick={() => setSessionKey((k) => k + 1)}>{t("Нова сесія")}</GhostButton>
           </span>
         )}
       </div>
 
       {activeHost && (
-        <Panel eyebrow={`Підключено · ${activeHost.name}`} title="tty · ssh">
+        <Panel eyebrow={`${t("Підключено")} · ${activeHost.name}`} title="tty · ssh">
           <TermView key={`${activeHost.id}:${sessionKey}`} hostId={activeHost.id} />
           <div className="mono mt-3 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            <span>сесія · ефемерна</span>
+            <span>{t("сесія · ефемерна")}</span>
             <span>
               {activeHost.user}@{activeHost.host}:{activeHost.port}
             </span>
