@@ -2,15 +2,15 @@
   "name": "shok-monitor",
   "version": "1.0.0",
   "description": "Моніторинг Linux-серверів і Docker по SSH — без агентів. Десктопна програма для Windows.",
-  "author": "4am-png",
+  "author": "kiurakku",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/4am-png/shok-monitor.git"
+    "url": "https://github.com/kiurakku/shok-monitor.git"
   },
-  "homepage": "https://github.com/4am-png/shok-monitor#readme",
+  "homepage": "https://github.com/kiurakku/shok-monitor#readme",
   "bugs": {
-    "url": "https://github.com/4am-png/shok-monitor/issues"
+    "url": "https://github.com/kiurakku/shok-monitor/issues"
   },
   "keywords": [
     "monitoring",
