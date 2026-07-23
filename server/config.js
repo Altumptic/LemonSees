@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import { ENGINES } from "./engines.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const APP_ROOT = path.resolve(__dirname, "..");
@@ -11,6 +12,7 @@ export const APP_ROOT = path.resolve(__dirname, "..");
 // при запуску через node — у папці програми.
 const CONFIG_DIR = process.env.SHOK_CONFIG_DIR || path.join(APP_ROOT, "config");
 const CONFIG_FILE = path.join(CONFIG_DIR, "hosts.json");
+const DBS_FILE = path.join(CONFIG_DIR, "dbs.json");
 
 export function loadHosts() {
   try {
@@ -56,4 +58,52 @@ export function sanitizeHost(input, existing = null) {
 export function publicHost(h) {
   const { password, passphrase, ...rest } = h;
   return { ...rest, hasPassword: !!password, hasPassphrase: !!passphrase };
+}
+
+/* ---------------- Бази даних ---------------- */
+
+export function loadDbs() {
+  try {
+    const data = JSON.parse(fs.readFileSync(DBS_FILE, "utf8"));
+    return Array.isArray(data.dbs) ? data.dbs : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveDbs(dbs) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(DBS_FILE, JSON.stringify({ dbs }, null, 2), "utf8");
+}
+
+export function newDbId() {
+  return "db_" + crypto.randomBytes(4).toString("hex");
+}
+
+export function sanitizeDb(input, existing = null) {
+  const meta = ENGINES[input.type];
+  if (!meta) throw new Error("Невідомий тип бази даних");
+  const type = input.type;
+  const d = {
+    id: existing?.id ?? newDbId(),
+    hostId: String(input.hostId ?? "").trim(),
+    name: String(input.name ?? "").trim(),
+    type,
+    dbHost: String(input.dbHost ?? "127.0.0.1").trim() || "127.0.0.1",
+    dbPort: Math.max(0, Math.min(65535, parseInt(input.dbPort, 10) || meta.port)),
+    user: String(input.user ?? "").trim(),
+    database: String(input.database ?? "").trim(),
+    dbFile: String(input.dbFile ?? "").trim(),
+    password: input.password ? String(input.password) : "",
+  };
+  if (!d.hostId) throw new Error("Не вибрано хост (SSH)");
+  if (meta.file && !d.dbFile) throw new Error("Не вказано шлях до файлу .db");
+  if (!d.name) d.name = meta.file ? `${meta.label}: ${d.dbFile}` : `${meta.label} @ ${d.dbHost}:${d.dbPort}`;
+  if (!input.password && existing) d.password = existing.password;
+  return d;
+}
+
+export function publicDb(d) {
+  const { password, ...rest } = d;
+  return { ...rest, hasPassword: !!password };
 }

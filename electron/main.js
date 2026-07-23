@@ -51,14 +51,16 @@ if (!gotLock) {
       minWidth: 980,
       minHeight: 640,
       show: false,
-      backgroundColor: "#101014",
+      // Прозорий фон вікна + акриловий матеріал Windows 11 — «скляний» блюр робочого столу.
+      // Поки в застосунку не ввімкнено скляний режим, тіло непрозоре й вікно виглядає звично.
+      backgroundColor: "#00000000",
+      backgroundMaterial: "acrylic",
       title: "ШОК — Моніторинг серверів",
       icon: path.join(__dirname, "..", "buildResources", "icon.png"),
       autoHideMenuBar: true,
-      // Ховаємо системний заголовок — лишаються тільки темні кнопки вікна,
-      // верхня панель програми стає суцільною
+      // Ховаємо системний заголовок — лишаються тільки темні кнопки вікна
       titleBarStyle: "hidden",
-      titleBarOverlay: { color: "#101014", symbolColor: "#e8e6df", height: 42 },
+      titleBarOverlay: { color: "#00000000", symbolColor: "#e8e6df", height: 42 },
       webPreferences: { contextIsolation: true, nodeIntegration: false },
     });
     // Одразу на весь екран

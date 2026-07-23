@@ -1,6 +1,6 @@
 {
   "name": "shok-monitor",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "Agentless Linux server & Docker monitoring over SSH. Windows desktop app.",
   "author": "kiurakku",
   "license": "MIT",
@@ -57,9 +57,14 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "express": "^4.21.2",
+    "ioredis": "^5.11.1",
     "lucide-react": "^0.575.0",
+    "mongodb": "^7.5.0",
+    "mysql2": "^3.23.1",
+    "pg": "^8.22.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "sql.js": "^1.14.1",
     "ssh2": "^1.16.0",
     "ws": "^8.18.0"
   },

@@ -4,7 +4,7 @@
 
 # SHOK
 
-**Agentless Linux server & Docker monitoring over SSH**
+**Agentless Linux server, Docker & database monitoring over SSH**
 
 [![Release](https://img.shields.io/github/v/release/kiurakku/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
 [![License](https://img.shields.io/github/license/kiurakku/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
@@ -19,7 +19,7 @@
 [![Issues](https://img.shields.io/github/issues/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/issues)
 [![Last commit](https://img.shields.io/github/last-commit/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/commits/main)
 
-[⬇️ Download v1.1.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
+[⬇️ Download v1.2.1](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
 
 </div>
 
@@ -27,17 +27,28 @@
 
 ## ✨ About
 
-**SHOK** is a desktop app for monitoring Linux servers and Docker containers over SSH. Nothing is installed on remote machines — only SSH (port 22) is required.
+**SHOK** is a Windows desktop app for monitoring Linux servers, Docker, and databases over SSH. Nothing is installed on remote machines — only SSH (port 22) is required.
 
 | | |
 |---|---|
 | 🖥️ **Platform** | Windows 10/11 (ready-to-run `.exe`) |
 | 🔌 **Connection** | SSH key or password |
 | 🐳 **Docker** | Containers, networks, volumes, logs |
+| 🗄️ **Databases** | 39 engines — query, browse, REST console |
 | 🌍 **Languages** | Ukrainian, English, Russian, Polish, Chinese |
-| 🎨 **Themes** | 6 built-in color themes |
+| 🎨 **Themes** | 6 built-in color themes + acrylic window |
 | 🔒 **Security** | Engine listens on `127.0.0.1` only |
 | ⚡ **Lightweight** | No agents, no background services |
+
+---
+
+## 🆕 What's new in v1.2.1
+
+- **Real metrics** — rewritten collector; CPU is computed from two `/proc/stat` reads in a single SSH call. Live-tested: values differ per host and update correctly.
+- **SQLite works** — no `sqlite3` on the server; `.db` files are fetched over SSH and opened locally with a WASM engine (read-only browse).
+- **Database hub** — 39 engines grouped by category, auto-discovery on the server (Docker, listening ports, SQLite files).
+- **REST console** — HTTP adapters for Elasticsearch, OpenSearch, ClickHouse, InfluxDB, Prometheus, vector DBs, and more.
+- **UI polish** — acrylic glass window, glow accents in Settings, version badge in the sidebar.
 
 ---
 
@@ -48,25 +59,31 @@
 <td width="50%">
 
 ### 📊 Fleet overview
-All hosts on one screen — live CPU, RAM, and disk. Automatic warnings for overloads and container restart loops.
+Live CPU, RAM, disk, load, and uptime for every host. Warnings for overloads and container restart loops.
 
 ### 🖧 Host management
 Add, edit, and test SSH connections. Supports `ed25519` / RSA keys.
 
-### 📦 Docker containers
-Start, stop, restart, remove. Live log streaming.
+### 📦 Docker
+Start, stop, restart, remove containers. Networks, volumes, live logs.
+
+### 💻 Built-in terminal
+Full SSH terminal (xterm.js) inside the app.
 
 </td>
 <td width="50%">
 
-### 🌐 Networks & volumes
-Full registry of `docker network` and `docker volume` on every host.
+### 🗄️ Databases
+Connect to 30+ engines over SSH tunnels. Categorized picker, tabs per engine type, table browse, SQL/NoSQL queries.
 
-### 💻 Built-in terminal
-Full SSH terminal (xterm.js) right inside the app window.
+### 🔍 Auto-discovery
+**Find on server** scans Docker containers, listening ports, and SQLite files — suggests connections automatically.
+
+### 🌐 REST console
+HTTP-based engines (search, vector, time-series) with quick-query presets.
 
 ### ⚙️ Settings
-Switch language and theme. Preferences are stored locally on your PC.
+5 languages, 6 themes, acrylic window, local preferences.
 
 </td>
 </tr>
@@ -74,11 +91,39 @@ Switch language and theme. Preferences are stored locally on your PC.
 
 ---
 
+## 🗄️ Database engines
+
+### Full support (queries + browse)
+
+| Family | Engines |
+|--------|---------|
+| **PostgreSQL** | PostgreSQL, TimescaleDB, CockroachDB, YugabyteDB, QuestDB, Redshift (self-hosted) |
+| **MySQL** | MySQL, MariaDB |
+| **Redis** | Redis, KeyDB, Valkey, Dragonfly |
+| **Document** | MongoDB |
+| **SQLite** | Local WASM browse over SSH (read-only; file loaded into memory) |
+
+### REST console (HTTP adapter)
+
+Elasticsearch · OpenSearch · CouchDB · ClickHouse · Meilisearch · Typesense · Qdrant · Weaviate · Chroma · ArangoDB · InfluxDB · Prometheus
+
+### Coming soon (needs dedicated driver)
+
+MS SQL · Oracle · Cassandra · ScyllaDB · Neo4j · Memgraph · Memcached · Milvus
+
+### Cloud (vendor API keys — not available over SSH)
+
+DynamoDB · BigQuery · Snowflake · Firebase · Firestore · Pinecone · Neptune
+
+> Cloud databases require provider API keys and are outside the SSH agentless model. They are listed for transparency.
+
+---
+
 ## ⬇️ Installation
 
 ### Pre-built release (recommended)
 
-1. Download [`SHOK-v1.1.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
+1. Download [`SHOK-v1.2.1-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
 2. Extract the archive
 3. Run `SHOK.exe`
 
@@ -105,30 +150,31 @@ npm run dist:win    # → release/win-unpacked/SHOK.exe
    - **Password**: standard SSH password
 4. Click **Test connection** → **Add**
 
-Within a few seconds you'll see CPU/RAM/disk metrics, containers, networks, and volumes.
+Within seconds you'll see live metrics, containers, and networks. Open **Databases** → **Find on server** to auto-detect PostgreSQL, Redis, SQLite files, and more.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│           Electron (SHOK.exe)           │
-│  ┌─────────────┐    ┌─────────────────┐  │
-│  │  React UI   │◄──►│  Node.js Engine │  │
-│  │  (Vite)     │ WS │  (127.0.0.1)    │  │
-│  └─────────────┘    └────────┬────────┘  │
-└──────────────────────────────┼───────────┘
-                               │ SSH (port 22)
-                    ┌──────────┴──────────┐
-                    │   Linux Server(s)   │
-                    │  /proc · docker ps  │
-                    └─────────────────────┘
+┌──────────────────────────────────────────────────┐
+│              Electron (SHOK.exe)                 │
+│  ┌──────────────┐      ┌──────────────────────┐  │
+│  │   React UI   │◄────►│   Node.js Engine     │  │
+│  │   (Vite)     │  WS  │   (127.0.0.1)        │  │
+│  └──────────────┘      └──────────┬───────────┘  │
+└───────────────────────────────────┼──────────────┘
+                                    │ SSH (port 22)
+                         ┌──────────┴──────────┐
+                         │   Linux Server(s)   │
+                         │ /proc · docker · db │
+                         └─────────────────────┘
 ```
 
 - **One persistent SSH connection** per host (multiplexing), separate channels per task
-- Every N seconds a single script collects all metrics (`/proc/stat`, `free`, `df`, `docker ps/stats`)
-- CPU is calculated as a delta between polls — minimal server load
+- Metrics: single script per poll (`/proc/stat`, `free`, `df`, `docker ps/stats`); CPU delta in one SSH round-trip
+- Databases: SSH port-forward to local drivers (pg, mysql2, ioredis, mongodb) or HTTP proxy for REST engines
+- SQLite: file copied over SFTP → `sql.js` WASM locally
 
 ---
 
@@ -148,7 +194,7 @@ Within a few seconds you'll see CPU/RAM/disk metrics, containers, networks, and 
 
 - **Windows 10/11** (pre-built exe needs nothing else)
 - **Node.js 18+** (for development)
-- **Linux servers** with SSH; Docker is optional
+- **Linux servers** with SSH; Docker and databases are optional
 
 ---
 
@@ -157,7 +203,8 @@ Within a few seconds you'll see CPU/RAM/disk metrics, containers, networks, and 
 | What | Where |
 |------|-------|
 | Server list | `%APPDATA%\SHOK\config\hosts.json` |
-| Passwords | Stored in plain text in `hosts.json` |
+| DB connections | `%APPDATA%\SHOK\config\` (local only) |
+| Passwords | Stored in plain text — **use SSH keys** |
 
 > ⚠️ **Use SSH keys instead of passwords** for better security.
 
@@ -168,10 +215,14 @@ Within a few seconds you'll see CPU/RAM/disk metrics, containers, networks, and 
 ```
 shok-monitor/
 ├── electron/          # Electron main process
-├── server/            # Node.js SSH engine + WebSocket
-├── src/               # React UI (Vite + Tailwind)
-├── buildResources/    # Build icon
-├── public/            # Static assets
+├── server/            # SSH engine, collector, DB drivers
+│   ├── collector.js   # Metrics (fixed CPU parser)
+│   ├── db.js          # DB connections & queries
+│   └── engines.js     # Engine registry (39 engines)
+├── src/
+│   ├── pages/Database.tsx
+│   └── lib/engines.ts
+├── buildResources/    # App icon
 └── .github/assets/    # Logo & social preview
 ```
 

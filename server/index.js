@@ -7,15 +7,28 @@ import { exec as cpExec } from "node:child_process";
 import express from "express";
 import { WebSocketServer } from "ws";
 
-import { APP_ROOT, loadHosts, saveHosts, sanitizeHost, publicHost } from "./config.js";
+import {
+  APP_ROOT,
+  loadHosts,
+  saveHosts,
+  sanitizeHost,
+  publicHost,
+  loadDbs,
+  saveDbs,
+  sanitizeDb,
+  publicDb,
+} from "./config.js";
 import { HostConnection } from "./ssh.js";
 import { Poller } from "./collector.js";
+import * as dbmod from "./db.js";
+import { engineFamily } from "./engines.js";
 
 const PORT = parseInt(process.env.SHOK_PORT || "5199", 10);
 const HOST = "127.0.0.1";
 const NO_OPEN = process.argv.includes("--no-open") || process.env.SHOK_NO_OPEN === "1";
 
 let hosts = loadHosts();
+let dbs = loadDbs();
 const conns = new Map(); // id -> HostConnection
 const pollers = new Map(); // id -> Poller
 const hostStates = new Map(); // id -> state
@@ -117,6 +130,7 @@ app.put("/api/hosts/:id", (req, res) => {
 app.delete("/api/hosts/:id", (req, res) => {
   const idx = hosts.findIndex((h) => h.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Хост не знайдено" });
+  dbmod.closeTunnelsForHost(req.params.id, dbs);
   stopHost(req.params.id);
   hosts.splice(idx, 1);
   saveHosts(hosts);
@@ -170,6 +184,135 @@ app.get("/api/containers/:hostId/logs", async (req, res) => {
     res.json({ logs: r.stdout });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+/* ---------------- Бази даних ---------------- */
+
+app.get("/api/dbs", (req, res) => res.json(dbs.map(publicDb)));
+
+// Автопошук баз на підключеному хості
+app.post("/api/hosts/:id/detect-dbs", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json({ found: await dbmod.detectDatabases(conn) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/dbs", (req, res) => {
+  try {
+    const d = sanitizeDb(req.body);
+    if (!hosts.some((h) => h.id === d.hostId)) return res.status(400).json({ error: "Хост не знайдено" });
+    dbs.push(d);
+    saveDbs(dbs);
+    res.json(publicDb(d));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.put("/api/dbs/:id", (req, res) => {
+  const idx = dbs.findIndex((d) => d.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Базу не знайдено" });
+  try {
+    const d = sanitizeDb(req.body, dbs[idx]);
+    dbs[idx] = d;
+    saveDbs(dbs);
+    dbmod.closeTunnel(d.id);
+    res.json(publicDb(d));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.delete("/api/dbs/:id", (req, res) => {
+  const idx = dbs.findIndex((d) => d.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Базу не знайдено" });
+  dbmod.closeTunnel(req.params.id);
+  dbs.splice(idx, 1);
+  saveDbs(dbs);
+  res.json({ ok: true });
+});
+
+function dbAndConn(id) {
+  const d = dbs.find((x) => x.id === id);
+  if (!d) return { error: "Базу не знайдено", code: 404 };
+  const conn = conns.get(d.hostId);
+  if (!conn) return { error: "Хост цієї бази не підключено", code: 400 };
+  return { d, conn };
+}
+
+app.post("/api/dbs/:id/test", async (req, res) => {
+  // Дозволяємо тест непорядкованого (ще не збереженого) з'єднання
+  let d, conn;
+  try {
+    if (req.body && req.body.hostId) {
+      d = sanitizeDb(req.body);
+      conn = conns.get(d.hostId);
+      if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+    } else {
+      const r = dbAndConn(req.params.id);
+      if (r.error) return res.status(r.code).json({ error: r.error });
+      ({ d, conn } = r);
+    }
+    const fam = engineFamily(d.type);
+    const probe =
+      fam === "redis"
+        ? "PING"
+        : fam === "mongo"
+          ? '{ "command": { "ping": 1 } }'
+          : fam === "http"
+            ? "GET /"
+            : "SELECT 1";
+    const out = await dbmod.runQuery(d, conn, probe);
+    res.json({ ok: true, rowCount: out.rowCount });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post("/api/dbs/:id/schema", async (req, res) => {
+  const r = dbAndConn(req.params.id);
+  if (r.error) return res.status(r.code).json({ error: r.error });
+  try {
+    res.json(await dbmod.getSchema(r.d, r.conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/dbs/:id/query", async (req, res) => {
+  const r = dbAndConn(req.params.id);
+  if (r.error) return res.status(r.code).json({ error: r.error });
+  const sql = String(req.body?.sql || "");
+  if (!sql.trim()) return res.status(400).json({ error: "Порожній запит" });
+  try {
+    res.json(await dbmod.runQuery(r.d, r.conn, sql));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post("/api/dbs/:id/table", async (req, res) => {
+  const r = dbAndConn(req.params.id);
+  if (r.error) return res.status(r.code).json({ error: r.error });
+  try {
+    res.json(await dbmod.browseTable(r.d, r.conn, req.body || {}));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post("/api/dbs/:id/update", async (req, res) => {
+  const r = dbAndConn(req.params.id);
+  if (r.error) return res.status(r.code).json({ error: r.error });
+  try {
+    res.json(await dbmod.updateRow(r.d, r.conn, req.body || {}));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 

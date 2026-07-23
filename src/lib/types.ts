@@ -63,6 +63,66 @@ export type HostInput = {
   interval: number;
 };
 
+/* ---------------- Бази даних ---------------- */
+
+export type DbType = string; // id рушія з реєстру engines.ts
+
+export type DbConn = {
+  id: string;
+  hostId: string;
+  name: string;
+  type: DbType;
+  dbHost: string;
+  dbPort: number;
+  user: string;
+  database: string;
+  dbFile: string;
+  hasPassword: boolean;
+};
+
+export type DbInput = {
+  hostId: string;
+  name: string;
+  type: DbType;
+  dbHost: string;
+  dbPort: number;
+  user: string;
+  database: string;
+  dbFile: string;
+  password: string;
+};
+
+export type DetectedDb = {
+  type: DbType;
+  dbHost: string;
+  dbPort: number;
+  dbFile?: string;
+  name: string;
+  source: string;
+};
+
+export type DbColumn = { name: string; type: string; pk: boolean };
+export type DbTable = { schema: string; name: string; columns: DbColumn[] };
+export type RedisKey = { key: string; type: string };
+
+export type DbSchema =
+  | { kind: "sql"; tables: DbTable[] }
+  | { kind: "redis"; dbsize: number; keys: RedisKey[]; info: Record<string, string> }
+  | { kind: "http"; hints: string[] };
+
+export type QueryResult = {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  rowCount: number;
+  command: string;
+};
+
+export type TableResult = {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  total: number;
+};
+
 export function fmtUptime(sec: number): string {
   if (!sec) return "—";
   const d = Math.floor(sec / 86400);
