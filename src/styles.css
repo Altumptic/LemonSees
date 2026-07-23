@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Стримана редакторська темна тема — чорнило, слонова кістка, один акцент шампань */
+  --background: oklch(0.13 0.005 250);
+  --foreground: oklch(0.94 0.01 90);
+
+  --primary: oklch(0.82 0.06 85);
+  --primary-foreground: oklch(0.13 0.005 250);
+
+  --muted: oklch(0.98 0.01 90 / 0.04);
+  --muted-foreground: oklch(0.68 0.01 90);
+
+  --ring: oklch(0.82 0.06 85 / 0.4);
+
+  --success: oklch(0.74 0.09 150);
+  --warning: oklch(0.82 0.1 85);
+  --danger: oklch(0.65 0.16 25);
+
+  --hairline: oklch(0.98 0.01 90 / 0.08);
+  --hairline-strong: oklch(0.98 0.01 90 / 0.14);
+  --ink: oklch(0.09 0.005 250);
+}
+
+@layer base {
+  * {
+    border-color: var(--hairline);
+  }
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+  }
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11", "cv02";
+    letter-spacing: -0.005em;
+  }
+  body {
+    color: var(--foreground);
+    background-color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .mono,
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+    font-feature-settings: "zero", "ss01";
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Матові панелі — напівпрозорі, волосяні межі */
+@utility glass {
+  background: oklch(0.98 0.01 90 / 0.025);
+  backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid var(--hairline);
+}
+
+@utility glass-strong {
+  background: oklch(0.98 0.01 90 / 0.04);
+  backdrop-filter: blur(28px) saturate(130%);
+  border: 1px solid var(--hairline-strong);
+}
+
+@utility eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@utility live-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* Фон: чорнило + ледь помітна сітка + зерно */
+.app-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(oklch(0.98 0.01 90 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.98 0.01 90 / 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  z-index: 0;
+}
+.app-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+/* xterm контейнер */
+.term-wrap .xterm {
+  padding: 12px;
+}
+.term-wrap .xterm-viewport {
+  background-color: transparent !important;
+}

@@ -1,0 +1,76 @@
+{
+  "name": "shok-monitor",
+  "version": "1.0.0",
+  "description": "Моніторинг Linux-серверів і Docker по SSH — без агентів. Десктопна програма для Windows.",
+  "author": "4am-png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/4am-png/shok-monitor.git"
+  },
+  "homepage": "https://github.com/4am-png/shok-monitor#readme",
+  "bugs": {
+    "url": "https://github.com/4am-png/shok-monitor/issues"
+  },
+  "keywords": [
+    "monitoring",
+    "ssh",
+    "docker",
+    "linux",
+    "electron",
+    "server",
+    "devops",
+    "windows"
+  ],
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "server": "node server/index.js",
+    "start": "node server/index.js",
+    "app": "electron .",
+    "dist:win": "electron-builder --win dir"
+  },
+  "build": {
+    "appId": "ua.shok.monitor",
+    "productName": "SHOK",
+    "directories": {
+      "buildResources": "buildResources",
+      "output": "release"
+    },
+    "asar": false,
+    "files": [
+      "electron/**",
+      "server/**",
+      "dist/**",
+      "package.json"
+    ],
+    "win": {
+      "target": ["dir"],
+      "icon": "buildResources/icon.png"
+    }
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "express": "^4.21.2",
+    "lucide-react": "^0.575.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ssh2": "^1.16.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
