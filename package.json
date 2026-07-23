@@ -1,7 +1,7 @@
 {
   "name": "shok-monitor",
-  "version": "1.0.0",
-  "description": "Моніторинг Linux-серверів і Docker по SSH — без агентів. Десктопна програма для Windows.",
+  "version": "1.1.0",
+  "description": "Agentless Linux server & Docker monitoring over SSH. Windows desktop app.",
   "author": "kiurakku",
   "license": "MIT",
   "repository": {
@@ -47,7 +47,9 @@
       "package.json"
     ],
     "win": {
-      "target": ["dir"],
+      "target": [
+        "dir"
+      ],
       "icon": "buildResources/icon.png"
     }
   },

@@ -50,12 +50,20 @@ if (!gotLock) {
       height: 920,
       minWidth: 980,
       minHeight: 640,
+      show: false,
       backgroundColor: "#101014",
       title: "ШОК — Моніторинг серверів",
       icon: path.join(__dirname, "..", "buildResources", "icon.png"),
       autoHideMenuBar: true,
+      // Ховаємо системний заголовок — лишаються тільки темні кнопки вікна,
+      // верхня панель програми стає суцільною
+      titleBarStyle: "hidden",
+      titleBarOverlay: { color: "#101014", symbolColor: "#e8e6df", height: 42 },
       webPreferences: { contextIsolation: true, nodeIntegration: false },
     });
+    // Одразу на весь екран
+    win.maximize();
+    win.show();
 
     // Зовнішні посилання — у системний браузер
     win.webContents.setWindowOpenHandler(({ url }) => {

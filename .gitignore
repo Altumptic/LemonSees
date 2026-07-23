@@ -7,3 +7,4 @@ config/hosts.json
 Thumbs.db
 .claude/
 *.local
+SHOK-v*.zip

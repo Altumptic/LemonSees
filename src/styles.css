@@ -16,7 +16,7 @@
 :root {
   --radius: 0.75rem;
 
-  /* Стримана редакторська темна тема — чорнило, слонова кістка, один акцент шампань */
+  /* Тема за замовчуванням — «Шампань»: чорнило + теплий акцент */
   --background: oklch(0.13 0.005 250);
   --foreground: oklch(0.94 0.01 90);
 
@@ -35,11 +35,80 @@
   --hairline: oklch(0.98 0.01 90 / 0.08);
   --hairline-strong: oklch(0.98 0.01 90 / 0.14);
   --ink: oklch(0.09 0.005 250);
+
+  /* Керовані з налаштувань */
+  --glass-color: oklch(0.98 0.01 90);
+  --glass-alpha: 0.025;
+  --glass-alpha-strong: 0.04;
+  --grid-color: oklch(0.98 0.01 90 / 0.035);
+  --modal-bg: oklch(0.14 0.005 250 / 0.97);
+  --topbar-bg: oklch(0.13 0.005 250 / 0.55);
+}
+
+/* ---- Теми ---- */
+
+:root[data-theme="ink"] {
+  --background: oklch(0.1 0 0);
+  --ink: oklch(0.04 0 0);
+  --modal-bg: oklch(0.1 0 0 / 0.97);
+  --topbar-bg: oklch(0.07 0 0 / 0.6);
+}
+
+:root[data-theme="ocean"] {
+  --primary: oklch(0.75 0.09 230);
+  --ring: oklch(0.75 0.09 230 / 0.4);
+  --warning: oklch(0.8 0.1 85);
+  --background: oklch(0.14 0.014 245);
+  --ink: oklch(0.1 0.014 245);
+  --modal-bg: oklch(0.15 0.014 245 / 0.97);
+  --topbar-bg: oklch(0.13 0.014 245 / 0.55);
+}
+
+:root[data-theme="forest"] {
+  --primary: oklch(0.76 0.1 155);
+  --ring: oklch(0.76 0.1 155 / 0.4);
+  --background: oklch(0.14 0.012 160);
+  --ink: oklch(0.1 0.012 160);
+  --modal-bg: oklch(0.15 0.012 160 / 0.97);
+  --topbar-bg: oklch(0.13 0.012 160 / 0.55);
+}
+
+:root[data-theme="violet"] {
+  --primary: oklch(0.75 0.11 300);
+  --ring: oklch(0.75 0.11 300 / 0.4);
+  --background: oklch(0.14 0.014 300);
+  --ink: oklch(0.1 0.014 300);
+  --modal-bg: oklch(0.15 0.014 300 / 0.97);
+  --topbar-bg: oklch(0.13 0.014 300 / 0.55);
+}
+
+:root[data-theme="light"] {
+  --background: oklch(0.97 0.004 90);
+  --ink: oklch(0.95 0.004 90);
+  --foreground: oklch(0.22 0.01 250);
+  --muted-foreground: oklch(0.45 0.01 250);
+  --primary: oklch(0.55 0.09 85);
+  --ring: oklch(0.55 0.09 85 / 0.4);
+  --hairline: oklch(0.22 0.01 250 / 0.1);
+  --hairline-strong: oklch(0.22 0.01 250 / 0.2);
+  --glass-color: oklch(0.22 0.01 250);
+  --grid-color: oklch(0.22 0.01 250 / 0.05);
+  --modal-bg: oklch(0.97 0.004 90 / 0.98);
+  --topbar-bg: oklch(0.97 0.004 90 / 0.7);
 }
 
 @layer base {
   * {
     border-color: var(--hairline);
+  }
+  /* Ховаємо смуги прокрутки — скрол колесом і жестами працює */
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
   html,
   body,
@@ -56,6 +125,7 @@
     background-color: var(--ink);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
   .mono,
   code,
@@ -72,15 +142,19 @@
   }
 }
 
-/* Матові панелі — напівпрозорі, волосяні межі */
+/* Матові панелі — прозорість керується з налаштувань */
 @utility glass {
-  background: oklch(0.98 0.01 90 / 0.025);
+  background: color-mix(in oklab, var(--glass-color) calc(var(--glass-alpha) * 100%), transparent);
   backdrop-filter: blur(20px) saturate(120%);
   border: 1px solid var(--hairline);
 }
 
 @utility glass-strong {
-  background: oklch(0.98 0.01 90 / 0.04);
+  background: color-mix(
+    in oklab,
+    var(--glass-color) calc(var(--glass-alpha-strong) * 100%),
+    transparent
+  );
   backdrop-filter: blur(28px) saturate(130%);
   border: 1px solid var(--hairline-strong);
 }
@@ -107,6 +181,16 @@
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
+/* Зона перетягування вікна (Electron, прихований заголовок) */
+.drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
 /* Фон: чорнило + ледь помітна сітка + зерно */
 .app-bg::before {
   content: "";
@@ -114,8 +198,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(oklch(0.98 0.01 90 / 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.98 0.01 90 / 0.035) 1px, transparent 1px);
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
   z-index: 0;
@@ -129,6 +213,27 @@
   opacity: 0.4;
   mix-blend-mode: overlay;
   z-index: 0;
+}
+:root[data-theme="light"] .app-bg::after {
+  opacity: 0.15;
+}
+
+/* Слайдер у налаштуваннях */
+input[type="range"].shok-range {
+  appearance: none;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+  outline: none;
+}
+input[type="range"].shok-range::-webkit-slider-thumb {
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  border: none;
+  cursor: pointer;
 }
 
 /* xterm контейнер */

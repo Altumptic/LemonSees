@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { HostStatus, ContainerState } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 /* -------- Каркас -------- */
 
@@ -174,6 +175,7 @@ const STATE_MAP: Record<ContainerState, { c: string; label: string }> = {
 };
 
 export function StatePill({ state }: { state: ContainerState }) {
+  const { t } = useI18n();
   const { c, label } = STATE_MAP[state] ?? STATE_MAP.exited;
   return (
     <span
@@ -188,12 +190,13 @@ export function StatePill({ state }: { state: ContainerState }) {
         className={`h-1 w-1 rounded-full ${state === "running" || state === "restarting" ? "live-dot" : ""}`}
         style={{ backgroundColor: c }}
       />
-      {label}
+      {t(label)}
     </span>
   );
 }
 
 export function SeverityTag({ level }: { level: "critical" | "warning" | "info" }) {
+  const { t } = useI18n();
   const map = {
     critical: { c: "var(--danger)", label: "критично" },
     warning: { c: "var(--warning)", label: "увага" },
@@ -209,7 +212,7 @@ export function SeverityTag({ level }: { level: "critical" | "warning" | "info" 
         border: `1px solid color-mix(in oklab, ${c} 26%, transparent)`,
       }}
     >
-      {label}
+      {t(label)}
     </span>
   );
 }
@@ -383,7 +386,7 @@ export function Modal({
       <div
         className={`glass-strong max-h-[85vh] w-full overflow-y-auto rounded-xl p-6 ${wide ? "max-w-3xl" : "max-w-lg"}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ background: "oklch(0.14 0.005 250 / 0.97)" }}
+        style={{ background: "var(--modal-bg)" }}
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-medium tracking-tight">{title}</h2>
