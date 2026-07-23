@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Activity, Server, Boxes, Network, HardDrive, Terminal, Settings as SettingsIcon } from "lucide-react";
+import { Activity, Server, Boxes, Network, HardDrive, Terminal, Database, Settings as SettingsIcon } from "lucide-react";
 import { useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { isElectron } from "@/lib/settings";
@@ -9,12 +9,14 @@ import Containers from "@/pages/Containers";
 import Networks from "@/pages/Networks";
 import Volumes from "@/pages/Volumes";
 import TerminalPage from "@/pages/Terminal";
+import DatabasePage from "@/pages/Database";
 import SettingsPage from "@/pages/Settings";
 
 const NAV = [
   { to: "overview", label: "Огляд", icon: Activity },
   { to: "hosts", label: "Хости", icon: Server },
   { to: "containers", label: "Контейнери", icon: Boxes },
+  { to: "databases", label: "Бази даних", icon: Database },
   { to: "networks", label: "Мережі", icon: Network },
   { to: "volumes", label: "Томи", icon: HardDrive },
   { to: "terminal", label: "Термінал", icon: Terminal },
@@ -92,7 +94,7 @@ export default function App() {
 
           <div className="mt-auto px-2">
             <div className="mono flex items-center justify-between border-t border-[var(--hairline)] pt-4 text-[10px] text-muted-foreground">
-              <span>v1.0</span>
+              <span>v1.2.1</span>
               <span className="flex items-center gap-1.5">
                 <span
                   className={`h-1 w-1 rounded-full ${connected ? "live-dot bg-[var(--success)]" : "bg-[var(--danger)]"}`}
@@ -135,6 +137,7 @@ export default function App() {
             {page === "overview" && <Overview go={go} />}
             {page === "hosts" && <Hosts />}
             {page === "containers" && <Containers />}
+            {page === "databases" && <DatabasePage />}
             {page === "networks" && <Networks />}
             {page === "volumes" && <Volumes />}
             {page === "terminal" && <TerminalPage />}

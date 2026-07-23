@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Play, Square, RotateCw, ScrollText, Trash2, Search } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useSettings } from "@/lib/settings";
 import type { Container } from "@/lib/types";
 import { PageHeader, Panel, StatePill, Bar, IconBtn, Modal } from "@/components/ui";
 
@@ -13,6 +14,7 @@ const HEAD_TINT = "bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]";
 export default function Containers() {
   const { hosts } = useAppState();
   const { t } = useI18n();
+  const { settings } = useSettings();
   const [q, setQ] = useState("");
   const [hostFilter, setHostFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
@@ -35,9 +37,10 @@ export default function Containers() {
   );
 
   const act = async (row: Row, action: string) => {
-    if (action === "remove" && !confirm(`${t("Видалити контейнер")} «${row.name}» ${t("на")} ${row.hostName}? ${t("Це незворотно.")}`))
+    const ask = settings.confirmDestructive;
+    if (action === "remove" && ask && !confirm(`${t("Видалити контейнер")} «${row.name}» ${t("на")} ${row.hostName}? ${t("Це незворотно.")}`))
       return;
-    if (action === "stop" && !confirm(`${t("Зупинити")} «${row.name}» ${t("на")} ${row.hostName}?`)) return;
+    if (action === "stop" && ask && !confirm(`${t("Зупинити")} «${row.name}» ${t("на")} ${row.hostName}?`)) return;
     const key = `${row.hostId}:${row.name}`;
     setBusy(key);
     try {

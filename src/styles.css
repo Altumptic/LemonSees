@@ -82,6 +82,96 @@
   --topbar-bg: oklch(0.13 0.014 300 / 0.55);
 }
 
+:root[data-theme="midnight"] {
+  --primary: oklch(0.7 0.11 265);
+  --ring: oklch(0.7 0.11 265 / 0.4);
+  --background: oklch(0.14 0.02 265);
+  --ink: oklch(0.08 0.02 265);
+  --modal-bg: oklch(0.15 0.02 265 / 0.97);
+  --topbar-bg: oklch(0.12 0.02 265 / 0.55);
+}
+
+:root[data-theme="rose"] {
+  --primary: oklch(0.74 0.13 8);
+  --ring: oklch(0.74 0.13 8 / 0.4);
+  --background: oklch(0.14 0.012 350);
+  --ink: oklch(0.1 0.012 350);
+  --modal-bg: oklch(0.15 0.012 350 / 0.97);
+  --topbar-bg: oklch(0.13 0.012 350 / 0.55);
+}
+
+:root[data-theme="amber"] {
+  --primary: oklch(0.8 0.11 70);
+  --ring: oklch(0.8 0.11 70 / 0.4);
+  --warning: oklch(0.85 0.11 95);
+  --background: oklch(0.14 0.01 60);
+  --ink: oklch(0.1 0.01 60);
+  --modal-bg: oklch(0.15 0.01 60 / 0.97);
+  --topbar-bg: oklch(0.13 0.01 60 / 0.55);
+}
+
+:root[data-theme="crimson"] {
+  --primary: oklch(0.66 0.17 22);
+  --ring: oklch(0.66 0.17 22 / 0.4);
+  --background: oklch(0.13 0.014 20);
+  --ink: oklch(0.09 0.014 20);
+  --modal-bg: oklch(0.15 0.014 20 / 0.97);
+  --topbar-bg: oklch(0.12 0.014 20 / 0.55);
+}
+
+:root[data-theme="nord"] {
+  --primary: oklch(0.72 0.07 230);
+  --ring: oklch(0.72 0.07 230 / 0.4);
+  --foreground: oklch(0.92 0.01 250);
+  --muted-foreground: oklch(0.66 0.02 250);
+  --background: oklch(0.28 0.02 260);
+  --ink: oklch(0.24 0.02 260);
+  --hairline: oklch(0.98 0.01 250 / 0.1);
+  --hairline-strong: oklch(0.98 0.01 250 / 0.18);
+  --success: oklch(0.78 0.09 150);
+  --modal-bg: oklch(0.3 0.02 260 / 0.98);
+  --topbar-bg: oklch(0.27 0.02 260 / 0.6);
+}
+
+:root[data-theme="dracula"] {
+  --primary: oklch(0.78 0.13 320);
+  --ring: oklch(0.78 0.13 320 / 0.4);
+  --foreground: oklch(0.95 0.02 320);
+  --muted-foreground: oklch(0.7 0.03 300);
+  --background: oklch(0.24 0.03 285);
+  --ink: oklch(0.19 0.03 285);
+  --hairline: oklch(0.98 0.02 300 / 0.1);
+  --hairline-strong: oklch(0.98 0.02 300 / 0.18);
+  --success: oklch(0.85 0.16 140);
+  --warning: oklch(0.85 0.13 95);
+  --modal-bg: oklch(0.26 0.03 285 / 0.98);
+  --topbar-bg: oklch(0.23 0.03 285 / 0.6);
+}
+
+:root[data-theme="cyber"] {
+  --primary: oklch(0.86 0.2 150);
+  --ring: oklch(0.86 0.2 150 / 0.4);
+  --foreground: oklch(0.92 0.03 150);
+  --muted-foreground: oklch(0.66 0.05 150);
+  --background: oklch(0.11 0.02 155);
+  --ink: oklch(0.06 0.02 155);
+  --hairline: oklch(0.86 0.2 150 / 0.12);
+  --hairline-strong: oklch(0.86 0.2 150 / 0.22);
+  --grid-color: oklch(0.86 0.2 150 / 0.05);
+  --success: oklch(0.86 0.2 150);
+  --modal-bg: oklch(0.1 0.02 155 / 0.98);
+  --topbar-bg: oklch(0.08 0.02 155 / 0.6);
+}
+
+:root[data-theme="slate"] {
+  --primary: oklch(0.75 0.03 250);
+  --ring: oklch(0.75 0.03 250 / 0.4);
+  --background: oklch(0.18 0.008 250);
+  --ink: oklch(0.13 0.008 250);
+  --modal-bg: oklch(0.2 0.008 250 / 0.98);
+  --topbar-bg: oklch(0.17 0.008 250 / 0.6);
+}
+
 :root[data-theme="light"] {
   --background: oklch(0.97 0.004 90);
   --ink: oklch(0.95 0.004 90);
@@ -95,6 +185,39 @@
   --grid-color: oklch(0.22 0.01 250 / 0.05);
   --modal-bg: oklch(0.97 0.004 90 / 0.98);
   --topbar-bg: oklch(0.97 0.004 90 / 0.7);
+}
+
+:root[data-theme="solarized"] {
+  --background: oklch(0.96 0.02 95);
+  --ink: oklch(0.93 0.025 95);
+  --foreground: oklch(0.38 0.03 210);
+  --muted-foreground: oklch(0.55 0.03 200);
+  --primary: oklch(0.55 0.11 220);
+  --ring: oklch(0.55 0.11 220 / 0.4);
+  --hairline: oklch(0.4 0.03 210 / 0.12);
+  --hairline-strong: oklch(0.4 0.03 210 / 0.22);
+  --glass-color: oklch(0.4 0.03 210);
+  --grid-color: oklch(0.4 0.03 210 / 0.05);
+  --success: oklch(0.6 0.12 130);
+  --warning: oklch(0.68 0.12 60);
+  --danger: oklch(0.58 0.17 30);
+  --modal-bg: oklch(0.96 0.02 95 / 0.98);
+  --topbar-bg: oklch(0.96 0.02 95 / 0.7);
+}
+
+:root[data-theme="sand"] {
+  --background: oklch(0.95 0.015 75);
+  --ink: oklch(0.92 0.02 75);
+  --foreground: oklch(0.3 0.02 60);
+  --muted-foreground: oklch(0.5 0.02 60);
+  --primary: oklch(0.58 0.1 55);
+  --ring: oklch(0.58 0.1 55 / 0.4);
+  --hairline: oklch(0.3 0.02 60 / 0.12);
+  --hairline-strong: oklch(0.3 0.02 60 / 0.22);
+  --glass-color: oklch(0.3 0.02 60);
+  --grid-color: oklch(0.3 0.02 60 / 0.05);
+  --modal-bg: oklch(0.95 0.015 75 / 0.98);
+  --topbar-bg: oklch(0.95 0.015 75 / 0.7);
 }
 
 @layer base {
@@ -191,6 +314,21 @@
   app-region: no-drag;
 }
 
+/* Скляне (акрилове) вікно: тіло напівпрозоре — крізь нього видно розмитий робочий стіл.
+   Прозорість регулюється тим самим повзунком «Прозорість панелей». */
+:root[data-glass="on"] body {
+  background-color: color-mix(in oklab, var(--ink) calc(78% - var(--glass-alpha) * 320%), transparent);
+}
+:root[data-glass="on"] .app-bg::after {
+  opacity: 0.12;
+}
+
+/* Кольорове сяйво навколо панелей — тінь у колір акценту */
+:root[data-glow="on"] .glass,
+:root[data-glow="on"] .glass-strong {
+  box-shadow: 0 12px 48px -12px color-mix(in oklab, var(--primary) 45%, transparent);
+}
+
 /* Фон: чорнило + ледь помітна сітка + зерно */
 .app-bg::before {
   content: "";
@@ -214,8 +352,25 @@
   mix-blend-mode: overlay;
   z-index: 0;
 }
-:root[data-theme="light"] .app-bg::after {
+:root[data-theme="light"] .app-bg::after,
+:root[data-theme="solarized"] .app-bg::after,
+:root[data-theme="sand"] .app-bg::after {
   opacity: 0.15;
+}
+
+/* Вимкнення фонових ефектів */
+:root[data-effects="off"] .app-bg::before,
+:root[data-effects="off"] .app-bg::after {
+  display: none;
+}
+
+/* Зменшення руху */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }
 
 /* Слайдер у налаштуваннях */

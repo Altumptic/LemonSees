@@ -159,6 +159,18 @@ export class HostConnection {
     );
   }
 
+  /** Прокинути канал до dstHost:dstPort на віддаленому боці (local port forwarding). */
+  forwardOut(dstHost, dstPort) {
+    return this.connect().then(
+      (client) =>
+        new Promise((resolve, reject) => {
+          client.forwardOut("127.0.0.1", 0, dstHost, dstPort, (err, stream) =>
+            err ? reject(err) : resolve(stream),
+          );
+        }),
+    );
+  }
+
   /** Інтерактивний shell із PTY. Повертає stream. */
   shell({ cols = 120, rows = 32 } = {}) {
     return this.connect().then(

@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import type { HostInput, HostState } from "./types";
+import type {
+  HostInput,
+  HostState,
+  DbConn,
+  DbInput,
+  DbSchema,
+  QueryResult,
+  TableResult,
+  DetectedDb,
+} from "./types";
 
 /* ---------- REST ---------- */
 
@@ -29,6 +38,39 @@ export const api = {
     req<{ logs: string }>(
       `/api/containers/${hostId}/logs?name=${encodeURIComponent(name)}&tail=${tail}`,
     ),
+
+  // Бази даних
+  listDbs: () => req<DbConn[]>("/api/dbs"),
+  detectDbs: (hostId: string) =>
+    req<{ found: DetectedDb[] }>(`/api/hosts/${hostId}/detect-dbs`, { method: "POST" }),
+  addDb: (d: DbInput) => req<DbConn>("/api/dbs", { method: "POST", body: JSON.stringify(d) }),
+  updateDb: (id: string, d: DbInput) =>
+    req<DbConn>(`/api/dbs/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  deleteDb: (id: string) => req<{ ok: boolean }>(`/api/dbs/${id}`, { method: "DELETE" }),
+  testDb: (d: DbInput) =>
+    req<{ ok: boolean; rowCount: number }>(`/api/dbs/new/test`, {
+      method: "POST",
+      body: JSON.stringify(d),
+    }),
+  dbSchema: (id: string) => req<DbSchema>(`/api/dbs/${id}/schema`, { method: "POST" }),
+  dbQuery: (id: string, sql: string) =>
+    req<QueryResult>(`/api/dbs/${id}/query`, { method: "POST", body: JSON.stringify({ sql }) }),
+  dbTable: (id: string, schema: string, table: string, limit: number, offset: number) =>
+    req<TableResult>(`/api/dbs/${id}/table`, {
+      method: "POST",
+      body: JSON.stringify({ schema, table, limit, offset }),
+    }),
+  dbUpdateRow: (
+    id: string,
+    schema: string,
+    table: string,
+    pk: Record<string, unknown>,
+    changes: Record<string, unknown>,
+  ) =>
+    req<{ affected: number }>(`/api/dbs/${id}/update`, {
+      method: "POST",
+      body: JSON.stringify({ schema, table, pk, changes }),
+    }),
 };
 
 /* ---------- Живий стан через WebSocket ---------- */

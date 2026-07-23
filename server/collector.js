@@ -1,17 +1,22 @@
-// Збирач метрик: один exec на цикл — CPU/RAM/Disk/uptime + docker ps/stats/networks/volumes.
-// CPU рахується як дельта /proc/stat між двома опитуваннями (без sleep на сервері).
+// Збирач метрик: один exec на цикл.
+// CPU рахується всередині сесії через ДВА зчитування /proc/stat з паузою —
+// це дає реальне миттєве навантаження окремо для кожного хоста (не залежить від інтервалу опитування).
 
-// Маркери секцій, щоб парсити суцільний вивід одного скрипта
 const SCRIPT = `
 LANG=C
-echo "@@HOST@@"
-head -1 /proc/stat
-free -m 2>/dev/null | awk 'NR==2{print $2" "$3" "$7}'
-df -kP / 2>/dev/null | awk 'NR==2{print $2" "$3}'
-cut -d. -f1 /proc/uptime
-awk '{print $1" "$2" "$3}' /proc/loadavg
-uname -r
-nproc 2>/dev/null || echo 1
+CPU1=$(head -1 /proc/stat)
+sleep 0.3
+CPU2=$(head -1 /proc/stat)
+echo "CPU1 $CPU1"
+echo "CPU2 $CPU2"
+echo "MEM $(free -m 2>/dev/null | awk 'NR==2{print $2, $3, $7}')"
+echo "SWAP $(free -m 2>/dev/null | awk 'NR==3{print $2, $3}')"
+echo "DISK $(df -kP / 2>/dev/null | awk 'NR==2{print $2, $3}')"
+echo "UPTIME $(cut -d. -f1 /proc/uptime)"
+echo "LOAD $(awk '{print $1, $2, $3}' /proc/loadavg)"
+echo "KERNEL $(uname -r)"
+echo "CORES $(nproc 2>/dev/null || echo 1)"
+echo "HOSTNAME $(hostname 2>/dev/null)"
 echo "@@DOCKERV@@"
 docker version --format '{{.Server.Version}}' 2>/dev/null || echo "-"
 echo "@@PS@@"
@@ -25,20 +30,28 @@ docker volume ls --format '{{json .}}' 2>/dev/null
 echo "@@END@@"
 `.trim();
 
-function splitSections(text) {
+// Розбиває на пари ключ→значення (до першого @@…@@) та секції докера.
+function parseOutput(text) {
+  const kv = {};
   const sections = {};
   let current = null;
-  for (const line of text.split("\n")) {
-    const t = line.trim();
-    const m = t.match(/^@@([A-Z]+)@@$/);
-    if (m) {
-      current = m[1];
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/, "");
+    const marker = line.trim().match(/^@@([A-Z]+)@@$/);
+    if (marker) {
+      current = marker[1];
       sections[current] = [];
       continue;
     }
-    if (current && t !== "") sections[current].push(t);
+    if (current === null) {
+      const sp = line.indexOf(" ");
+      if (sp > 0) kv[line.slice(0, sp)] = line.slice(sp + 1).trim();
+      else if (line.trim()) kv[line.trim()] = "";
+    } else if (line.trim() !== "") {
+      sections[current].push(line.trim());
+    }
   }
-  return sections;
+  return { kv, sections };
 }
 
 function parseJsonLines(lines = []) {
@@ -51,6 +64,27 @@ function parseJsonLines(lines = []) {
     }
   }
   return out;
+}
+
+// "cpu 123 0 456 789 ..." → { idle, total }
+function parseCpuLine(line) {
+  const m = String(line).trim().match(/^cpu\s+(.+)$/);
+  if (!m) return null;
+  const parts = m[1].trim().split(/\s+/).map(Number);
+  if (parts.length < 4 || parts.some(Number.isNaN)) return null;
+  const idle = (parts[3] || 0) + (parts[4] || 0); // idle + iowait
+  const total = parts.reduce((a, b) => a + b, 0);
+  return { idle, total };
+}
+
+function cpuPercent(l1, l2) {
+  const a = parseCpuLine(l1);
+  const b = parseCpuLine(l2);
+  if (!a || !b) return null;
+  const dTotal = b.total - a.total;
+  const dIdle = b.idle - a.idle;
+  if (dTotal <= 0) return null;
+  return Math.max(0, Math.min(100, Math.round((1 - dIdle / dTotal) * 100)));
 }
 
 // "128MiB / 1.944GiB" → { used: MB, limit: MB }
@@ -71,20 +105,18 @@ function parseMemUsage(s) {
   return { used: Math.round(toMb(used || "0")), limit: Math.round(toMb(limit || "0")) };
 }
 
-function parseCpuLine(line) {
-  // cpu  user nice system idle iowait irq softirq steal ...
-  const parts = line.replace(/^cpu\s+/, "").trim().split(/\s+/).map(Number);
-  if (parts.length < 4 || parts.some(Number.isNaN)) return null;
-  const idle = (parts[3] || 0) + (parts[4] || 0);
-  const total = parts.reduce((a, b) => a + b, 0);
-  return { idle, total };
-}
-
 function normState(s) {
   const v = String(s || "").toLowerCase();
-  if (v === "running" || v === "restarting" || v === "paused" || v === "exited" || v === "created" || v === "dead")
-    return v;
+  if (["running", "restarting", "paused", "exited", "created", "dead"].includes(v)) return v;
   return "exited";
+}
+
+function nums(s) {
+  return String(s || "")
+    .trim()
+    .split(/\s+/)
+    .map(Number)
+    .filter((n) => !Number.isNaN(n));
 }
 
 export class Poller {
@@ -92,7 +124,6 @@ export class Poller {
     this.conn = conn;
     this.cfg = cfg;
     this.onUpdate = onUpdate;
-    this.prevCpu = null;
     this.timer = null;
     this.stopped = false;
     this.running = false;
@@ -145,32 +176,21 @@ export class Poller {
   }
 
   parse(text) {
-    const s = splitSections(text);
+    const { kv, sections } = parseOutput(text);
 
-    // --- host metrics ---
-    const hostLines = s.HOST || [];
-    const cpuNow = hostLines[0] ? parseCpuLine(hostLines[0]) : null;
-    let cpuPct = this.state.metrics?.cpu ?? 0;
-    if (cpuNow && this.prevCpu) {
-      const dTotal = cpuNow.total - this.prevCpu.total;
-      const dIdle = cpuNow.idle - this.prevCpu.idle;
-      if (dTotal > 0) cpuPct = Math.max(0, Math.min(100, Math.round((1 - dIdle / dTotal) * 100)));
-    }
-    if (cpuNow) this.prevCpu = cpuNow;
-
-    const mem = (hostLines[1] || "").split(/\s+/).map(Number);
-    const disk = (hostLines[2] || "").split(/\s+/).map(Number);
-    const uptimeSec = parseInt(hostLines[3], 10) || 0;
-    const load = (hostLines[4] || "").split(/\s+/).map(Number);
-    const kernel = hostLines[5] || "-";
-    const cores = parseInt(hostLines[6], 10) || 1;
+    const cpu = cpuPercent(kv.CPU1, kv.CPU2);
+    const mem = nums(kv.MEM); // total used avail
+    const disk = nums(kv.DISK); // total used (KB)
+    const load = nums(kv.LOAD);
+    const uptimeSec = parseInt(kv.UPTIME, 10) || 0;
+    const cores = parseInt(kv.CORES, 10) || 1;
 
     const memTotal = mem[0] || 0;
-    const memAvail = Number.isFinite(mem[2]) ? mem[2] : null;
+    const memAvail = mem.length >= 3 ? mem[2] : null;
     const memUsed = memAvail != null && memTotal ? memTotal - memAvail : mem[1] || 0;
 
     this.state.metrics = {
-      cpu: cpuPct,
+      cpu: cpu ?? this.state.metrics?.cpu ?? 0,
       memTotalMb: memTotal,
       memUsedMb: memUsed,
       memPct: memTotal ? Math.round((memUsed / memTotal) * 100) : 0,
@@ -179,15 +199,15 @@ export class Poller {
       diskPct: disk[0] ? Math.round(((disk[1] || 0) / disk[0]) * 100) : 0,
       uptimeSec,
       load1: load[0] || 0,
-      kernel,
+      kernel: kv.KERNEL || "-",
       cores,
+      hostname: kv.HOSTNAME || "",
     };
 
-    this.state.dockerVersion = (s.DOCKERV || ["-"])[0] || "-";
+    this.state.dockerVersion = (sections.DOCKERV || ["-"])[0] || "-";
 
-    // --- docker ---
-    const ps = parseJsonLines(s.PS);
-    const stats = parseJsonLines(s.STATS);
+    const ps = parseJsonLines(sections.PS);
+    const stats = parseJsonLines(sections.STATS);
     const statByName = new Map();
     for (const st of stats) statByName.set(st.Name, st);
 
@@ -207,14 +227,14 @@ export class Poller {
       };
     });
 
-    this.state.networks = parseJsonLines(s.NET).map((n) => ({
+    this.state.networks = parseJsonLines(sections.NET).map((n) => ({
       id: n.ID || "",
       name: n.Name || "",
       driver: n.Driver || "",
       scope: n.Scope || "",
     }));
 
-    this.state.volumes = parseJsonLines(s.VOL).map((v) => ({
+    this.state.volumes = parseJsonLines(sections.VOL).map((v) => ({
       name: v.Name || "",
       driver: v.Driver || "",
       scope: v.Scope || "",
