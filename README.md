@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="SHOK" width="128" height="128" />
+<img src=".github/assets/banner.svg" alt="SHOK — SOC & GRC Platform" width="100%" />
 
 # SHOK
 
-**Agentless Linux server, Docker & database monitoring over SSH**
+**Agentless SOC & GRC platform — Linux, Docker, 39 databases & threat intel over SSH**
 
 [![Release](https://img.shields.io/github/v/release/kiurakku/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
 [![License](https://img.shields.io/github/license/kiurakku/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
@@ -19,7 +19,7 @@
 [![Issues](https://img.shields.io/github/issues/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/issues)
 [![Last commit](https://img.shields.io/github/last-commit/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/commits/main)
 
-[⬇️ Download v1.2.1](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
+[⬇️ Download v1.4.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
 
 </div>
 
@@ -27,28 +27,32 @@
 
 ## ✨ About
 
-**SHOK** is a Windows desktop app for monitoring Linux servers, Docker, and databases over SSH. Nothing is installed on remote machines — only SSH (port 22) is required.
+**SHOK** is a Windows desktop app that turns your SSH keychain into a full **SOC & GRC workstation** — infrastructure monitoring, database access, security posture, threat intelligence, compliance and audit, all agentless. Nothing is installed on remote machines — only SSH (port 22) is required.
 
 | | |
 |---|---|
 | 🖥️ **Platform** | Windows 10/11 (ready-to-run `.exe`) |
 | 🔌 **Connection** | SSH key or password |
-| 🐳 **Docker** | Containers, networks, volumes, logs |
+| 🐳 **Infra** | Hosts, Docker containers, networks, volumes, terminal |
 | 🗄️ **Databases** | 39 engines — query, browse, REST console |
+| 🛡️ **SOC** | Security posture, live threat intel + geo-IP, incidents |
+| ⚖️ **GRC** | CIS/NIST/ISO compliance controls, attestations, audit log |
 | 🌍 **Languages** | Ukrainian, English, Russian, Polish, Chinese |
-| 🎨 **Themes** | 6 built-in color themes + acrylic window |
-| 🔒 **Security** | Engine listens on `127.0.0.1` only |
-| ⚡ **Lightweight** | No agents, no background services |
+| 🎨 **Themes** | 16 color themes + acrylic glass window |
+| 🔒 **Security** | Engine listens on `127.0.0.1` only, no agents |
 
 ---
 
-## 🆕 What's new in v1.2.1
+## 🆕 What's new in v1.4.0
 
-- **Real metrics** — rewritten collector; CPU is computed from two `/proc/stat` reads in a single SSH call. Live-tested: values differ per host and update correctly.
-- **SQLite works** — no `sqlite3` on the server; `.db` files are fetched over SSH and opened locally with a WASM engine (read-only browse).
-- **Database hub** — 39 engines grouped by category, auto-discovery on the server (Docker, listening ports, SQLite files).
-- **REST console** — HTTP adapters for Elasticsearch, OpenSearch, ClickHouse, InfluxDB, Prometheus, vector DBs, and more.
-- **UI polish** — acrylic glass window, glow accents in Settings, version badge in the sidebar.
+- **🎯 Threat intelligence** — real-time analysis of `auth.log` / journald: top attacking IPs with **geo-IP** (country · city · ISP), targeted usernames, attack geography, and successful-login review. Live auto-refresh.
+- **🚨 Auto-incidents** — a background monitor opens an incident automatically when failed SSH logins cross a configurable threshold (brute-force detection), deduplicated per host.
+- **🛡️ Security posture** — per-host risk score from listening ports, sessions, failed logins, firewall, pending updates, SUID, and SSH hardening (`PermitRootLogin`, `PasswordAuthentication`, …).
+- **⚖️ Compliance (GRC)** — 15 automated CIS/NIST controls checked over SSH + manual governance attestations, with an overall score and framework tags.
+- **📜 Audit log** — append-only, searchable record of every action, exportable to CSV — evidence for audits.
+- **🎨 Design system v2** — grouped navigation (Monitor / SOC / GRC / System), KPI tiles, score rings, risk badges, drawers, 16 themes.
+
+> Every module runs on **real data over SSH** — no agents, nothing installed on your servers.
 
 ---
 
@@ -58,32 +62,35 @@
 <tr>
 <td width="50%">
 
-### 📊 Fleet overview
-Live CPU, RAM, disk, load, and uptime for every host. Warnings for overloads and container restart loops.
+### 📊 SOC dashboard
+One panel over the whole estate — KPIs, per-host risk, fleet posture ring, latest incidents and activity.
 
-### 🖧 Host management
-Add, edit, and test SSH connections. Supports `ed25519` / RSA keys.
+### 🖥️ Monitoring
+Live CPU, RAM, disk, load and uptime per host. Docker containers (start/stop/restart/remove), networks, volumes, live logs, built-in SSH terminal (xterm.js).
 
-### 📦 Docker
-Start, stop, restart, remove containers. Networks, volumes, live logs.
+### 🗄️ Databases
+39 engines over SSH tunnels — categorized picker, table browse & edit, SQL/NoSQL queries, REST console, **Find on server** auto-discovery.
 
-### 💻 Built-in terminal
-Full SSH terminal (xterm.js) inside the app.
+### 🎯 Threat intelligence
+Real-time `auth.log` / journald analysis: top attacking IPs with **geo-IP**, attack geography, targeted usernames, successful-login review.
 
 </td>
 <td width="50%">
 
-### 🗄️ Databases
-Connect to 30+ engines over SSH tunnels. Categorized picker, tabs per engine type, table browse, SQL/NoSQL queries.
+### 🛡️ Security posture
+Per-host risk score: listening ports, sessions, failed logins, firewall, pending updates, SUID, SSH hardening — with actionable findings.
 
-### 🔍 Auto-discovery
-**Find on server** scans Docker containers, listening ports, and SQLite files — suggests connections automatically.
+### 🚨 Incidents
+Incident register with severity, status workflow, host linkage and a full timeline. **Auto-created** on brute-force thresholds.
 
-### 🌐 REST console
-HTTP-based engines (search, vector, time-series) with quick-query presets.
+### ⚖️ Compliance (GRC)
+15 automated CIS/NIST controls over SSH + manual governance attestations, overall score, ISO/NIST/CIS framework tags.
+
+### 📜 Audit
+Append-only, searchable action log — evidence for audits and investigations, one-click CSV export.
 
 ### ⚙️ Settings
-5 languages, 6 themes, acrylic window, local preferences.
+5 languages, 16 themes, acrylic window, UI scale, threat thresholds, geo-IP toggle — stored locally.
 
 </td>
 </tr>
@@ -119,11 +126,29 @@ DynamoDB · BigQuery · Snowflake · Firebase · Firestore · Pinecone · Neptun
 
 ---
 
+## 🛡️ SOC & GRC
+
+Everything below runs on **real data collected over SSH** — no agents, nothing installed on the server.
+
+| Module | What it does | Framework |
+|--------|--------------|-----------|
+| **Security posture** | Risk score from open ports, sessions, failed logins, firewall, updates, SUID, SSH hardening | — |
+| **Threat intel** | Top attacking IPs from `auth.log`/journald, geo-IP (country · city · ISP), targeted usernames, attack map | — |
+| **Incidents** | Register with severity, status workflow, timeline; **auto-created** on brute-force thresholds | NIST IR |
+| **Compliance** | Automated SSH-hardening / firewall / auto-updates / auditd / time-sync checks + manual attestations | CIS · NIST · ISO 27001 |
+| **Audit** | Append-only action log with CSV export — evidence for auditors | NIST AU |
+
+**Auto-incident rule** — when failed SSH logins over 24h exceed the configurable threshold (default `300`), an incident is opened automatically and deduplicated per host. Toggle and tune in **Settings → Threats**.
+
+> **Privacy note:** geo-IP enrichment sends *attackers' public IPs only* to a geolocation service. It is on by default and can be disabled in **Settings → Threats → Geo-IP enrichment**. Everything else stays on your machine.
+
+---
+
 ## ⬇️ Installation
 
 ### Pre-built release (recommended)
 
-1. Download [`SHOK-v1.2.1-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
+1. Download [`SHOK-v1.4.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
 2. Extract the archive
 3. Run `SHOK.exe`
 
@@ -150,7 +175,10 @@ npm run dist:win    # → release/win-unpacked/SHOK.exe
    - **Password**: standard SSH password
 4. Click **Test connection** → **Add**
 
-Within seconds you'll see live metrics, containers, and networks. Open **Databases** → **Find on server** to auto-detect PostgreSQL, Redis, SQLite files, and more.
+Within seconds you'll see live metrics, containers, and networks. Then explore:
+- **Databases → Find on server** — auto-detect PostgreSQL, Redis, SQLite files, and more.
+- **Security** / **Threats** — get an instant risk score and see who's brute-forcing your SSH (with geo-IP).
+- **Compliance** — run CIS/NIST checks over SSH and attest governance controls.
 
 ---
 
@@ -165,16 +193,18 @@ Within seconds you'll see live metrics, containers, and networks. Open **Databas
 │  └──────────────┘      └──────────┬───────────┘  │
 └───────────────────────────────────┼──────────────┘
                                     │ SSH (port 22)
-                         ┌──────────┴──────────┐
-                         │   Linux Server(s)   │
-                         │ /proc · docker · db │
-                         └─────────────────────┘
+                         ┌──────────┴──────────────┐
+                         │      Linux Server(s)     │
+                         │ /proc · docker · db      │
+                         │ auth.log · sshd · ss     │
+                         └──────────────────────────┘
 ```
 
 - **One persistent SSH connection** per host (multiplexing), separate channels per task
-- Metrics: single script per poll (`/proc/stat`, `free`, `df`, `docker ps/stats`); CPU delta in one SSH round-trip
-- Databases: SSH port-forward to local drivers (pg, mysql2, ioredis, mongodb) or HTTP proxy for REST engines
-- SQLite: file copied over SFTP → `sql.js` WASM locally
+- **Metrics:** single script per poll (`/proc/stat`, `free`, `df`, `docker ps/stats`); CPU delta in one SSH round-trip
+- **Databases:** SSH port-forward to local drivers (pg, mysql2, ioredis, mongodb) or HTTP proxy for REST engines
+- **SQLite:** file streamed over SSH (base64) → opened locally with `sql.js` WASM (read-only)
+- **SOC/GRC:** `security.js`, `threats.js`, `compliance.js` run hardened one-pass scripts over SSH; geo-IP resolved from a batch lookup; auto-incident monitor sweeps every 5 min
 
 ---
 
@@ -202,11 +232,11 @@ Within seconds you'll see live metrics, containers, and networks. Open **Databas
 
 | What | Where |
 |------|-------|
-| Server list | `%APPDATA%\SHOK\config\hosts.json` |
-| DB connections | `%APPDATA%\SHOK\config\` (local only) |
+| Hosts / DBs / incidents / audit | `%APPDATA%\shok-monitor\config\` (local only) |
 | Passwords | Stored in plain text — **use SSH keys** |
+| Outbound traffic | None, except optional geo-IP (attacker public IPs only) |
 
-> ⚠️ **Use SSH keys instead of passwords** for better security.
+> ⚠️ **Use SSH keys instead of passwords** for better security. The engine binds to `127.0.0.1` only.
 
 ---
 
@@ -214,16 +244,23 @@ Within seconds you'll see live metrics, containers, and networks. Open **Databas
 
 ```
 shok-monitor/
-├── electron/          # Electron main process
-├── server/            # SSH engine, collector, DB drivers
-│   ├── collector.js   # Metrics (fixed CPU parser)
-│   ├── db.js          # DB connections & queries
-│   └── engines.js     # Engine registry (39 engines)
+├── electron/            # Electron main process (acrylic window)
+├── server/              # Node.js SSH engine
+│   ├── collector.js     # Host metrics (single-pass CPU delta)
+│   ├── db.js            # 39 DB engines, tunnels, REST/SQLite
+│   ├── engines.js       # Engine registry
+│   ├── security.js      # SOC — host posture
+│   ├── threats.js       # SOC — auth.log threat intel
+│   ├── geoip.js         # Geo-IP batch lookup + cache
+│   ├── compliance.js    # GRC — CIS/NIST controls
+│   └── config.js        # Hosts, DBs, incidents, audit, SOC config
 ├── src/
-│   ├── pages/Database.tsx
-│   └── lib/engines.ts
-├── buildResources/    # App icon
-└── .github/assets/    # Logo & social preview
+│   ├── pages/           # Dashboard, Security, Threats, Incidents,
+│   │                    #   Compliance, Audit, Database, Hosts, …
+│   ├── components/ui.tsx # Design system v2
+│   └── lib/             # api, engines, i18n (5 langs), settings
+├── buildResources/      # App icon
+└── .github/assets/      # Banner, logo, social preview
 ```
 
 ---

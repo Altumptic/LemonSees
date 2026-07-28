@@ -31,6 +31,7 @@
   --success: oklch(0.74 0.09 150);
   --warning: oklch(0.82 0.1 85);
   --danger: oklch(0.65 0.16 25);
+  --info: oklch(0.7 0.1 240);
 
   --hairline: oklch(0.98 0.01 90 / 0.08);
   --hairline-strong: oklch(0.98 0.01 90 / 0.14);

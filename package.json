@@ -1,7 +1,7 @@
 {
   "name": "shok-monitor",
-  "version": "1.2.1",
-  "description": "Agentless Linux server & Docker monitoring over SSH. Windows desktop app.",
+  "version": "1.4.0",
+  "description": "Agentless SOC & GRC platform — Linux, Docker, databases & threat intel over SSH. Windows desktop app.",
   "author": "kiurakku",
   "license": "MIT",
   "repository": {

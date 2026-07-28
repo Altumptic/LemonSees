@@ -13,6 +13,10 @@ export const APP_ROOT = path.resolve(__dirname, "..");
 const CONFIG_DIR = process.env.SHOK_CONFIG_DIR || path.join(APP_ROOT, "config");
 const CONFIG_FILE = path.join(CONFIG_DIR, "hosts.json");
 const DBS_FILE = path.join(CONFIG_DIR, "dbs.json");
+const INCIDENTS_FILE = path.join(CONFIG_DIR, "incidents.json");
+const ATTEST_FILE = path.join(CONFIG_DIR, "attestations.json");
+const AUDIT_FILE = path.join(CONFIG_DIR, "audit.jsonl");
+const SOC_FILE = path.join(CONFIG_DIR, "soc.json");
 
 export function loadHosts() {
   try {
@@ -106,4 +110,109 @@ export function sanitizeDb(input, existing = null) {
 export function publicDb(d) {
   const { password, ...rest } = d;
   return { ...rest, hasPassword: !!password };
+}
+
+/* ---------------- Інциденти (SOC) ---------------- */
+
+const SEVERITIES = ["critical", "high", "medium", "low", "info"];
+const STATUSES = ["open", "investigating", "mitigated", "closed"];
+
+export function loadIncidents() {
+  try {
+    const data = JSON.parse(fs.readFileSync(INCIDENTS_FILE, "utf8"));
+    return Array.isArray(data.incidents) ? data.incidents : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveIncidents(incidents) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(INCIDENTS_FILE, JSON.stringify({ incidents }, null, 2), "utf8");
+}
+
+export function sanitizeIncident(input, existing = null) {
+  const now = Date.now();
+  const inc = {
+    id: existing?.id ?? "inc_" + crypto.randomBytes(4).toString("hex"),
+    title: String(input.title ?? "").trim(),
+    severity: SEVERITIES.includes(input.severity) ? input.severity : "medium",
+    status: STATUSES.includes(input.status) ? input.status : "open",
+    hostId: String(input.hostId ?? "").trim(),
+    assignee: String(input.assignee ?? "").trim(),
+    detail: String(input.detail ?? "").trim(),
+    category: String(input.category ?? "").trim(),
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+    timeline: Array.isArray(existing?.timeline) ? existing.timeline : [],
+    auto: existing?.auto ?? !!input.auto,
+    rule: existing?.rule ?? String(input.rule ?? ""),
+  };
+  if (!inc.title) throw new Error("Не вказано назву інциденту");
+  return inc;
+}
+
+/* ---------------- SOC-конфіг (пороги, автоінциденти) ---------------- */
+
+const SOC_DEFAULTS = { autoIncidents: true, bruteThreshold: 300 };
+
+export function loadSoc() {
+  try {
+    return { ...SOC_DEFAULTS, ...JSON.parse(fs.readFileSync(SOC_FILE, "utf8")) };
+  } catch {
+    return { ...SOC_DEFAULTS };
+  }
+}
+
+export function saveSoc(cfg) {
+  const clean = {
+    autoIncidents: !!cfg.autoIncidents,
+    bruteThreshold: Math.max(10, Math.min(100000, parseInt(cfg.bruteThreshold, 10) || SOC_DEFAULTS.bruteThreshold)),
+  };
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(SOC_FILE, JSON.stringify(clean, null, 2), "utf8");
+  return clean;
+}
+
+/* ---------------- Атестації (GRC ручні контролі) ---------------- */
+
+export function loadAttest() {
+  try {
+    return JSON.parse(fs.readFileSync(ATTEST_FILE, "utf8")) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveAttest(map) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(ATTEST_FILE, JSON.stringify(map, null, 2), "utf8");
+}
+
+/* ---------------- Аудит-журнал (JSONL) ---------------- */
+
+export function appendAudit(entry) {
+  try {
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    fs.appendFileSync(AUDIT_FILE, JSON.stringify({ at: Date.now(), ...entry }) + "\n", "utf8");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadAudit(limit = 500) {
+  try {
+    const lines = fs.readFileSync(AUDIT_FILE, "utf8").trim().split("\n").filter(Boolean);
+    const out = [];
+    for (const l of lines.slice(-limit)) {
+      try {
+        out.push(JSON.parse(l));
+      } catch {
+        /* skip */
+      }
+    }
+    return out.reverse();
+  } catch {
+    return [];
+  }
 }

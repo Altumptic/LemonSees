@@ -1,7 +1,10 @@
-import { Languages, Palette, Blend, SlidersHorizontal, Sparkles, RotateCcw, Droplet } from "lucide-react";
-import { PageHeader, Panel, GhostButton } from "@/components/ui";
+import { useEffect, useState } from "react";
+import { Languages, Palette, Blend, SlidersHorizontal, Sparkles, RotateCcw, Droplet, ShieldAlert } from "lucide-react";
+import { PageHeader, Panel, GhostButton, SectionHeader } from "@/components/ui";
 import { useSettings, ACCENTS, type Lang, type ThemeId, type AccentId } from "@/lib/settings";
 import { useI18n } from "@/lib/i18n";
+import { api } from "@/lib/api";
+import type { SocConfig } from "@/lib/types";
 
 const LANGS: ReadonlyArray<readonly [Lang, string]> = [
   ["uk", "Українська"],
@@ -44,6 +47,17 @@ const ACCENT_LIST: ReadonlyArray<{ id: AccentId; color: string }> = [
 export default function SettingsPage() {
   const { settings, set, reset } = useSettings();
   const { t } = useI18n();
+  const [soc, setSoc] = useState<SocConfig>({ autoIncidents: true, bruteThreshold: 300 });
+
+  useEffect(() => {
+    api.getSoc().then(setSoc).catch(() => {});
+  }, []);
+
+  const updateSoc = (patch: Partial<SocConfig>) => {
+    const next = { ...soc, ...patch };
+    setSoc(next);
+    api.setSoc(next).then(setSoc).catch(() => {});
+  };
 
   return (
     <>
@@ -217,6 +231,49 @@ export default function SettingsPage() {
               desc={t("Питати перед видаленням і зупинкою.")}
               on={settings.confirmDestructive}
               onChange={(v) => set({ confirmDestructive: v })}
+            />
+          </div>
+        </Panel>
+
+        {/* SOC / Загрози */}
+        <Panel
+          eyebrow={t("SOC")}
+          title={
+            <span className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+              {t("Загрози та автоінциденти")}
+            </span>
+          }
+          className="lg:col-span-2"
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <Toggle
+              label={t("Автоінциденти (брутфорс)")}
+              desc={t("Автоматично створювати інцидент, коли невдалих SSH-логінів більше порогу.")}
+              on={soc.autoIncidents}
+              onChange={(v) => updateSoc({ autoIncidents: v })}
+            />
+            <div className="rounded-lg border border-[var(--hairline)] p-4">
+              <div className="text-sm font-medium">{t("Поріг брутфорсу (за 24 год)")}</div>
+              <div className="mb-3 text-[12px] text-muted-foreground">{t("Скільки невдалих логінів запускає інцидент.")}</div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={50}
+                  max={5000}
+                  step={50}
+                  value={soc.bruteThreshold}
+                  onChange={(e) => updateSoc({ bruteThreshold: parseInt(e.target.value, 10) })}
+                  className="shok-range w-full"
+                />
+                <span className="num w-16 text-right text-sm text-foreground/80">{soc.bruteThreshold}</span>
+              </div>
+            </div>
+            <Toggle
+              label={t("Гео-IP збагачення")}
+              desc={t("Визначати країну/провайдера атакуючих. Надсилає публічні IP у зовнішній сервіс геолокації.")}
+              on={settings.geoip}
+              onChange={(v) => set({ geoip: v })}
             />
           </div>
         </Panel>

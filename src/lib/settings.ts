@@ -33,6 +33,7 @@ export type AppSettings = {
   confirmDestructive: boolean;
   glassWindow: boolean; // прозорий (акриловий) фон вікна
   glow: boolean; // кольорове сяйво навколо панелей
+  geoip: boolean; // гео-IP збагачення атакуючих (зовнішній запит)
 };
 
 const KEY = "shok.settings";
@@ -48,6 +49,7 @@ export const DEFAULTS: AppSettings = {
   confirmDestructive: true,
   glassWindow: false,
   glow: false,
+  geoip: true,
 };
 
 export const ACCENTS: Record<Exclude<AccentId, "auto">, string> = {
