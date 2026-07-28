@@ -8,6 +8,15 @@ import type {
   QueryResult,
   TableResult,
   DetectedDb,
+  SecurityPosture,
+  ControlDef,
+  ControlResult,
+  Attestations,
+  Incident,
+  IncidentInput,
+  AuditEvent,
+  ThreatReport,
+  SocConfig,
 } from "./types";
 
 /* ---------- REST ---------- */
@@ -71,6 +80,35 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ schema, table, pk, changes }),
     }),
+
+  // SOC — безпека
+  security: (hostId: string) =>
+    req<SecurityPosture>(`/api/hosts/${hostId}/security`, { method: "POST" }),
+  threats: (hostId: string, geo: boolean) =>
+    req<ThreatReport>(`/api/hosts/${hostId}/threats?geo=${geo ? 1 : 0}`, { method: "POST" }),
+  getSoc: () => req<SocConfig>("/api/soc"),
+  setSoc: (cfg: SocConfig) => req<SocConfig>("/api/soc", { method: "PUT", body: JSON.stringify(cfg) }),
+
+  // GRC — комплаєнс
+  complianceControls: () =>
+    req<{ auto: ControlDef[]; manual: ControlDef[]; attest: Attestations }>("/api/compliance/controls"),
+  complianceRun: (hostId: string) =>
+    req<{ controls: ControlResult[] }>(`/api/hosts/${hostId}/compliance`, { method: "POST" }),
+  attest: (controlId: string, status: string, note: string) =>
+    req<{ ok: boolean; attest: Attestations }>(`/api/compliance/attest/${controlId}`, {
+      method: "PUT",
+      body: JSON.stringify({ status, note }),
+    }),
+
+  // SOC — інциденти
+  listIncidents: () => req<Incident[]>("/api/incidents"),
+  addIncident: (i: IncidentInput) => req<Incident>("/api/incidents", { method: "POST", body: JSON.stringify(i) }),
+  updateIncident: (id: string, i: IncidentInput) =>
+    req<Incident>(`/api/incidents/${id}`, { method: "PUT", body: JSON.stringify(i) }),
+  deleteIncident: (id: string) => req<{ ok: boolean }>(`/api/incidents/${id}`, { method: "DELETE" }),
+
+  // GRC — аудит
+  audit: (limit = 500) => req<{ events: AuditEvent[] }>(`/api/audit?limit=${limit}`),
 };
 
 /* ---------- Живий стан через WebSocket ---------- */

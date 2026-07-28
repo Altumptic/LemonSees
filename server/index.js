@@ -17,11 +17,23 @@ import {
   saveDbs,
   sanitizeDb,
   publicDb,
+  loadIncidents,
+  saveIncidents,
+  sanitizeIncident,
+  loadAttest,
+  saveAttest,
+  appendAudit,
+  loadAudit,
+  loadSoc,
+  saveSoc,
 } from "./config.js";
 import { HostConnection } from "./ssh.js";
 import { Poller } from "./collector.js";
 import * as dbmod from "./db.js";
 import { engineFamily } from "./engines.js";
+import { collectSecurity } from "./security.js";
+import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
+import { collectThreats, countRecentFailed } from "./threats.js";
 
 const PORT = parseInt(process.env.SHOK_PORT || "5199", 10);
 const HOST = "127.0.0.1";
@@ -29,7 +41,65 @@ const NO_OPEN = process.argv.includes("--no-open") || process.env.SHOK_NO_OPEN =
 
 let hosts = loadHosts();
 let dbs = loadDbs();
+let incidents = loadIncidents();
 const conns = new Map(); // id -> HostConnection
+
+const hostName = (id) => hosts.find((h) => h.id === id)?.name || id;
+function audit(action, target, meta) {
+  appendAudit({ actor: "analyst", action, target: target || "", meta: meta || {} });
+}
+
+/* ---------------- Монітор автоінцидентів (SSH brute-force) ---------------- */
+
+async function threatSweep() {
+  const soc = loadSoc();
+  if (!soc.autoIncidents) return;
+  for (const h of hosts) {
+    const conn = conns.get(h.id);
+    if (!conn || !conn.ready) continue;
+    try {
+      const failed = await countRecentFailed(conn);
+      evaluateBruteforce(h, failed, soc.bruteThreshold);
+    } catch {
+      /* хост недоступний — пропускаємо */
+    }
+  }
+}
+
+function evaluateBruteforce(h, failed, threshold) {
+  if (failed < threshold) return;
+  const rule = "ssh-bruteforce";
+  const open = incidents.find((i) => i.rule === rule && i.hostId === h.id && i.status !== "closed");
+  if (open) {
+    // оновлюємо лічильник у таймлайні не частіше разу на годину
+    const last = open.timeline[open.timeline.length - 1];
+    if (!last || Date.now() - (open.updatedAt || 0) > 3600000) {
+      open.timeline.push({ at: Date.now(), text: `Оновлення: ${failed} невдалих логінів за 24 год` });
+      open.updatedAt = Date.now();
+      saveIncidents(incidents);
+    }
+    return;
+  }
+  const severity = failed >= 5000 ? "critical" : failed >= 1500 ? "high" : "medium";
+  const inc = sanitizeIncident({
+    title: `Брутфорс SSH на ${h.name}`,
+    severity,
+    status: "open",
+    hostId: h.id,
+    category: "brute-force",
+    detail: `Автоматично виявлено: ${failed} невдалих SSH-логінів за 24 год (поріг ${threshold}). Рекомендація: увімкнути fail2ban, заборонити PasswordAuthentication.`,
+    auto: true,
+    rule,
+  });
+  inc.timeline = [{ at: Date.now(), text: `Автостворено: ${failed} невдалих логінів (поріг ${threshold})` }];
+  incidents.unshift(inc);
+  saveIncidents(incidents);
+  audit("incident.auto", inc.id, { rule, failed, host: h.name });
+}
+
+// Перша перевірка через 45с після старту, далі кожні 5 хв.
+setTimeout(threatSweep, 45000);
+setInterval(threatSweep, 5 * 60 * 1000);
 const pollers = new Map(); // id -> Poller
 const hostStates = new Map(); // id -> state
 
@@ -105,6 +175,7 @@ app.post("/api/hosts", (req, res) => {
     saveHosts(hosts);
     startHost(h);
     broadcast();
+    audit("host.add", h.id, { name: h.name, addr: `${h.user}@${h.host}:${h.port}` });
     res.json(publicHost(h));
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -131,6 +202,7 @@ app.delete("/api/hosts/:id", (req, res) => {
   const idx = hosts.findIndex((h) => h.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Хост не знайдено" });
   dbmod.closeTunnelsForHost(req.params.id, dbs);
+  audit("host.remove", req.params.id, { name: hostName(req.params.id) });
   stopHost(req.params.id);
   hosts.splice(idx, 1);
   saveHosts(hosts);
@@ -165,6 +237,7 @@ app.post("/api/containers/:hostId/:action", async (req, res) => {
   try {
     const r = await conn.exec(`docker ${verb} ${name}`, { timeout: 30000 });
     if (r.code !== 0) return res.status(500).json({ error: r.stderr.trim() || "Помилка docker" });
+    audit(`container.${req.params.action}`, name, { host: hostName(req.params.hostId) });
     pollers.get(req.params.hostId)?.tick();
     res.json({ ok: true, output: r.stdout.trim() });
   } catch (e) {
@@ -208,6 +281,7 @@ app.post("/api/dbs", (req, res) => {
     if (!hosts.some((h) => h.id === d.hostId)) return res.status(400).json({ error: "Хост не знайдено" });
     dbs.push(d);
     saveDbs(dbs);
+    audit("db.add", d.id, { name: d.name, type: d.type });
     res.json(publicDb(d));
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -314,6 +388,119 @@ app.post("/api/dbs/:id/update", async (req, res) => {
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
+});
+
+/* ---------------- Безпека (SOC) ---------------- */
+
+app.post("/api/hosts/:id/security", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json(await collectSecurity(conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Threat intelligence: топ атакуючих IP + гео
+app.post("/api/hosts/:id/threats", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  const geo = req.query.geo !== "0";
+  try {
+    res.json(await collectThreats(conn, { geo }));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// SOC-конфіг (пороги, автоінциденти)
+app.get("/api/soc", (req, res) => res.json(loadSoc()));
+app.put("/api/soc", (req, res) => {
+  const cfg = saveSoc(req.body || {});
+  audit("soc.config", "", cfg);
+  res.json(cfg);
+});
+
+/* ---------------- Комплаєнс (GRC) ---------------- */
+
+app.get("/api/compliance/controls", (req, res) => {
+  res.json({
+    auto: AUTO_CONTROLS.map((c) => ({ id: c.id, title: c.title, framework: c.framework, severity: c.severity })),
+    manual: MANUAL_CONTROLS,
+    attest: loadAttest(),
+  });
+});
+
+app.post("/api/hosts/:id/compliance", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json({ controls: await runAuto(conn) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put("/api/compliance/attest/:controlId", (req, res) => {
+  const map = loadAttest();
+  const status = ["attested", "na", "failed"].includes(req.body?.status) ? req.body.status : "attested";
+  map[req.params.controlId] = { status, note: String(req.body?.note ?? "").trim(), at: Date.now() };
+  saveAttest(map);
+  audit("compliance.attest", req.params.controlId, { status });
+  res.json({ ok: true, attest: map });
+});
+
+/* ---------------- Інциденти (SOC) ---------------- */
+
+app.get("/api/incidents", (req, res) => res.json(incidents));
+
+app.post("/api/incidents", (req, res) => {
+  try {
+    const inc = sanitizeIncident(req.body);
+    inc.timeline = [{ at: Date.now(), text: "Інцидент створено" }];
+    incidents.unshift(inc);
+    saveIncidents(incidents);
+    audit("incident.create", inc.id, { title: inc.title, severity: inc.severity });
+    res.json(inc);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.put("/api/incidents/:id", (req, res) => {
+  const idx = incidents.findIndex((i) => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Інцидент не знайдено" });
+  try {
+    const prev = incidents[idx];
+    const inc = sanitizeIncident(req.body, prev);
+    inc.timeline = prev.timeline.slice();
+    if (req.body.note) inc.timeline.push({ at: Date.now(), text: String(req.body.note).trim() });
+    if (prev.status !== inc.status)
+      inc.timeline.push({ at: Date.now(), text: `Статус → ${inc.status}` });
+    incidents[idx] = inc;
+    saveIncidents(incidents);
+    audit("incident.update", inc.id, { status: inc.status });
+    res.json(inc);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.delete("/api/incidents/:id", (req, res) => {
+  const idx = incidents.findIndex((i) => i.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Інцидент не знайдено" });
+  audit("incident.delete", req.params.id, {});
+  incidents.splice(idx, 1);
+  saveIncidents(incidents);
+  res.json({ ok: true });
+});
+
+/* ---------------- Аудит (GRC) ---------------- */
+
+app.get("/api/audit", (req, res) => {
+  const limit = Math.max(1, Math.min(2000, parseInt(req.query.limit, 10) || 500));
+  res.json({ events: loadAudit(limit) });
 });
 
 /* ---------------- статика (зібраний фронт) ---------------- */

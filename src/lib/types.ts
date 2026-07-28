@@ -123,6 +123,83 @@ export type TableResult = {
   total: number;
 };
 
+/* ---------------- SOC / GRC ---------------- */
+
+export type Finding = { severity: "critical" | "warning" | "info"; text: string };
+
+export type SecurityPosture = {
+  risk: number;
+  grade: "ok" | "info" | "warning" | "critical";
+  findings: Finding[];
+  ports: { proto: string; port: number; addr: string; public: boolean }[];
+  publicPortCount: number;
+  sessions: { user: string; tty: string; from: string }[];
+  lastLogins: string[];
+  failedLogins: number;
+  firewall: { tool: string; active: boolean };
+  updates: number;
+  suid: number;
+  ssh: { rootLogin: string; passwordAuth: string; emptyPasswords: string; x11: string; maxAuthTries: string };
+  fail2ban: boolean;
+  at: number;
+};
+
+export type ControlDef = { id: string; title: string; framework: string; severity: string };
+export type ControlResult = ControlDef & { status: "pass" | "fail" | "unknown"; evidence: string };
+export type Attestation = { status: "attested" | "na" | "failed"; note: string; at: number };
+export type Attestations = Record<string, Attestation>;
+
+export type Incident = {
+  id: string;
+  title: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  status: "open" | "investigating" | "mitigated" | "closed";
+  hostId: string;
+  assignee: string;
+  detail: string;
+  category: string;
+  createdAt: number;
+  updatedAt: number;
+  timeline: { at: number; text: string }[];
+};
+
+export type IncidentInput = {
+  title: string;
+  severity: Incident["severity"];
+  status: Incident["status"];
+  hostId: string;
+  assignee: string;
+  detail: string;
+  category: string;
+  note?: string;
+};
+
+export type AuditEvent = { at: number; actor: string; action: string; target: string; meta: Record<string, unknown> };
+
+export type Geo = { country: string; countryCode: string; city: string; isp: string };
+export type Attacker = { ip: string; count: number; geo: Geo | null };
+export type ThreatReport = {
+  attackers: Attacker[];
+  users: { user: string; count: number }[];
+  accepted: { ip: string; count: number }[];
+  countries: { cc: string; country: string; count: number }[];
+  total: number;
+  uniqueIps: number;
+  at: number;
+};
+export type SocConfig = { autoIncidents: boolean; bruteThreshold: number };
+
+export function fmtWhen(ts: number): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  const now = Date.now();
+  const diff = Math.floor((now - ts) / 1000);
+  if (diff < 60) return "щойно";
+  if (diff < 3600) return `${Math.floor(diff / 60)} хв тому`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} год тому`;
+  return d.toLocaleString();
+}
+
 export function fmtUptime(sec: number): string {
   if (!sec) return "—";
   const d = Math.floor(sec / 86400);
