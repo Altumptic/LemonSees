@@ -4,7 +4,7 @@
 
 # SHOK
 
-**Agentless SOC & GRC platform — Linux, Docker, 39 databases & threat intel over SSH**
+**Agentless SOC & GRC platform — monitoring, 39 databases, vulnerability analysis, threat intel & compliance over SSH**
 
 [![Release](https://img.shields.io/github/v/release/kiurakku/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
 [![License](https://img.shields.io/github/license/kiurakku/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
@@ -19,7 +19,7 @@
 [![Issues](https://img.shields.io/github/issues/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/issues)
 [![Last commit](https://img.shields.io/github/last-commit/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/commits/main)
 
-[⬇️ Download v1.4.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
+[⬇️ Download v1.5.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
 
 </div>
 
@@ -33,24 +33,24 @@
 |---|---|
 | 🖥️ **Platform** | Windows 10/11 (ready-to-run `.exe`) |
 | 🔌 **Connection** | SSH key or password |
-| 🐳 **Infra** | Hosts, Docker containers, networks, volumes, terminal |
+| 🐳 **Infra** | Hosts, Docker, networks, volumes, **live traffic**, terminal |
 | 🗄️ **Databases** | 39 engines — query, browse, REST console |
-| 🛡️ **SOC** | Security posture, live threat intel + geo-IP, incidents |
-| ⚖️ **GRC** | CIS/NIST/ISO compliance controls, attestations, audit log |
+| 🐛 **Cyber analysis** | Vulnerability / exposure scan with remediation |
+| 🛡️ **SOC** | Security posture, threat intel + geo-IP, incidents |
+| ⚖️ **GRC** | CIS/NIST/ISO compliance, **standards reports**, audit log |
 | 🌍 **Languages** | Ukrainian, English, Russian, Polish, Chinese |
 | 🎨 **Themes** | 16 color themes + acrylic glass window |
 | 🔒 **Security** | Engine listens on `127.0.0.1` only, no agents |
 
 ---
 
-## 🆕 What's new in v1.4.0
+## 🆕 What's new in v1.5.0
 
-- **🎯 Threat intelligence** — real-time analysis of `auth.log` / journald: top attacking IPs with **geo-IP** (country · city · ISP), targeted usernames, attack geography, and successful-login review. Live auto-refresh.
-- **🚨 Auto-incidents** — a background monitor opens an incident automatically when failed SSH logins cross a configurable threshold (brute-force detection), deduplicated per host.
-- **🛡️ Security posture** — per-host risk score from listening ports, sessions, failed logins, firewall, pending updates, SUID, and SSH hardening (`PermitRootLogin`, `PasswordAuthentication`, …).
-- **⚖️ Compliance (GRC)** — 15 automated CIS/NIST controls checked over SSH + manual governance attestations, with an overall score and framework tags.
-- **📜 Audit log** — append-only, searchable record of every action, exportable to CSV — evidence for audits.
-- **🎨 Design system v2** — grouped navigation (Monitor / SOC / GRC / System), KPI tiles, score rings, risk badges, drawers, 16 themes.
+- **🐛 Vulnerability analysis (cyber)** — configuration & exposure scan over SSH: SSH hardening, firewall, **pending security patches (CVE risk)**, permissions, accounts, exposed DB ports. Each finding ships with a **remediation** and a hardening index; coverage checkbars per category.
+- **📡 Live traffic monitoring** — rx/tx throughput from `/proc/net/dev`, active connections, and **top remote peers with geo-IP** — with live sparklines.
+- **📄 Standards reports** — one click consolidates posture + compliance + vulnerabilities + threats + incidents into a report mapped to **CIS / NIST / ISO 27001 / GDPR**, with coverage checkbars and a downloadable HTML.
+- **🎨 New identity** — new logo, bolder look, no background grid, accent glows.
+- Carried over from v1.4: threat intel + geo-IP, auto-incidents, security posture, compliance, audit — all on **real data over SSH**.
 
 > Every module runs on **real data over SSH** — no agents, nothing installed on your servers.
 
@@ -71,8 +71,11 @@ Live CPU, RAM, disk, load and uptime per host. Docker containers (start/stop/res
 ### 🗄️ Databases
 39 engines over SSH tunnels — categorized picker, table browse & edit, SQL/NoSQL queries, REST console, **Find on server** auto-discovery.
 
-### 🎯 Threat intelligence
-Real-time `auth.log` / journald analysis: top attacking IPs with **geo-IP**, attack geography, targeted usernames, successful-login review.
+### 🐛 Vulnerability analysis
+Config & exposure scan over SSH — SSH/firewall/patches/permissions/accounts — with severity, **remediation** and a hardening index.
+
+### 📡 Traffic
+Live rx/tx throughput, active connections and **top remote peers with geo-IP**, sparklines from `/proc/net/dev`.
 
 </td>
 <td width="50%">
@@ -80,11 +83,11 @@ Real-time `auth.log` / journald analysis: top attacking IPs with **geo-IP**, att
 ### 🛡️ Security posture
 Per-host risk score: listening ports, sessions, failed logins, firewall, pending updates, SUID, SSH hardening — with actionable findings.
 
-### 🚨 Incidents
-Incident register with severity, status workflow, host linkage and a full timeline. **Auto-created** on brute-force thresholds.
+### 🎯 Threat intelligence
+Real-time `auth.log` / journald analysis: top attacking IPs with **geo-IP**, attack geography, targeted usernames, and **auto-incidents** on brute-force thresholds.
 
-### ⚖️ Compliance (GRC)
-15 automated CIS/NIST controls over SSH + manual governance attestations, overall score, ISO/NIST/CIS framework tags.
+### ⚖️ Compliance & Reports (GRC)
+15 automated CIS/NIST controls + manual attestations, plus one-click **standards reports** (CIS/NIST/ISO/GDPR) with coverage checkbars and HTML export.
 
 ### 📜 Audit
 Append-only, searchable action log — evidence for audits and investigations, one-click CSV export.
@@ -133,9 +136,12 @@ Everything below runs on **real data collected over SSH** — no agents, nothing
 | Module | What it does | Framework |
 |--------|--------------|-----------|
 | **Security posture** | Risk score from open ports, sessions, failed logins, firewall, updates, SUID, SSH hardening | — |
+| **Vulnerabilities** | Config/exposure scan: SSH, firewall, pending security patches, permissions, accounts, exposed DBs — with remediation | CIS |
+| **Traffic** | Live rx/tx throughput, established connections, top remote peers with geo-IP | — |
 | **Threat intel** | Top attacking IPs from `auth.log`/journald, geo-IP (country · city · ISP), targeted usernames, attack map | — |
 | **Incidents** | Register with severity, status workflow, timeline; **auto-created** on brute-force thresholds | NIST IR |
 | **Compliance** | Automated SSH-hardening / firewall / auto-updates / auditd / time-sync checks + manual attestations | CIS · NIST · ISO 27001 |
+| **Reports** | Consolidated security & compliance report with standards coverage checkbars, downloadable HTML | CIS · NIST · ISO · GDPR |
 | **Audit** | Append-only action log with CSV export — evidence for auditors | NIST AU |
 
 **Auto-incident rule** — when failed SSH logins over 24h exceed the configurable threshold (default `300`), an incident is opened automatically and deduplicated per host. Toggle and tune in **Settings → Threats**.
@@ -148,7 +154,7 @@ Everything below runs on **real data collected over SSH** — no agents, nothing
 
 ### Pre-built release (recommended)
 
-1. Download [`SHOK-v1.4.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
+1. Download [`SHOK-v1.5.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
 2. Extract the archive
 3. Run `SHOK.exe`
 
@@ -246,17 +252,19 @@ Within seconds you'll see live metrics, containers, and networks. Then explore:
 shok-monitor/
 ├── electron/            # Electron main process (acrylic window)
 ├── server/              # Node.js SSH engine
-│   ├── collector.js     # Host metrics (single-pass CPU delta)
+│   ├── collector.js     # Host metrics + traffic (single-pass deltas)
 │   ├── db.js            # 39 DB engines, tunnels, REST/SQLite
 │   ├── engines.js       # Engine registry
 │   ├── security.js      # SOC — host posture
+│   ├── vulns.js         # Cyber — vulnerability/exposure scan
 │   ├── threats.js       # SOC — auth.log threat intel
 │   ├── geoip.js         # Geo-IP batch lookup + cache
 │   ├── compliance.js    # GRC — CIS/NIST controls
 │   └── config.js        # Hosts, DBs, incidents, audit, SOC config
 ├── src/
-│   ├── pages/           # Dashboard, Security, Threats, Incidents,
-│   │                    #   Compliance, Audit, Database, Hosts, …
+│   ├── pages/           # Dashboard, Security, Vulnerabilities, Threats,
+│   │                    #   Traffic, Incidents, Compliance, Reports,
+│   │                    #   Audit, Database, Hosts, …
 │   ├── components/ui.tsx # Design system v2
 │   └── lib/             # api, engines, i18n (5 langs), settings
 ├── buildResources/      # App icon

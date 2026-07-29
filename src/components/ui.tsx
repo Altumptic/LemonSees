@@ -48,9 +48,12 @@ export function PageHeader({
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6">
       <div className="max-w-2xl">
-        <div className="eyebrow mb-2">{eyebrow}</div>
-        <h1 className="text-3xl font-medium leading-tight tracking-tight md:text-[34px]">{title}</h1>
-        {lede && <p className="mt-2 text-sm text-muted-foreground">{lede}</p>}
+        <div className="mb-2 flex items-center gap-2">
+          <span className="h-3 w-1 rounded-full bg-[var(--primary)]" />
+          <span className="eyebrow">{eyebrow}</span>
+        </div>
+        <h1 className="text-[32px] font-semibold leading-[1.05] tracking-tight md:text-[40px]">{title}</h1>
+        {lede && <p className="mt-2.5 max-w-xl text-sm text-muted-foreground">{lede}</p>}
       </div>
       {action}
     </div>

@@ -17,6 +17,8 @@ echo "LOAD $(awk '{print $1, $2, $3}' /proc/loadavg)"
 echo "KERNEL $(uname -r)"
 echo "CORES $(nproc 2>/dev/null || echo 1)"
 echo "HOSTNAME $(hostname 2>/dev/null)"
+echo "NET $(awk 'NR>2 && $1 !~ /^lo:/ {rx+=$2; tx+=$10} END{print rx" "tx}' /proc/net/dev 2>/dev/null)"
+echo "CONN $(ss -tunH state established 2>/dev/null | wc -l)"
 echo "@@DOCKERV@@"
 docker version --format '{{.Server.Version}}' 2>/dev/null || echo "-"
 echo "@@PS@@"
@@ -185,6 +187,21 @@ export class Poller {
     const uptimeSec = parseInt(kv.UPTIME, 10) || 0;
     const cores = parseInt(kv.CORES, 10) || 1;
 
+    // Мережа: дельти байтів між опитуваннями → пропускна здатність
+    const net = nums(kv.NET); // rx tx (сумарні байти)
+    const now = Date.now();
+    let netRxBps = this.state.metrics?.netRxBps ?? 0;
+    let netTxBps = this.state.metrics?.netTxBps ?? 0;
+    if (net.length >= 2 && this.prevNet) {
+      const dt = (now - this.prevNet.at) / 1000;
+      if (dt > 0) {
+        netRxBps = Math.max(0, Math.round((net[0] - this.prevNet.rx) / dt));
+        netTxBps = Math.max(0, Math.round((net[1] - this.prevNet.tx) / dt));
+      }
+    }
+    if (net.length >= 2) this.prevNet = { rx: net[0], tx: net[1], at: now };
+    const connections = parseInt(kv.CONN, 10) || 0;
+
     const memTotal = mem[0] || 0;
     const memAvail = mem.length >= 3 ? mem[2] : null;
     const memUsed = memAvail != null && memTotal ? memTotal - memAvail : mem[1] || 0;
@@ -202,6 +219,11 @@ export class Poller {
       kernel: kv.KERNEL || "-",
       cores,
       hostname: kv.HOSTNAME || "",
+      netRxBps,
+      netTxBps,
+      netRxTotal: net[0] || 0,
+      netTxTotal: net[1] || 0,
+      connections,
     };
 
     this.state.dockerVersion = (sections.DOCKERV || ["-"])[0] || "-";

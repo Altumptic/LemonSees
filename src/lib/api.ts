@@ -17,6 +17,8 @@ import type {
   AuditEvent,
   ThreatReport,
   SocConfig,
+  VulnReport,
+  Peer,
 } from "./types";
 
 /* ---------- REST ---------- */
@@ -88,6 +90,9 @@ export const api = {
     req<ThreatReport>(`/api/hosts/${hostId}/threats?geo=${geo ? 1 : 0}`, { method: "POST" }),
   getSoc: () => req<SocConfig>("/api/soc"),
   setSoc: (cfg: SocConfig) => req<SocConfig>("/api/soc", { method: "PUT", body: JSON.stringify(cfg) }),
+  vulns: (hostId: string) => req<VulnReport>(`/api/hosts/${hostId}/vulns`, { method: "POST" }),
+  peers: (hostId: string, geo: boolean) =>
+    req<{ peers: Peer[] }>(`/api/hosts/${hostId}/peers?geo=${geo ? 1 : 0}`, { method: "POST" }),
 
   // GRC — комплаєнс
   complianceControls: () =>
