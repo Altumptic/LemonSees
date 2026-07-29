@@ -14,6 +14,12 @@ export type Metrics = {
   load1: number;
   kernel: string;
   cores: number;
+  hostname?: string;
+  netRxBps?: number;
+  netTxBps?: number;
+  netRxTotal?: number;
+  netTxTotal?: number;
+  connections?: number;
 };
 
 export type Container = {
@@ -188,6 +194,43 @@ export type ThreatReport = {
   at: number;
 };
 export type SocConfig = { autoIncidents: boolean; bruteThreshold: number };
+
+export type VulnFinding = {
+  id: string;
+  title: string;
+  category: string;
+  categoryLabel: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  status: "vuln" | "ok" | "unknown";
+  detail: string;
+  remediation: string;
+};
+export type VulnCategory = { cat: string; label: string; total: number; passed: number; pct: number };
+export type VulnReport = {
+  secScore: number;
+  risk: number;
+  grade: "ok" | "info" | "warning" | "critical";
+  findings: VulnFinding[];
+  vulnCount: number;
+  bySeverity: Record<string, number>;
+  categories: VulnCategory[];
+  os: string;
+  at: number;
+};
+
+export type Peer = { ip: string; count: number; geo: Geo | null };
+
+export function fmtBps(bps: number): string {
+  if (!bps || bps < 0) return "0 B/s";
+  const u = ["B/s", "KB/s", "MB/s", "GB/s"];
+  let i = 0;
+  let v = bps;
+  while (v >= 1024 && i < u.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${u[i]}`;
+}
 
 export function fmtWhen(ts: number): string {
   if (!ts) return "—";

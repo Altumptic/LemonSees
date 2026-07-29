@@ -456,6 +456,83 @@ const EN: Record<string, string> = {
   "Гео-IP збагачення": "Geo-IP enrichment",
   "Визначати країну/провайдера атакуючих. Надсилає публічні IP у зовнішній сервіс геолокації.":
     "Resolve attackers' country/ISP. Sends public IPs to an external geolocation service.",
+  // Nav
+  "Трафік": "Traffic",
+  "Вразливості": "Vulnerabilities",
+  "Звіти": "Reports",
+  // Vulnerabilities
+  "Кібераналіз": "Cyber analysis",
+  "Скан конфігурації, експозиції та патчів.": "Configuration, exposure and patch scan.",
+  "Додай сервер, щоб просканувати його на вразливості.": "Add a server to scan it for vulnerabilities.",
+  "Кібераналіз · Вразливості": "Cyber analysis · Vulnerabilities",
+  "Аналіз конфігурації й експозиції по SSH: SSH, firewall, патчі, права, облікові записи. З ремедіацією.":
+    "Configuration & exposure assessment over SSH: SSH, firewall, patches, permissions, accounts — with remediation.",
+  "Сканую на вразливості…": "Scanning for vulnerabilities…",
+  "Індекс захищеності": "Hardening index",
+  "вразливостей": "vulnerabilities",
+  "Високі": "High",
+  "Середні": "Medium",
+  "Низькі": "Low",
+  "Ризик": "Risk",
+  "Покриття по категоріях": "Coverage by category",
+  "Частка пройдених перевірок": "Share of passed checks",
+  "лише вразливі": "vulnerable only",
+  "Вразливостей не знайдено. Хост добре налаштовано.": "No vulnerabilities found. Host is well configured.",
+  "Ремедіація:": "Remediation:",
+  "Патчі": "Patching",
+  "Експозиція": "Exposure",
+  "Облікові записи": "Accounts",
+  "Файлова система": "Filesystem",
+  "Сервіси": "Services",
+  // Traffic
+  "Мережа": "Network",
+  "Пропускна здатність і зʼєднання наживо.": "Live throughput and connections.",
+  "Додай сервер, щоб бачити його мережевий трафік.": "Add a server to see its network traffic.",
+  "Мережа · Наживо": "Network · Live",
+  "Пропускна здатність rx/tx, активні зʼєднання й топ віддалених вузлів. Дані з /proc/net/dev по SSH.":
+    "rx/tx throughput, active connections and top remote peers. From /proc/net/dev over SSH.",
+  "Оновити піри": "Refresh peers",
+  "Чекаю метрики…": "Waiting for metrics…",
+  "Вхідний": "Inbound",
+  "Вихідний": "Outbound",
+  "наживо": "live",
+  "Зʼєднання": "Connections",
+  "Пірів": "Peers",
+  "віддалених": "remote",
+  "Вхідний трафік": "Inbound traffic",
+  "Вихідний трафік": "Outbound traffic",
+  "Топ віддалених вузлів": "Top remote peers",
+  "established-зʼєднання з гео-IP": "established connections with geo-IP",
+  "гео-IP вимкнено": "geo-IP disabled",
+  "Активних зовнішніх зʼєднань немає.": "No active external connections.",
+  // Reports
+  "GRC · Звітність": "GRC · Reporting",
+  "Зведені звіти безпеки та відповідності стандартам.": "Consolidated security & standards-compliance reports.",
+  "Додай сервер, щоб згенерувати звіт.": "Add a server to generate a report.",
+  "Зводить постуру, комплаєнс, вразливості, загрози та інциденти в звіт із мапінгом на CIS / NIST / ISO / GDPR.":
+    "Consolidates posture, compliance, vulnerabilities, threats and incidents into a report mapped to CIS / NIST / ISO / GDPR.",
+  "Генерую…": "Generating…",
+  "Згенерувати звіт": "Generate report",
+  "Постура безпеки…": "Security posture…",
+  "Контролі відповідності…": "Compliance controls…",
+  "Скан вразливостей…": "Vulnerability scan…",
+  "Аналіз загроз…": "Threat analysis…",
+  "Звіт ще не згенеровано": "No report generated yet",
+  "Обери хост і натисни «Згенерувати звіт» — зберемо всі модулі й покриття стандартів.":
+    "Pick a host and click “Generate report” — we'll gather every module and standards coverage.",
+  "Звіт для": "Report for",
+  "Завантажити HTML": "Download HTML",
+  "постура": "posture",
+  "Загальна постура": "Overall posture",
+  "Захищеність": "Hardening",
+  "Провалені контролі": "Failed controls",
+  "з авто": "of automated",
+  "Покриття стандартів": "Standards coverage",
+  "Частка виконаних контролів за фреймворками": "Share of satisfied controls per framework",
+  "Немає даних для мапінгу.": "No data to map.",
+  "Топ вразливостей": "Top vulnerabilities",
+  "Топ атакуючих": "Top attackers",
+  "Збираю дані…": "Collecting data…",
 };
 
 const RU: Record<string, string> = {
@@ -736,6 +813,13 @@ const RU: Record<string, string> = {
   "Топ атакуючих IP": "Топ атакующих IP", "Географія атак": "География атак", "Цільові логіни": "Целевые логины",
   "Загрози та автоінциденти": "Угрозы и автоинциденты", "Автоінциденти (брутфорс)": "Автоинциденты (брутфорс)",
   "Поріг брутфорсу (за 24 год)": "Порог брутфорса (за 24 ч)", "Гео-IP збагачення": "Гео-IP обогащение",
+  "Трафік": "Трафик", "Вразливості": "Уязвимости", "Звіти": "Отчёты",
+  "Кібераналіз": "Кибер-анализ", "Мережа": "Сеть", "Мережа · Наживо": "Сеть · Вживую", "GRC · Звітність": "GRC · Отчётность",
+  "Вхідний": "Входящий", "Вихідний": "Исходящий", "Зʼєднання": "Соединения", "Пірів": "Пиров",
+  "Високі": "Высокие", "Середні": "Средние", "Низькі": "Низкие", "Ризик": "Риск",
+  "Індекс захищеності": "Индекс защищённости", "Топ віддалених вузлів": "Топ удалённых узлов",
+  "Загальна постура": "Общая постура", "Покриття стандартів": "Покрытие стандартов", "Згенерувати звіт": "Сгенерировать отчёт",
+  "Патчі": "Патчи", "Експозиція": "Экспозиция", "Облікові записи": "Учётные записи", "Файлова система": "Файловая система", "Сервіси": "Сервисы",
 };
 
 const PL: Record<string, string> = {
@@ -1016,6 +1100,13 @@ const PL: Record<string, string> = {
   "Топ атакуючих IP": "Najczęstsze IP atakujących", "Географія атак": "Geografia ataków", "Цільові логіни": "Atakowane loginy",
   "Загрози та автоінциденти": "Zagrożenia i auto-incydenty", "Автоінциденти (брутфорс)": "Auto-incydenty (brute-force)",
   "Поріг брутфорсу (за 24 год)": "Próg brute-force (24 h)", "Гео-IP збагачення": "Wzbogacanie geo-IP",
+  "Трафік": "Ruch", "Вразливості": "Podatności", "Звіти": "Raporty",
+  "Кібераналіз": "Cyberanaliza", "Мережа": "Sieć", "Мережа · Наживо": "Sieć · Na żywo", "GRC · Звітність": "GRC · Raportowanie",
+  "Вхідний": "Przychodzący", "Вихідний": "Wychodzący", "Зʼєднання": "Połączenia", "Пірів": "Peerów",
+  "Високі": "Wysokie", "Середні": "Średnie", "Низькі": "Niskie", "Ризик": "Ryzyko",
+  "Індекс захищеності": "Indeks zabezpieczeń", "Топ віддалених вузлів": "Najczęstsze węzły zdalne",
+  "Загальна постура": "Ogólna postura", "Покриття стандартів": "Pokrycie standardów", "Згенерувати звіт": "Wygeneruj raport",
+  "Патчі": "Łatki", "Експозиція": "Ekspozycja", "Облікові записи": "Konta", "Файлова система": "System plików", "Сервіси": "Usługi",
 };
 
 const ZH: Record<string, string> = {
@@ -1293,6 +1384,13 @@ const ZH: Record<string, string> = {
   "Топ атакуючих IP": "攻击最多的 IP", "Географія атак": "攻击地理分布", "Цільові логіни": "被尝试的用户名",
   "Загрози та автоінциденти": "威胁与自动事件", "Автоінциденти (брутфорс)": "自动事件（暴力破解）",
   "Поріг брутфорсу (за 24 год)": "暴力破解阈值（24小时）", "Гео-IP збагачення": "Geo-IP 富化",
+  "Трафік": "流量", "Вразливості": "漏洞", "Звіти": "报告",
+  "Кібераналіз": "网络分析", "Мережа": "网络", "Мережа · Наживо": "网络 · 实时", "GRC · Звітність": "GRC · 报告",
+  "Вхідний": "入站", "Вихідний": "出站", "Зʼєднання": "连接", "Пірів": "对端",
+  "Високі": "高", "Середні": "中", "Низькі": "低", "Ризик": "风险",
+  "Індекс захищеності": "加固指数", "Топ віддалених вузлів": "热门远程节点",
+  "Загальна постура": "整体态势", "Покриття стандартів": "标准覆盖", "Згенерувати звіт": "生成报告",
+  "Патчі": "补丁", "Експозиція": "暴露面", "Облікові записи": "账户", "Файлова система": "文件系统", "Сервіси": "服务",
 };
 
 const DICTS: Partial<Record<Lang, Record<string, string>>> = { en: EN, ru: RU, pl: PL, zh: ZH };

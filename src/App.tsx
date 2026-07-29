@@ -7,11 +7,14 @@ import {
   HardDrive,
   Terminal,
   Database,
+  Waypoints,
   Shield,
+  Bug,
   Crosshair,
   Siren,
   ShieldCheck,
   ScrollText,
+  FileText,
   Settings as SettingsIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -25,11 +28,14 @@ import Networks from "@/pages/Networks";
 import Volumes from "@/pages/Volumes";
 import TerminalPage from "@/pages/Terminal";
 import DatabasePage from "@/pages/Database";
+import TrafficPage from "@/pages/Traffic";
 import SecurityPage from "@/pages/Security";
+import VulnerabilitiesPage from "@/pages/Vulnerabilities";
 import ThreatsPage from "@/pages/Threats";
 import IncidentsPage from "@/pages/Incidents";
 import CompliancePage from "@/pages/Compliance";
 import AuditPage from "@/pages/Audit";
+import ReportsPage from "@/pages/Reports";
 import SettingsPage from "@/pages/Settings";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
@@ -44,6 +50,7 @@ const NAV: NavGroup[] = [
       { to: "containers", label: "Контейнери", icon: Boxes },
       { to: "databases", label: "Бази даних", icon: Database },
       { to: "networks", label: "Мережі", icon: Network },
+      { to: "traffic", label: "Трафік", icon: Waypoints },
       { to: "volumes", label: "Томи", icon: HardDrive },
       { to: "terminal", label: "Термінал", icon: Terminal },
     ],
@@ -52,6 +59,7 @@ const NAV: NavGroup[] = [
     group: "Безпека · SOC",
     items: [
       { to: "security", label: "Безпека", icon: Shield },
+      { to: "vulns", label: "Вразливості", icon: Bug },
       { to: "threats", label: "Загрози", icon: Crosshair },
       { to: "incidents", label: "Інциденти", icon: Siren },
     ],
@@ -60,6 +68,7 @@ const NAV: NavGroup[] = [
     group: "Управління · GRC",
     items: [
       { to: "compliance", label: "Комплаєнс", icon: ShieldCheck },
+      { to: "reports", label: "Звіти", icon: FileText },
       { to: "audit", label: "Аудит", icon: ScrollText },
     ],
   },
@@ -95,10 +104,15 @@ export default function App() {
       <div className="relative z-10 flex min-h-screen">
         {/* Сайдбар */}
         <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--hairline)] lg:flex">
-          <div className={`flex items-center gap-2.5 px-5 py-5 ${isElectron ? "drag-region" : ""}`}>
-            <img src="/shok.jpg" alt="ШОК" className="h-9 w-9 rounded-md border border-[var(--hairline-strong)]" />
+          <div className={`flex items-center gap-3 px-5 py-5 ${isElectron ? "drag-region" : ""}`}>
+            <img
+              src="/shok.jpg"
+              alt="ШОК"
+              className="h-11 w-11 rounded-xl border border-[var(--hairline-strong)] object-cover"
+              style={{ boxShadow: "0 0 0 4px color-mix(in oklab, var(--primary) 12%, transparent)" }}
+            />
             <div>
-              <div className="text-[15px] font-semibold tracking-tight">ШОК</div>
+              <div className="text-[17px] font-bold tracking-tight">ШОК</div>
               <div className="eyebrow" style={{ letterSpacing: "0.24em" }}>SOC · GRC</div>
             </div>
           </div>
@@ -133,7 +147,7 @@ export default function App() {
           </nav>
 
           <div className="mono flex items-center justify-between border-t border-[var(--hairline)] px-5 py-3 text-[10px] text-muted-foreground">
-            <span>v1.4.0</span>
+            <span>v1.5.0</span>
             <span className="flex items-center gap-1.5">
               <span className={`h-1 w-1 rounded-full ${connected ? "live-dot bg-[var(--success)]" : "bg-[var(--danger)]"}`} />
               {connected ? t("двигун ок") : t("немає зв'язку")}
@@ -164,12 +178,15 @@ export default function App() {
             {page === "containers" && <Containers />}
             {page === "databases" && <DatabasePage />}
             {page === "networks" && <Networks />}
+            {page === "traffic" && <TrafficPage />}
             {page === "volumes" && <Volumes />}
             {page === "terminal" && <TerminalPage />}
             {page === "security" && <SecurityPage />}
+            {page === "vulns" && <VulnerabilitiesPage />}
             {page === "threats" && <ThreatsPage />}
             {page === "incidents" && <IncidentsPage />}
             {page === "compliance" && <CompliancePage />}
+            {page === "reports" && <ReportsPage />}
             {page === "audit" && <AuditPage />}
             {page === "settings" && <SettingsPage />}
           </main>

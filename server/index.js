@@ -34,6 +34,8 @@ import { engineFamily } from "./engines.js";
 import { collectSecurity } from "./security.js";
 import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
 import { collectThreats, countRecentFailed } from "./threats.js";
+import { scanVulns } from "./vulns.js";
+import { geoLookup } from "./geoip.js";
 
 const PORT = parseInt(process.env.SHOK_PORT || "5199", 10);
 const HOST = "127.0.0.1";
@@ -409,6 +411,50 @@ app.post("/api/hosts/:id/threats", async (req, res) => {
   const geo = req.query.geo !== "0";
   try {
     res.json(await collectThreats(conn, { geo }));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Аналіз вразливостей (кібераналіз)
+app.post("/api/hosts/:id/vulns", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json(await scanVulns(conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Топ мережевих пірів (established) + гео
+app.post("/api/hosts/:id/peers", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  const geo = req.query.geo !== "0";
+  try {
+    const r = await conn.exec(
+      `ss -tunH state established 2>/dev/null | awk '{print $5}' | sed -E 's/:[0-9]+$//; s/^\\[//; s/\\]$//' | sort | uniq -c | sort -rn | head -20`,
+      { timeout: 20000 },
+    );
+    const peers = r.stdout
+      .trim()
+      .split("\n")
+      .map((l) => {
+        const m = l.trim().match(/^(\d+)\s+(.+)$/);
+        return m ? { ip: m[2], count: parseInt(m[1], 10) || 0, geo: null } : null;
+      })
+      .filter(Boolean)
+      .filter((p) => p.ip && p.ip !== "*" && !p.ip.startsWith("127."));
+    if (geo && peers.length) {
+      try {
+        const g = await geoLookup(peers.map((p) => p.ip));
+        for (const p of peers) p.geo = g[p.ip] || null;
+      } catch {
+        /* без гео */
+      }
+    }
+    res.json({ peers });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
