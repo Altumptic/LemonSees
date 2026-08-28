@@ -8,6 +8,7 @@ import {
   Activity,
   ArrowUpRight,
   Cpu,
+  Plus,
 } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -16,6 +17,9 @@ import {
   PageHeader,
   Panel,
   Kpi,
+  HeroStat,
+  HeroAction,
+  PrimaryButton,
   ScoreRing,
   SeverityBadge,
   IncidentStatusBadge,
@@ -93,9 +97,71 @@ export default function Dashboard({ go }: { go: Nav }) {
       />
 
       {hosts.length === 0 ? (
-        <EmptyState icon={Server} title={t("Почни з додавання хоста")} hint={t("Підключи перший сервер — і тут зʼявляться метрики, ризик і статус безпеки.")} />
+        <div className="space-y-6">
+          <EmptyState
+            icon={Server}
+            title={t("Почни з додавання хоста")}
+            hint={t("Підключи перший сервер — і тут зʼявляться метрики, ризик і статус безпеки.")}
+            action={
+              <PrimaryButton onClick={() => go("infra/hosts")}>
+                <Plus className="h-3.5 w-3.5" /> {t("Додати хост")}
+              </PrimaryButton>
+            }
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              { n: "01", icon: Server, ti: t("Підключи по SSH"), d: t("Хост, користувач і ключ — без встановлення агентів.") },
+              { n: "02", icon: Activity, ti: t("Дивись наживо"), d: t("Метрики, процеси, зʼєднання й логи в реальному часі.") },
+              { n: "03", icon: ShieldCheck, ti: t("Тримай під контролем"), d: t("Ризик, інциденти, комплаєнс і аптайм в одній панелі.") },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.n} className="glass rounded-xl p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--hairline)]" style={{ background: "var(--surface-raised)" }}>
+                      <Icon className="h-4 w-4 text-[var(--primary)]" />
+                    </span>
+                    <span className="doto text-[15px] text-muted-foreground">{s.n}</span>
+                  </div>
+                  <div className="mt-3 text-[14px] font-semibold tracking-tight">{s.ti}</div>
+                  <div className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{s.d}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       ) : (
         <>
+          {/* Hero-рядок — глянцеві зелені картки */}
+          <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <HeroStat
+              label={t("Захищеність флоту")}
+              value={`${posture}%`}
+              sub={posture >= 85 ? t("Стан флоту стабільний.") : posture >= 60 ? t("Є що підсилити.") : t("Потрібна увага аналітика.")}
+              icon={ShieldCheck}
+              actions={
+                <>
+                  <HeroAction onClick={() => go("grc/compliance")}>{t("Комплаєнс")}</HeroAction>
+                  <HeroAction onClick={() => go("edr/vulns")}>{t("Вразливості")}</HeroAction>
+                </>
+              }
+            />
+            <HeroStat
+              label={t("Хости онлайн")}
+              value={`${totals.online}/${hosts.length}`}
+              sub={`${totals.running} ${t("контейнерів")} · CPU ${totals.avgCpu}%`}
+              icon={Server}
+              actions={<HeroAction onClick={() => go("infra/hosts")}>{t("Інфраструктура")}</HeroAction>}
+            />
+            <HeroStat
+              label={t("Відкриті інциденти")}
+              value={incStats.open}
+              sub={`${incStats.crit} ${t("критичних")} · ${t("ризик флоту")} ${fleetRisk}`}
+              icon={Siren}
+              actions={<HeroAction onClick={() => go("soar/incidents")}>{t("Реагування")}</HeroAction>}
+            />
+          </div>
+
           <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
             <Kpi label={t("Хости онлайн")} value={`${totals.online}/${hosts.length}`} icon={Server} tone={totals.online === hosts.length ? "ok" : "warning"} />
             <Kpi label={t("Контейнери")} value={totals.running} icon={Boxes} tone="neutral" />
@@ -113,7 +179,7 @@ export default function Dashboard({ go }: { go: Nav }) {
                 title={t("Ризик по хостах")}
                 sub={t("Оцінка з живих метрик і статусу")}
                 right={
-                  <button onClick={() => go("security")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
+                  <button onClick={() => go("edr/posture")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
                     {t("безпека")} <ArrowUpRight className="h-3 w-3" />
                   </button>
                 }
@@ -145,7 +211,7 @@ export default function Dashboard({ go }: { go: Nav }) {
                 <div className="text-center text-[12px] text-muted-foreground">
                   {posture >= 85 ? t("Стан флоту стабільний.") : posture >= 60 ? t("Є що підсилити.") : t("Потрібна увага аналітика.")}
                 </div>
-                <button onClick={() => go("compliance")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-[var(--primary)]">
+                <button onClick={() => go("grc/compliance")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-[var(--primary)]">
                   {t("до комплаєнсу")} <ArrowUpRight className="h-3 w-3" />
                 </button>
               </div>
@@ -157,7 +223,7 @@ export default function Dashboard({ go }: { go: Nav }) {
                 icon={Siren}
                 title={t("Останні інциденти")}
                 right={
-                  <button onClick={() => go("incidents")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
+                  <button onClick={() => go("soar/incidents")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
                     {t("всі")} <ArrowUpRight className="h-3 w-3" />
                   </button>
                 }
@@ -188,7 +254,7 @@ export default function Dashboard({ go }: { go: Nav }) {
                 icon={Activity}
                 title={t("Активність")}
                 right={
-                  <button onClick={() => go("audit")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
+                  <button onClick={() => go("grc/audit")} className="mono flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
                     {t("аудит")} <ArrowUpRight className="h-3 w-3" />
                   </button>
                 }

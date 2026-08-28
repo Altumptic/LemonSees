@@ -1,25 +1,19 @@
 <div align="center">
 
-<img src=".github/assets/banner.svg" alt="SHOK — SOC & GRC Platform" width="100%" />
+<img src=".github/assets/banner.svg" alt="LemonSees — SOC Platform" width="100%" />
 
-# SHOK
+# 🍋 LemonSees
 
-**Agentless SOC & GRC platform — monitoring, 39 databases, vulnerability analysis, threat intel & compliance over SSH**
+**Agentless SOC platform for L1 / L2 / L3 analysts — SIEM/XDR, EDR, NDR, CTI, SOAR & GRC over SSH**
 
-[![Release](https://img.shields.io/github/v/release/kiurakku/shok-monitor?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
-[![License](https://img.shields.io/github/license/kiurakku/shok-monitor?style=for-the-badge&color=blue)](LICENSE)
-[![Platform](https://img.shields.io/badge/Windows-10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kiurakku/shok-monitor/releases)
+[![Release](https://img.shields.io/github/v/release/kiurakku/LemonSees?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/LemonSees/releases)
+[![License](https://img.shields.io/github/license/kiurakku/LemonSees?style=for-the-badge&color=blue)](LICENSE)
+[![Platform](https://img.shields.io/badge/Windows-10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kiurakku/LemonSees/releases)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F?style=for-the-badge&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-[![Downloads](https://img.shields.io/github/downloads/kiurakku/shok-monitor/total?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/releases)
-[![Stars](https://img.shields.io/github/stars/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/stargazers)
-[![Issues](https://img.shields.io/github/issues/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/issues)
-[![Last commit](https://img.shields.io/github/last-commit/kiurakku/shok-monitor?style=flat-square&logo=github)](https://github.com/kiurakku/shok-monitor/commits/main)
-
-[⬇️ Download v1.5.0](https://github.com/kiurakku/shok-monitor/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/shok-monitor/issues/new) · [📖 Quick start](#-quick-start)
+[⬇️ Download v2.0.0](https://github.com/kiurakku/LemonSees/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/LemonSees/issues/new) · [📖 Quick start](#-quick-start)
 
 </div>
 
@@ -27,164 +21,106 @@
 
 ## ✨ About
 
-**SHOK** is a Windows desktop app that turns your SSH keychain into a full **SOC & GRC workstation** — infrastructure monitoring, database access, security posture, threat intelligence, compliance and audit, all agentless. Nothing is installed on remote machines — only SSH (port 22) is required.
+**LemonSees** turns your SSH keychain into a full **Security Operations Center** on the desktop. You sit in one bold, tabbed console and monitor your fleet; each host is treated as a managed endpoint where **the SSH session is the agent** — nothing is installed on the server. Built for the day-to-day of **L1 / L2 / L3** analysts: triage, investigate, respond, report.
 
 | | |
 |---|---|
 | 🖥️ **Platform** | Windows 10/11 (ready-to-run `.exe`) |
-| 🔌 **Connection** | SSH key or password |
-| 🐳 **Infra** | Hosts, Docker, networks, volumes, **live traffic**, terminal |
+| 🔌 **Connection** | SSH key or password — the session is the agent |
+| 🧭 **Console** | Cloudflare-style sections → tabs → detail |
+| 🛰️ **Domains** | SIEM/XDR · EDR · NDR · CTI · SOAR · GRC |
 | 🗄️ **Databases** | 39 engines — query, browse, REST console |
-| 🐛 **Cyber analysis** | Vulnerability / exposure scan with remediation |
-| 🛡️ **SOC** | Security posture, threat intel + geo-IP, incidents |
-| ⚖️ **GRC** | CIS/NIST/ISO compliance, **standards reports**, audit log |
 | 🌍 **Languages** | Ukrainian, English, Russian, Polish, Chinese |
-| 🎨 **Themes** | 16 color themes + acrylic glass window |
-| 🔒 **Security** | Engine listens on `127.0.0.1` only, no agents |
+| 🎨 **Design** | Clean, data-dense UI (BetterStack-inspired), light + dark themes |
+| 🔒 **Security** | Engine binds to `127.0.0.1` only, no agents, no background services |
 
 ---
 
-## 🆕 What's new in v1.5.0
+## 🆕 What's new in v2.0.0
 
-- **🐛 Vulnerability analysis (cyber)** — configuration & exposure scan over SSH: SSH hardening, firewall, **pending security patches (CVE risk)**, permissions, accounts, exposed DB ports. Each finding ships with a **remediation** and a hardening index; coverage checkbars per category.
-- **📡 Live traffic monitoring** — rx/tx throughput from `/proc/net/dev`, active connections, and **top remote peers with geo-IP** — with live sparklines.
-- **📄 Standards reports** — one click consolidates posture + compliance + vulnerabilities + threats + incidents into a report mapped to **CIS / NIST / ISO 27001 / GDPR**, with coverage checkbars and a downloadable HTML.
-- **🎨 New identity** — new logo, bolder look, no background grid, accent glows.
-- Carried over from v1.4: threat intel + geo-IP, auto-incidents, security posture, compliance, audit — all on **real data over SSH**.
+- **🍋 Brand — LemonSees** — minimal new logo and a polished, **BetterStack-inspired** UI: deep-charcoal surfaces with soft depth, tabular metrics, a subtle brand glow, and clean **light + dark** themes. Design system documented in [DESIGN.md](DESIGN.md).
+- **🧭 SOC information architecture** — reorganised into analyst domains with **sections → sub-tabs** (Cloudflare-style): Console/SIEM, Endpoints/EDR, Network/NDR, Intel/CTI, Response/SOAR, Governance/GRC, Infrastructure, Utilities.
+- **🖥️ EDR** — live **process table** (CPU/MEM/uptime) and **persistence** view (cron, systemd services, timers, startup) collected over SSH.
+- **🔌 NDR** — full **connections** view (established + listening + owning process) alongside live traffic.
+- **🔎 CTI** — **IP investigation** (geo, reverse DNS, WHOIS, cross-check against your attacker list) run from the host.
+- **🧰 Utilities** — analyst **network toolkit** (dig, reverse DNS, whois, ping, traceroute, HTTP check, TCP port check) executed on the remote host.
+- **🗒️ SIEM events** — remote **log viewer** (auth.log/syslog/nginx/…) + the app event journal in one place.
+- **⚙️ SOAR** — playbooks view + the auto-incident brute-force rule.
 
-> Every module runs on **real data over SSH** — no agents, nothing installed on your servers.
+> Every module runs on **real data over SSH** — no agents deployed, nothing installed on your servers. Deployable EDR agents and malware sandboxing are intentionally out of scope for the agentless model.
 
 ---
 
-## 📸 Features
+## 🧭 The console
 
 <table>
-<tr>
-<td width="50%">
+<tr><td width="50%">
 
-### 📊 SOC dashboard
-One panel over the whole estate — KPIs, per-host risk, fleet posture ring, latest incidents and activity.
+### 📟 Console · SIEM
+Fleet **dashboard** (KPIs, risk-by-host, posture ring, incidents, activity) + a unified **events** view: remote log viewer with color-coded severities and the app journal.
 
-### 🖥️ Monitoring
-Live CPU, RAM, disk, load and uptime per host. Docker containers (start/stop/restart/remove), networks, volumes, live logs, built-in SSH terminal (xterm.js).
+### 🖥️ Endpoints · EDR
+Hosts as managed endpoints; **processes** (top CPU/MEM), **persistence** (cron / services / timers / startup), **posture** (risk score), **vulnerabilities** (config/exposure scan with remediation).
 
-### 🗄️ Databases
-39 engines over SSH tunnels — categorized picker, table browse & edit, SQL/NoSQL queries, REST console, **Find on server** auto-discovery.
+### 🌐 Network · NDR
+Live **traffic** (rx/tx, top peers with geo-IP) and full **connections** (established + listening + process, public/local flags).
 
-### 🐛 Vulnerability analysis
-Config & exposure scan over SSH — SSH/firewall/patches/permissions/accounts — with severity, **remediation** and a hardening index.
+</td><td width="50%">
 
-### 📡 Traffic
-Live rx/tx throughput, active connections and **top remote peers with geo-IP**, sparklines from `/proc/net/dev`.
+### 🔎 Intel · CTI
+**Threat intelligence** (top attackers, geo-map, targeted usernames) and **IP investigation** (geo · rDNS · WHOIS · attacker cross-check).
 
-</td>
-<td width="50%">
+### 🚨 Response · SOAR
+**Incident** register with severity, status workflow and timeline; **playbooks** incl. the auto-incident brute-force rule.
 
-### 🛡️ Security posture
-Per-host risk score: listening ports, sessions, failed logins, firewall, pending updates, SUID, SSH hardening — with actionable findings.
+### ⚖️ Governance · GRC
+**Compliance** (CIS/NIST/ISO controls + attestations), **standards reports** (CIS/NIST/ISO/GDPR coverage, HTML export), **audit** log with CSV export.
 
-### 🎯 Threat intelligence
-Real-time `auth.log` / journald analysis: top attacking IPs with **geo-IP**, attack geography, targeted usernames, and **auto-incidents** on brute-force thresholds.
+### 🧰 Utilities
+Network **toolkit**, built-in **SSH terminal**, and the **database** hub (39 engines).
 
-### ⚖️ Compliance & Reports (GRC)
-15 automated CIS/NIST controls + manual attestations, plus one-click **standards reports** (CIS/NIST/ISO/GDPR) with coverage checkbars and HTML export.
-
-### 📜 Audit
-Append-only, searchable action log — evidence for audits and investigations, one-click CSV export.
-
-### ⚙️ Settings
-5 languages, 16 themes, acrylic window, UI scale, threat thresholds, geo-IP toggle — stored locally.
-
-</td>
-</tr>
+</td></tr>
 </table>
 
 ---
 
 ## 🗄️ Database engines
 
-### Full support (queries + browse)
-
-| Family | Engines |
-|--------|---------|
-| **PostgreSQL** | PostgreSQL, TimescaleDB, CockroachDB, YugabyteDB, QuestDB, Redshift (self-hosted) |
-| **MySQL** | MySQL, MariaDB |
-| **Redis** | Redis, KeyDB, Valkey, Dragonfly |
-| **Document** | MongoDB |
-| **SQLite** | Local WASM browse over SSH (read-only; file loaded into memory) |
-
-### REST console (HTTP adapter)
-
-Elasticsearch · OpenSearch · CouchDB · ClickHouse · Meilisearch · Typesense · Qdrant · Weaviate · Chroma · ArangoDB · InfluxDB · Prometheus
-
-### Coming soon (needs dedicated driver)
-
-MS SQL · Oracle · Cassandra · ScyllaDB · Neo4j · Memgraph · Memcached · Milvus
-
-### Cloud (vendor API keys — not available over SSH)
-
-DynamoDB · BigQuery · Snowflake · Firebase · Firestore · Pinecone · Neptune
-
-> Cloud databases require provider API keys and are outside the SSH agentless model. They are listed for transparency.
-
----
-
-## 🛡️ SOC & GRC
-
-Everything below runs on **real data collected over SSH** — no agents, nothing installed on the server.
-
-| Module | What it does | Framework |
-|--------|--------------|-----------|
-| **Security posture** | Risk score from open ports, sessions, failed logins, firewall, updates, SUID, SSH hardening | — |
-| **Vulnerabilities** | Config/exposure scan: SSH, firewall, pending security patches, permissions, accounts, exposed DBs — with remediation | CIS |
-| **Traffic** | Live rx/tx throughput, established connections, top remote peers with geo-IP | — |
-| **Threat intel** | Top attacking IPs from `auth.log`/journald, geo-IP (country · city · ISP), targeted usernames, attack map | — |
-| **Incidents** | Register with severity, status workflow, timeline; **auto-created** on brute-force thresholds | NIST IR |
-| **Compliance** | Automated SSH-hardening / firewall / auto-updates / auditd / time-sync checks + manual attestations | CIS · NIST · ISO 27001 |
-| **Reports** | Consolidated security & compliance report with standards coverage checkbars, downloadable HTML | CIS · NIST · ISO · GDPR |
-| **Audit** | Append-only action log with CSV export — evidence for auditors | NIST AU |
-
-**Auto-incident rule** — when failed SSH logins over 24h exceed the configurable threshold (default `300`), an incident is opened automatically and deduplicated per host. Toggle and tune in **Settings → Threats**.
-
-> **Privacy note:** geo-IP enrichment sends *attackers' public IPs only* to a geolocation service. It is on by default and can be disabled in **Settings → Threats → Geo-IP enrichment**. Everything else stays on your machine.
+**Full support (query + browse):** PostgreSQL · TimescaleDB · CockroachDB · YugabyteDB · QuestDB · Redshift · MySQL · MariaDB · Redis · KeyDB · Valkey · Dragonfly · MongoDB · SQLite (WASM over SSH)
+**REST console:** Elasticsearch · OpenSearch · CouchDB · ClickHouse · Meilisearch · Typesense · Qdrant · Weaviate · Chroma · ArangoDB · InfluxDB · Prometheus
+**Planned (needs driver):** MS SQL · Oracle · Cassandra · ScyllaDB · Neo4j · Memgraph · Memcached · Milvus
+**Cloud (API keys, not via SSH):** DynamoDB · BigQuery · Snowflake · Firebase · Firestore · Pinecone · Neptune
 
 ---
 
 ## ⬇️ Installation
 
-### Pre-built release (recommended)
-
-1. Download [`SHOK-v1.5.0-win.zip`](https://github.com/kiurakku/shok-monitor/releases/latest) from [Releases](https://github.com/kiurakku/shok-monitor/releases)
-2. Extract the archive
-3. Run `SHOK.exe`
+1. Download [`LemonSees-v2.0.0-win.zip`](https://github.com/kiurakku/LemonSees/releases/latest) from [Releases](https://github.com/kiurakku/LemonSees/releases)
+2. Extract and run `LemonSees.exe`
 
 > Close the window — everything stops. No background services.
 
 ### From source
 
 ```bash
-git clone https://github.com/kiurakku/shok-monitor.git
-cd shok-monitor
+git clone https://github.com/kiurakku/LemonSees.git
+cd LemonSees
 npm install
 npm run build
-npm run dist:win    # → release/win-unpacked/SHOK.exe
+npm run dist:win    # → release/win-unpacked/LemonSees.exe
 ```
 
 ---
 
 ## 🚀 Quick start
 
-1. Launch **SHOK**
-2. Go to **Hosts → Add host**
-3. Enter IP, username, and auth method:
-   - **SSH key** *(recommended)*: `C:\Users\User\.ssh\id_ed25519`
-   - **Password**: standard SSH password
-4. Click **Test connection** → **Add**
-
-Within seconds you'll see live metrics, containers, and networks. Then explore:
-- **Databases → Find on server** — auto-detect PostgreSQL, Redis, SQLite files, and more.
-- **Security** / **Threats** — get an instant risk score and see who's brute-forcing your SSH (with geo-IP).
-- **Compliance** — run CIS/NIST checks over SSH and attest governance controls.
+1. Launch **LemonSees**
+2. **Infrastructure → Hosts → Add host** — enter IP + SSH key (recommended) or password → **Test connection** → **Add**
+3. Within seconds the host appears as an **endpoint**. Then:
+   - **Endpoints → Processes / Persistence** — see what's running and what persists
+   - **Network → Traffic / Connections** — who's talking to the box
+   - **Intel → Threats / IP intel** — who's attacking, and investigate any IP
+   - **Governance → Compliance / Reports** — CIS/NIST checks and a downloadable report
 
 ---
 
@@ -192,25 +128,25 @@ Within seconds you'll see live metrics, containers, and networks. Then explore:
 
 ```
 ┌──────────────────────────────────────────────────┐
-│              Electron (SHOK.exe)                 │
+│            Electron (LemonSees.exe)              │
 │  ┌──────────────┐      ┌──────────────────────┐  │
 │  │   React UI   │◄────►│   Node.js Engine     │  │
-│  │   (Vite)     │  WS  │   (127.0.0.1)        │  │
-│  └──────────────┘      └──────────┬───────────┘  │
+│  │  (sections   │  WS  │   (127.0.0.1)        │  │
+│  │   → tabs)    │      └──────────┬───────────┘  │
+│  └──────────────┘                 │              │
 └───────────────────────────────────┼──────────────┘
-                                    │ SSH (port 22)
+                                    │ SSH (port 22)  ← the session IS the agent
                          ┌──────────┴──────────────┐
                          │      Linux Server(s)     │
                          │ /proc · docker · db      │
-                         │ auth.log · sshd · ss     │
+                         │ auth.log · ss · ps · cron│
                          └──────────────────────────┘
 ```
 
 - **One persistent SSH connection** per host (multiplexing), separate channels per task
-- **Metrics:** single script per poll (`/proc/stat`, `free`, `df`, `docker ps/stats`); CPU delta in one SSH round-trip
-- **Databases:** SSH port-forward to local drivers (pg, mysql2, ioredis, mongodb) or HTTP proxy for REST engines
-- **SQLite:** file streamed over SSH (base64) → opened locally with `sql.js` WASM (read-only)
-- **SOC/GRC:** `security.js`, `threats.js`, `compliance.js` run hardened one-pass scripts over SSH; geo-IP resolved from a batch lookup; auto-incident monitor sweeps every 5 min
+- **Metrics/traffic:** single script per poll (`/proc/stat`, `/proc/net/dev`, `free`, `df`, `docker`); deltas in one round-trip
+- **EDR/NDR/CTI:** `ps`, `ss`, `cron`/`systemctl`, `auth.log`, `dig`/`whois` — parsed server-side, enriched with batch geo-IP
+- **Databases:** SSH port-forward to native drivers or HTTP proxy for REST engines; SQLite streamed and opened locally with `sql.js`
 
 ---
 
@@ -219,87 +155,63 @@ Within seconds you'll see live metrics, containers, and networks. Then explore:
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Frontend with HMR (requires running `server`) |
-| `npm run server` | Engine standalone, opens browser |
+| `npm run server` | Engine standalone |
 | `npm run app` | Electron in dev mode |
 | `npm run build` | Build frontend → `dist/` |
-| `npm run dist:win` | Build `SHOK.exe` → `release/win-unpacked/` |
+| `npm run dist:win` | Build `LemonSees.exe` → `release/win-unpacked/` |
 
-`ШОК.bat` — fallback launch via browser without Electron.
-
-### Requirements
-
-- **Windows 10/11** (pre-built exe needs nothing else)
-- **Node.js 18+** (for development)
-- **Linux servers** with SSH; Docker and databases are optional
+**Requirements:** Windows 10/11 (pre-built exe needs nothing else) · Node.js 18+ (dev) · Linux servers with SSH.
 
 ---
 
-## 🔐 Data & security
+## 🔐 Data & privacy
 
 | What | Where |
 |------|-------|
-| Hosts / DBs / incidents / audit | `%APPDATA%\shok-monitor\config\` (local only) |
-| Passwords | Stored in plain text — **use SSH keys** |
-| Outbound traffic | None, except optional geo-IP (attacker public IPs only) |
+| Hosts / DBs / incidents / audit | `%APPDATA%\LemonSees\config\` (local only) |
+| Passwords | Plain text — **use SSH keys** |
+| Outbound traffic | None, except optional geo-IP (attacker/peer public IPs only) |
 
-> ⚠️ **Use SSH keys instead of passwords** for better security. The engine binds to `127.0.0.1` only.
+> The engine binds to `127.0.0.1` only. Geo-IP enrichment (togglable in **Settings**) sends only public IPs of attackers/peers to a geolocation service; everything else stays on your machine.
 
 ---
 
 ## 📁 Project structure
 
 ```
-shok-monitor/
-├── electron/            # Electron main process (acrylic window)
+LemonSees/
+├── electron/            # Electron main process (frameless window, config migration)
 ├── server/              # Node.js SSH engine
-│   ├── collector.js     # Host metrics + traffic (single-pass deltas)
-│   ├── db.js            # 39 DB engines, tunnels, REST/SQLite
-│   ├── engines.js       # Engine registry
-│   ├── security.js      # SOC — host posture
-│   ├── vulns.js         # Cyber — vulnerability/exposure scan
-│   ├── threats.js       # SOC — auth.log threat intel
-│   ├── geoip.js         # Geo-IP batch lookup + cache
+│   ├── collector.js     # Host metrics + traffic
+│   ├── security.js      # Posture · vulns.js — vulnerability scan
+│   ├── threats.js       # CTI — auth.log · geoip.js — geo lookup
+│   ├── edr.js           # EDR — processes + persistence
+│   ├── netops.js        # NDR/CTI — connections, tools, IP intel
 │   ├── compliance.js    # GRC — CIS/NIST controls
+│   ├── db.js            # 39 DB engines, engines.js — registry
 │   └── config.js        # Hosts, DBs, incidents, audit, SOC config
 ├── src/
-│   ├── pages/           # Dashboard, Security, Vulnerabilities, Threats,
-│   │                    #   Traffic, Incidents, Compliance, Reports,
-│   │                    #   Audit, Database, Hosts, …
-│   ├── components/ui.tsx # Design system v2
+│   ├── pages/           # Dashboard, Events, Endpoints, Processes, Persistence,
+│   │                    #   Security, Vulnerabilities, Traffic, Connections,
+│   │                    #   Threats, Investigate, Incidents, Playbooks,
+│   │                    #   Compliance, Reports, Audit, Toolkit, …
+│   ├── components/ui.tsx # Design system (Tabs, KPIs, rings, badges)
 │   └── lib/             # api, engines, i18n (5 langs), settings
 ├── buildResources/      # App icon
-└── .github/assets/      # Banner, logo, social preview
+└── .github/assets/      # Banner, logo
 ```
-
----
-
-## 👥 Contributors
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/kiurakku">
-        <img src="https://github.com/kiurakku.png" width="80" height="80" style="border-radius:50%" alt="kiurakku"/>
-      </a>
-      <br />
-      <a href="https://github.com/kiurakku"><b>kiurakku</b></a>
-      <br />
-      <sub>Owner & Developer</sub>
-    </td>
-  </tr>
-</table>
 
 ---
 
 ## 🤝 Contributing
 
-Issues and Pull Requests are welcome! For large changes, please open an issue first to discuss.
+Issues and PRs welcome. For large changes, open an issue first.
 
 ---
 
 <div align="center">
 
-**Built with ⚡ for people who like simple monitoring without the bloat**
+**Built with 🍋 for analysts who want a real SOC without the bloat**
 
 MIT © [kiurakku](https://github.com/kiurakku)
 

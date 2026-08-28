@@ -19,6 +19,17 @@ import type {
   SocConfig,
   VulnReport,
   Peer,
+  ProcessReport,
+  MetricSample,
+  Monitor,
+  MonitorInput,
+  MonitorCheck,
+  MonitorStats,
+  MonitorEvent,
+  PersistenceReport,
+  ConnectionsReport,
+  ToolResult,
+  IpIntel,
 } from "./types";
 
 /* ---------- REST ---------- */
@@ -93,6 +104,28 @@ export const api = {
   vulns: (hostId: string) => req<VulnReport>(`/api/hosts/${hostId}/vulns`, { method: "POST" }),
   peers: (hostId: string, geo: boolean) =>
     req<{ peers: Peer[] }>(`/api/hosts/${hostId}/peers?geo=${geo ? 1 : 0}`, { method: "POST" }),
+
+  // EDR / NDR / CTI / утиліти
+  processes: (hostId: string) => req<ProcessReport>(`/api/hosts/${hostId}/processes`, { method: "POST" }),
+  persistence: (hostId: string) => req<PersistenceReport>(`/api/hosts/${hostId}/persistence`, { method: "POST" }),
+  connections: (hostId: string) => req<ConnectionsReport>(`/api/hosts/${hostId}/connections`, { method: "POST" }),
+  tool: (hostId: string, tool: string, target: string, port?: number) =>
+    req<ToolResult>(`/api/hosts/${hostId}/tool`, { method: "POST", body: JSON.stringify({ tool, target, port }) }),
+  investigate: (hostId: string, ip: string, geo: boolean) =>
+    req<IpIntel>(`/api/hosts/${hostId}/investigate?geo=${geo ? 1 : 0}`, { method: "POST", body: JSON.stringify({ ip }) }),
+  logtail: (hostId: string, path: string, lines = 200) =>
+    req<{ path: string; lines: string[] }>(`/api/hosts/${hostId}/logtail?path=${encodeURIComponent(path)}&lines=${lines}`),
+  history: (hostId: string) => req<{ history: MetricSample[] }>(`/api/hosts/${hostId}/history`),
+
+  // Uptime-монітори
+  listMonitors: () => req<Monitor[]>("/api/monitors"),
+  addMonitor: (m: MonitorInput) => req<Monitor>("/api/monitors", { method: "POST", body: JSON.stringify(m) }),
+  updateMonitor: (id: string, m: MonitorInput) => req<Monitor>(`/api/monitors/${id}`, { method: "PUT", body: JSON.stringify(m) }),
+  deleteMonitor: (id: string) => req<{ ok: boolean }>(`/api/monitors/${id}`, { method: "DELETE" }),
+  monitorHistory: (id: string) =>
+    req<{ history: MonitorCheck[]; stats: MonitorStats }>(`/api/monitors/${id}/history`),
+  checkMonitor: (id: string) => req<MonitorCheck>(`/api/monitors/${id}/check`, { method: "POST" }),
+  monitorEvents: () => req<{ events: MonitorEvent[] }>("/api/monitors/events"),
 
   // GRC — комплаєнс
   complianceControls: () =>

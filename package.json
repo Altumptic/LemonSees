@@ -1,25 +1,29 @@
 {
-  "name": "shok-monitor",
-  "version": "1.5.0",
-  "description": "Agentless SOC & GRC platform — Linux, Docker, databases & threat intel over SSH. Windows desktop app.",
+  "name": "lemonsees",
+  "version": "2.0.0",
+  "description": "LemonSees — agentless SOC platform for L1/L2/L3 analysts over SSH: SIEM/XDR, EDR, NDR, CTI, SOAR, GRC. Windows desktop app.",
   "author": "kiurakku",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kiurakku/shok-monitor.git"
+    "url": "https://github.com/kiurakku/LemonSees.git"
   },
-  "homepage": "https://github.com/kiurakku/shok-monitor#readme",
+  "homepage": "https://github.com/kiurakku/LemonSees#readme",
   "bugs": {
-    "url": "https://github.com/kiurakku/shok-monitor/issues"
+    "url": "https://github.com/kiurakku/LemonSees/issues"
   },
   "keywords": [
-    "monitoring",
+    "soc",
+    "siem",
+    "edr",
+    "xdr",
+    "ndr",
+    "cti",
+    "soar",
+    "grc",
     "ssh",
-    "docker",
-    "linux",
+    "security",
     "electron",
-    "server",
-    "devops",
     "windows"
   ],
   "type": "module",
@@ -33,8 +37,8 @@
     "dist:win": "electron-builder --win dir"
   },
   "build": {
-    "appId": "ua.shok.monitor",
-    "productName": "SHOK",
+    "appId": "com.lemonsees.app",
+    "productName": "LemonSees",
     "directories": {
       "buildResources": "buildResources",
       "output": "release"

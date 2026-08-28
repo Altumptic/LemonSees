@@ -12,7 +12,7 @@ export async function geoLookup(ips) {
   const need = [];
   for (const ip of ips) {
     if (isPrivate(ip)) {
-      out[ip] = { country: "Локальна", countryCode: "", city: "", isp: "" };
+      out[ip] = { country: "Локальна", countryCode: "", city: "", isp: "", lat: 0, lon: 0 };
       continue;
     }
     const c = cache.get(ip);
@@ -24,7 +24,7 @@ export async function geoLookup(ips) {
   }
 
   for (let i = 0; i < need.length; i += 90) {
-    const chunk = need.slice(i, i + 90).map((q) => ({ query: q, fields: "status,country,countryCode,city,isp,query" }));
+    const chunk = need.slice(i, i + 90).map((q) => ({ query: q, fields: "status,country,countryCode,city,isp,lat,lon,query" }));
     try {
       const r = await fetch("http://ip-api.com/batch", {
         method: "POST",
@@ -36,8 +36,8 @@ export async function geoLookup(ips) {
       for (const g of arr) {
         const geo =
           g.status === "success"
-            ? { country: g.country || "", countryCode: g.countryCode || "", city: g.city || "", isp: g.isp || "" }
-            : { country: "?", countryCode: "", city: "", isp: "" };
+            ? { country: g.country || "", countryCode: g.countryCode || "", city: g.city || "", isp: g.isp || "", lat: g.lat ?? 0, lon: g.lon ?? 0 }
+            : { country: "?", countryCode: "", city: "", isp: "", lat: 0, lon: 0 };
         if (g.query) {
           out[g.query] = geo;
           cache.set(g.query, { geo, at: Date.now() });

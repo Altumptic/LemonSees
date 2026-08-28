@@ -182,7 +182,7 @@ export type IncidentInput = {
 
 export type AuditEvent = { at: number; actor: string; action: string; target: string; meta: Record<string, unknown> };
 
-export type Geo = { country: string; countryCode: string; city: string; isp: string };
+export type Geo = { country: string; countryCode: string; city: string; isp: string; lat?: number; lon?: number };
 export type Attacker = { ip: string; count: number; geo: Geo | null };
 export type ThreatReport = {
   attackers: Attacker[];
@@ -219,6 +219,79 @@ export type VulnReport = {
 };
 
 export type Peer = { ip: string; count: number; geo: Geo | null };
+
+export type MetricSample = { at: number; cpu: number; memPct: number; diskPct: number; rx: number; tx: number; conn: number };
+
+export type MonitorCheck = { at: number; ok: boolean; status: number; ms: number; error: string };
+export type MonitorStats = { uptimePct: number | null; checks: number; avgMs: number; last: MonitorCheck | null; up: boolean };
+export type Monitor = {
+  id: string;
+  name: string;
+  url: string;
+  method: string;
+  expectStatus: number;
+  intervalSec: number;
+  timeoutMs: number;
+  enabled: boolean;
+  stats?: MonitorStats;
+};
+export type MonitorInput = {
+  name: string;
+  url: string;
+  method: string;
+  expectStatus: number;
+  intervalSec: number;
+  timeoutMs: number;
+  enabled: boolean;
+};
+export type MonitorEvent = { monitorId: string; name: string; url: string; ok: boolean; status: number; ms: number; error: string; at: number };
+
+/* ---------------- EDR / NDR / CTI / утиліти ---------------- */
+
+export type Process = {
+  user: string;
+  pid: number;
+  ppid: number;
+  cpu: number;
+  mem: number;
+  uptimeSec: number;
+  stat: string;
+  comm: string;
+};
+export type ProcessReport = { processes: Process[]; total: number; cpuSum: number; memSum: number; at: number };
+
+export type CronEntry = { source: string; entry: string };
+export type PersistenceReport = {
+  cron: CronEntry[];
+  running: string[];
+  enabled: string[];
+  timers: string[];
+  startup: string[];
+  counts: { cron: number; running: number; enabled: number; timers: number };
+  at: number;
+};
+
+export type Connection = { proto: string; state: string; local: string; peer: string; process: string };
+export type ConnectionsReport = {
+  established: Connection[];
+  listening: Connection[];
+  estabCount: number;
+  listenCount: number;
+  at: number;
+};
+
+export type ToolResult = { tool: string; target: string; output: string; at: number };
+
+export type IpIntel = {
+  ip: string;
+  geo: Geo | null;
+  rdns: string;
+  whois: string[];
+  known: boolean;
+  attackCount: number;
+  reputation: string;
+  at: number;
+};
 
 export function fmtBps(bps: number): string {
   if (!bps || bps < 0) return "0 B/s";

@@ -12,6 +12,7 @@ import {
   Pill,
   Track,
   SectionHeader,
+  MapPlot,
   EmptyState,
   StatusDot,
 } from "@/components/ui";
@@ -120,6 +121,17 @@ export default function ThreatsPage() {
             <Kpi label={t("Країн")} value={data.countries.length} icon={MapPin} tone="neutral" sub={t("походження")} />
             <Kpi label={t("Успішні входи")} value={data.accepted.reduce((a, x) => a + x.count, 0)} icon={ShieldCheck} tone={data.accepted.length ? "info" : "ok"} sub={`${data.accepted.length} ${t("джерел")}`} />
           </div>
+
+          {settings.geoip && data.attackers.some((a) => a.geo && ((a.geo.lat ?? 0) || (a.geo.lon ?? 0))) && (
+            <Panel className="mb-6">
+              <SectionHeader icon={Globe} title={t("Геокарта атак")} sub={t("Джерела атак за координатами")} />
+              <MapPlot
+                points={data.attackers
+                  .filter((a) => a.geo)
+                  .map((a) => ({ lon: a.geo!.lon ?? 0, lat: a.geo!.lat ?? 0, count: a.count, label: `${a.ip} · ${a.geo!.country || ""}` }))}
+              />
+            </Panel>
+          )}
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Топ атакуючих */}
