@@ -46,14 +46,14 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--hairline)] pb-6">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--hairline)] pb-4">
       <div className="max-w-2xl">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="h-3 w-1 rounded-full bg-[var(--primary)]" />
+        <div className="mb-1.5 flex items-center gap-2">
+          <span className="h-2.5 w-1 rounded-full bg-[var(--primary)]" />
           <span className="eyebrow">{eyebrow}</span>
         </div>
-        <h1 className="text-[32px] font-semibold leading-[1.05] tracking-tight md:text-[40px]">{title}</h1>
-        {lede && <p className="mt-2.5 max-w-xl text-sm text-muted-foreground">{lede}</p>}
+        <h1 className="text-[23px] font-semibold leading-tight tracking-tight md:text-[26px]">{title}</h1>
+        {lede && <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-muted-foreground">{lede}</p>}
       </div>
       {action}
     </div>
@@ -78,7 +78,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-md border border-[var(--primary)]/40 bg-[color-mix(in_oklab,var(--primary)_14%,transparent)] px-3.5 py-1.5 text-xs font-medium tracking-wide text-[var(--primary)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_22%,transparent)] disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg bg-[var(--fg-display)] px-4 py-2 text-xs font-semibold tracking-wide text-[var(--background)] shadow-[var(--shadow-card)] transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-40"
     >
       {children}
     </button>
@@ -100,11 +100,63 @@ export function GhostButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors disabled:opacity-50 ${
         active
-          ? "border-[var(--hairline-strong)] bg-white/[0.04] text-foreground"
+          ? "border-[var(--primary)]/50 bg-[color-mix(in_oklab,var(--primary)_16%,transparent)] text-[var(--primary)]"
           : "border-[var(--hairline)] bg-transparent text-muted-foreground hover:border-[var(--hairline-strong)] hover:text-foreground"
       }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* -------- Hero-картка (глянцевий зелений градієнт з великою цифрою) -------- */
+
+export function HeroStat({
+  label,
+  value,
+  sub,
+  actions,
+  icon: Icon,
+  className = "",
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  sub?: ReactNode;
+  actions?: ReactNode;
+  icon?: LucideIcon;
+  className?: string;
+}) {
+  const ink = "var(--background)";
+  return (
+    <div className={`hero-card relative overflow-hidden rounded-xl p-5 ${className}`}>
+      <div className="flex items-center justify-between">
+        <span className="mono text-[11px] uppercase tracking-[0.09em]" style={{ color: `color-mix(in oklab, ${ink} 62%, transparent)` }}>
+          {label}
+        </span>
+        {Icon && <Icon className="h-4 w-4" style={{ color: `color-mix(in oklab, ${ink} 55%, transparent)` }} />}
+      </div>
+      <div className="doto mt-3 text-[44px] leading-none" style={{ color: ink }}>
+        {value}
+      </div>
+      {sub && (
+        <div className="mt-2 text-[12px] font-medium" style={{ color: `color-mix(in oklab, ${ink} 72%, transparent)` }}>
+          {sub}
+        </div>
+      )}
+      {actions && <div className="mt-4 flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/** Дія всередині інвертованої hero-картки. */
+export function HeroAction({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="mono inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] transition-colors"
+      style={{ background: "color-mix(in oklab, var(--background) 16%, transparent)", color: "var(--background)" }}
     >
       {children}
     </button>
@@ -333,12 +385,12 @@ export function StatCard({
   icon: LucideIcon;
 }) {
   return (
-    <div className="glass rounded-xl p-5">
+    <div className="glass rounded-xl p-5 transition-colors hover:border-[var(--hairline-strong)]">
       <div className="flex items-center justify-between">
         <span className="eyebrow">{label}</span>
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
-      <div className="num mt-4 text-[32px] font-medium leading-none tracking-tight">{value}</div>
+      <div className="doto mt-3 text-[32px] leading-none">{value}</div>
       {sub && <div className="mt-2 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
@@ -376,13 +428,13 @@ export function Kpi({
 }) {
   const c = toneColor(tone);
   return (
-    <div className="glass relative overflow-hidden rounded-xl p-5">
+    <div className="glass relative overflow-hidden rounded-xl p-5 transition-colors hover:border-[var(--hairline-strong)]">
       <span className="absolute inset-x-0 top-0 h-[2px]" style={{ background: c, opacity: tone === "neutral" ? 0.25 : 0.7 }} />
       <div className="flex items-center justify-between">
         <span className="eyebrow">{label}</span>
         {Icon && <Icon className="h-3.5 w-3.5" style={{ color: tone === "neutral" ? "var(--muted-foreground)" : c }} />}
       </div>
-      <div className="num mt-4 text-[30px] font-medium leading-none tracking-tight">{value}</div>
+      <div className="doto mt-3 text-[32px] leading-none">{value}</div>
       {sub && <div className="mt-2 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
@@ -544,13 +596,20 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="grid place-items-center gap-3 rounded-xl border border-dashed border-[var(--hairline)] px-6 py-14 text-center">
-      {Icon && <Icon className="h-7 w-7 text-muted-foreground/50" />}
+    <div className="glass grid place-items-center gap-4 rounded-2xl px-6 py-16 text-center">
+      {Icon && (
+        <span
+          className="grid h-14 w-14 place-items-center rounded-2xl border border-[var(--hairline-strong)] text-[var(--primary)]"
+          style={{ background: "var(--surface-raised)" }}
+        >
+          <Icon className="h-6 w-6" />
+        </span>
+      )}
       <div>
-        <div className="text-sm font-medium">{title}</div>
-        {hint && <div className="mt-1 max-w-md text-[12px] text-muted-foreground">{hint}</div>}
+        <div className="text-[15px] font-semibold tracking-tight">{title}</div>
+        {hint && <div className="mx-auto mt-1.5 max-w-md text-[13px] leading-relaxed text-muted-foreground">{hint}</div>}
       </div>
-      {action}
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }
@@ -585,11 +644,244 @@ export function Track({ value, tone = "neutral" }: { value: number; tone?: Tone 
   );
 }
 
+/** Компактний рядок вибору хоста + оновлення для підвкладок SOC-модулів. */
+export function HostBar({
+  hosts,
+  value,
+  onChange,
+  onRefresh,
+  loading,
+  right,
+}: {
+  hosts: { id: string; name: string; status: HostStatus }[];
+  value: string | null;
+  onChange: (id: string) => void;
+  onRefresh?: () => void;
+  loading?: boolean;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2 rounded-md border border-[var(--hairline)] bg-white/[0.02] px-2 py-1">
+        {value && <StatusDot status={hosts.find((h) => h.id === value)?.status ?? "offline"} />}
+        <select
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          className="mono bg-transparent text-xs outline-none"
+        >
+          {hosts.map((h) => (
+            <option key={h.id} value={h.id} className="bg-[var(--ink)]">
+              {h.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {right}
+      {onRefresh && (
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="ml-auto inline-flex items-center gap-2 rounded-md border border-[var(--hairline)] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--hairline-strong)] hover:text-foreground disabled:opacity-50"
+        >
+          <span className={loading ? "animate-spin" : ""}>↻</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Cloudflare-стиль: горизонтальні підвкладки з підкресленням активної. */
+export function Tabs({
+  items,
+  active,
+  onChange,
+}: {
+  items: { id: string; label: ReactNode; icon?: LucideIcon; badge?: ReactNode }[];
+  active: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-1 border-b border-[var(--hairline)]">
+      {items.map((it) => {
+        const on = active === it.id;
+        const Icon = it.icon;
+        return (
+          <button
+            key={it.id}
+            onClick={() => onChange(it.id)}
+            className={`group relative -mb-px inline-flex items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium transition-colors ${
+              on ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {Icon && <Icon className={`h-3.5 w-3.5 ${on ? "text-[var(--primary)]" : ""}`} />}
+            {it.label}
+            {it.badge != null && (
+              <span className="mono rounded-full bg-[color-mix(in_oklab,var(--primary)_20%,transparent)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--primary)]">
+                {it.badge}
+              </span>
+            )}
+            <span className={`absolute inset-x-2 -bottom-px h-[2px] rounded-full transition-colors ${on ? "bg-[var(--primary)]" : "bg-transparent"}`} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function riskTone(score: number): Tone {
   return score >= 60 ? "critical" : score >= 35 ? "warning" : score >= 15 ? "info" : "ok";
 }
 export function scoreTone(pct: number): Tone {
   return pct >= 85 ? "ok" : pct >= 60 ? "info" : pct >= 40 ? "warning" : "critical";
+}
+
+/* ==================== Графіки (Nothing-стиль) ==================== */
+
+/** Заповнений часовий ряд (area). data — сирі значення; max авто. */
+export function AreaChart({
+  data,
+  height = 72,
+  color = "var(--primary)",
+  unit,
+  fmt,
+}: {
+  data: number[];
+  height?: number;
+  color?: string;
+  unit?: string;
+  fmt?: (v: number) => string;
+}) {
+  const w = 320;
+  const h = height;
+  if (!data || data.length < 2)
+    return <div className="grid place-items-center text-[11px] text-muted-foreground" style={{ height: h }}>—</div>;
+  const max = Math.max(1, ...data);
+  const step = w / (data.length - 1);
+  const pts = data.map((v, i) => [i * step, h - (v / max) * (h - 6) - 3]);
+  const line = pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
+  const cur = data[data.length - 1];
+  return (
+    <div className="relative">
+      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full" style={{ height: h }}>
+        <defs>
+          <linearGradient id={`ac-${color.replace(/\W/g, "")}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={color} stopOpacity="0.28" />
+            <stop offset="1" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <polygon points={area} fill={`url(#ac-${color.replace(/\W/g, "")})`} />
+        <polyline points={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="mono absolute right-1 top-0 text-[10px] text-muted-foreground">
+        {fmt ? fmt(cur) : cur}
+        {unit ? ` ${unit}` : ""}
+      </div>
+    </div>
+  );
+}
+
+/** Вертикальні статус-бари up/down (uptime timeline). */
+export function StatusBars({ data, height = 34 }: { data: { ok: boolean | null }[]; height?: number }) {
+  return (
+    <div className="flex items-end gap-[2px]" style={{ height }}>
+      {data.map((d, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-[1px]"
+          style={{
+            height: "100%",
+            minWidth: 3,
+            background:
+              d.ok === null ? "var(--hairline-strong)" : d.ok ? "var(--success)" : "var(--danger)",
+            opacity: d.ok === null ? 0.5 : 1,
+          }}
+          title={d.ok === null ? "no data" : d.ok ? "up" : "down"}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Горизонтальний список-барчарт. */
+export function BarList({ items }: { items: { label: string; value: number; max?: number; sub?: string; color?: string }[] }) {
+  const max = Math.max(1, ...items.map((i) => i.max ?? i.value));
+  return (
+    <div className="space-y-2">
+      {items.map((it, i) => (
+        <div key={i}>
+          <div className="mb-1 flex items-center justify-between gap-3 text-[12px]">
+            <span className="truncate">{it.label}</span>
+            <span className="num shrink-0 text-muted-foreground">
+              {it.sub ?? it.value}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-[1px] bg-white/[0.06]">
+            <div className="h-full" style={{ width: `${Math.min(100, (it.value / max) * 100)}%`, background: it.color ?? "var(--primary)" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Часова гістограма (обʼєм подій по бакетах). */
+export function Histogram({ buckets, height = 64, color = "var(--primary)" }: { buckets: number[]; height?: number; color?: string }) {
+  const max = Math.max(1, ...buckets);
+  return (
+    <div className="flex items-end gap-[2px]" style={{ height }}>
+      {buckets.map((v, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-[1px]"
+          style={{ height: `${(v / max) * 100}%`, minHeight: v > 0 ? 2 : 1, minWidth: 2, background: v > 0 ? color : "var(--hairline)" }}
+          title={String(v)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Геокарта (equirectangular) — точки атак за координатами. */
+export function MapPlot({ points, height = 260 }: { points: { lon: number; lat: number; count: number; label: string }[]; height?: number }) {
+  const w = 560;
+  const h = height;
+  const toX = (lon: number) => ((lon + 180) / 360) * w;
+  const toY = (lat: number) => ((90 - lat) / 180) * h;
+  const max = Math.max(1, ...points.map((p) => p.count));
+  const pid = "mapdots";
+  return (
+    <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-auto w-full" style={{ background: "var(--surface)" }}>
+        <defs>
+          <pattern id={pid} width="11" height="11" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.7" fill="var(--hairline-strong)" />
+          </pattern>
+        </defs>
+        <rect width={w} height={h} fill={`url(#${pid})`} opacity="0.5" />
+        {Array.from({ length: 11 }, (_, i) => (
+          <line key={`v${i}`} x1={(i * w) / 11} y1={0} x2={(i * w) / 11} y2={h} stroke="var(--hairline)" strokeWidth="0.4" />
+        ))}
+        {Array.from({ length: 6 }, (_, i) => (
+          <line key={`h${i}`} x1={0} y1={(i * h) / 6} x2={w} y2={(i * h) / 6} stroke="var(--hairline)" strokeWidth="0.4" />
+        ))}
+        <line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="var(--hairline-strong)" strokeWidth="0.7" />
+        {points.filter((p) => p.lat || p.lon).map((p, i) => {
+          const r = 2.5 + (p.count / max) * 7;
+          const x = toX(p.lon);
+          const y = toY(p.lat);
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r={r + 4} fill="var(--danger)" opacity="0.12" />
+              <circle cx={x} cy={y} r={r} fill="var(--danger)" opacity="0.85">
+                <title>{p.label}: {p.count}</title>
+              </circle>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
 }
 
 /* -------- Форми -------- */

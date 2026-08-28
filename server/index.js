@@ -26,7 +26,11 @@ import {
   loadAudit,
   loadSoc,
   saveSoc,
+  loadMonitors,
+  saveMonitors,
+  sanitizeMonitor,
 } from "./config.js";
+import { Uptime } from "./uptime.js";
 import { HostConnection } from "./ssh.js";
 import { Poller } from "./collector.js";
 import * as dbmod from "./db.js";
@@ -36,6 +40,8 @@ import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
 import { collectThreats, countRecentFailed } from "./threats.js";
 import { scanVulns } from "./vulns.js";
 import { geoLookup } from "./geoip.js";
+import { collectProcesses, collectPersistence } from "./edr.js";
+import { collectConnections, runTool, investigateIp } from "./netops.js";
 
 const PORT = parseInt(process.env.SHOK_PORT || "5199", 10);
 const HOST = "127.0.0.1";
@@ -137,8 +143,24 @@ function onStatus(id, status, error) {
   broadcast();
 }
 
+const metricHistory = new Map(); // id -> [{at,cpu,memPct,diskPct,rx,tx,conn}]
 function onUpdate(id, state) {
   hostStates.set(id, { ...state });
+  if (state.metrics && state.status === "online") {
+    const arr = metricHistory.get(id) || [];
+    const m = state.metrics;
+    arr.push({
+      at: state.updatedAt || Date.now(),
+      cpu: m.cpu ?? 0,
+      memPct: m.memPct ?? 0,
+      diskPct: m.diskPct ?? 0,
+      rx: m.netRxBps ?? 0,
+      tx: m.netTxBps ?? 0,
+      conn: m.connections ?? 0,
+    });
+    if (arr.length > 180) arr.shift();
+    metricHistory.set(id, arr);
+  }
   broadcast();
 }
 
@@ -167,6 +189,80 @@ const app = express();
 app.use(express.json());
 
 app.get("/api/state", (req, res) => res.json(snapshot()));
+
+app.get("/api/hosts/:id/history", (req, res) =>
+  res.json({ history: metricHistory.get(req.params.id) || [] }),
+);
+
+/* ---------------- Uptime-монітори ---------------- */
+
+let monitors = loadMonitors();
+const uptime = new Uptime();
+uptime.onEvent = (evt) => {
+  audit(evt.ok ? "monitor.up" : "monitor.down", evt.name, { url: evt.url, status: evt.status });
+  try {
+    globalThis.__lemonNotify?.(
+      evt.ok ? `✅ ${evt.name}` : `🔴 ${evt.name}`,
+      evt.ok ? `Відновився · HTTP ${evt.status} · ${evt.ms} ms` : `Недоступний · ${evt.error || "HTTP " + evt.status}`,
+    );
+  } catch {
+    /* ignore */
+  }
+};
+uptime.setMonitors(monitors);
+
+app.get("/api/monitors", (req, res) =>
+  res.json(monitors.map((m) => ({ ...m, stats: uptime.stats(m.id) }))),
+);
+
+app.get("/api/monitors/events", (req, res) => res.json({ events: uptime.events }));
+
+app.post("/api/monitors", (req, res) => {
+  try {
+    const m = sanitizeMonitor(req.body);
+    monitors.push(m);
+    saveMonitors(monitors);
+    uptime.setMonitors(monitors);
+    audit("monitor.add", m.name, { url: m.url });
+    res.json({ ...m, stats: uptime.stats(m.id) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.put("/api/monitors/:id", (req, res) => {
+  const idx = monitors.findIndex((m) => m.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Монітор не знайдено" });
+  try {
+    monitors[idx] = sanitizeMonitor(req.body, monitors[idx]);
+    saveMonitors(monitors);
+    uptime.setMonitors(monitors);
+    res.json({ ...monitors[idx], stats: uptime.stats(monitors[idx].id) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.delete("/api/monitors/:id", (req, res) => {
+  const idx = monitors.findIndex((m) => m.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Монітор не знайдено" });
+  audit("monitor.delete", monitors[idx].name, {});
+  uptime.remove(req.params.id);
+  monitors.splice(idx, 1);
+  saveMonitors(monitors);
+  uptime.setMonitors(monitors);
+  res.json({ ok: true });
+});
+
+app.get("/api/monitors/:id/history", (req, res) =>
+  res.json({ history: uptime.getHistory(req.params.id), stats: uptime.stats(req.params.id) }),
+);
+
+app.post("/api/monitors/:id/check", async (req, res) => {
+  const m = monitors.find((x) => x.id === req.params.id);
+  if (!m) return res.status(404).json({ error: "Монітор не знайдено" });
+  res.json(await uptime.check(m));
+});
 
 app.get("/api/hosts", (req, res) => res.json(hosts.map(publicHost)));
 
@@ -455,6 +551,81 @@ app.post("/api/hosts/:id/peers", async (req, res) => {
       }
     }
     res.json({ peers });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// EDR — процеси
+app.post("/api/hosts/:id/processes", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json(await collectProcesses(conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// EDR — персистентність (cron, служби, таймери)
+app.post("/api/hosts/:id/persistence", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json(await collectPersistence(conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// NDR — активні зʼєднання
+app.post("/api/hosts/:id/connections", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    res.json(await collectConnections(conn));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Утиліти — мережеві інструменти (виконуються на хості)
+app.post("/api/hosts/:id/tool", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    const r = await runTool(conn, req.body?.tool, req.body?.target, req.body?.port);
+    audit("tool.run", `${req.body?.tool} ${req.body?.target || ""}`.trim(), { host: hostName(req.params.id) });
+    res.json(r);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// CTI — розвідка по IP
+app.post("/api/hosts/:id/investigate", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  const geo = req.query.geo !== "0";
+  try {
+    const attackers = Array.isArray(req.body?.attackers) ? req.body.attackers : [];
+    res.json(await investigateIp(conn, req.body?.ip, geo, attackers));
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// SIEM — тейл лог-файлу (allowlist /var/log)
+app.get("/api/hosts/:id/logtail", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  if (!conn) return res.status(400).json({ error: "Хост не підключено" });
+  const path = String(req.query.path || "/var/log/syslog");
+  const lines = Math.max(20, Math.min(1000, parseInt(req.query.lines, 10) || 200));
+  if (!/^\/var\/log\/[a-zA-Z0-9._/-]+$/.test(path) || path.includes(".."))
+    return res.status(400).json({ error: "Дозволено лише /var/log/*" });
+  try {
+    const r = await conn.exec(`tail -n ${lines} '${path}' 2>&1`, { timeout: 20000 });
+    res.json({ path, lines: r.stdout.split("\n") });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

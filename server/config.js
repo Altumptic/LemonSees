@@ -17,6 +17,7 @@ const INCIDENTS_FILE = path.join(CONFIG_DIR, "incidents.json");
 const ATTEST_FILE = path.join(CONFIG_DIR, "attestations.json");
 const AUDIT_FILE = path.join(CONFIG_DIR, "audit.jsonl");
 const SOC_FILE = path.join(CONFIG_DIR, "soc.json");
+const MONITORS_FILE = path.join(CONFIG_DIR, "monitors.json");
 
 export function loadHosts() {
   try {
@@ -162,6 +163,39 @@ export function loadSoc() {
   } catch {
     return { ...SOC_DEFAULTS };
   }
+}
+
+/* ---------------- Uptime-монітори (сайти/ендпоінти) ---------------- */
+
+export function loadMonitors() {
+  try {
+    const data = JSON.parse(fs.readFileSync(MONITORS_FILE, "utf8"));
+    return Array.isArray(data.monitors) ? data.monitors : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveMonitors(monitors) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(MONITORS_FILE, JSON.stringify({ monitors }, null, 2), "utf8");
+}
+
+export function sanitizeMonitor(input, existing = null) {
+  let url = String(input.url ?? "").trim();
+  if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  if (!/^https?:\/\/.+/i.test(url)) throw new Error("Некоректний URL (потрібен http/https)");
+  const m = {
+    id: existing?.id ?? "mon_" + crypto.randomBytes(4).toString("hex"),
+    name: String(input.name ?? "").trim() || url.replace(/^https?:\/\//, "").split("/")[0],
+    url,
+    method: ["GET", "HEAD", "POST"].includes(input.method) ? input.method : "GET",
+    expectStatus: parseInt(input.expectStatus, 10) || 0, // 0 = будь-який 2xx/3xx
+    intervalSec: Math.max(10, Math.min(3600, parseInt(input.intervalSec, 10) || 60)),
+    timeoutMs: Math.max(1000, Math.min(30000, parseInt(input.timeoutMs, 10) || 10000)),
+    enabled: input.enabled === undefined ? true : !!input.enabled,
+  };
+  return m;
 }
 
 export function saveSoc(cfg) {

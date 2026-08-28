@@ -4,7 +4,7 @@ import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { fmtBps, type Peer } from "@/lib/types";
-import { PageHeader, Panel, GhostButton, Kpi, Sparkline, SectionHeader, EmptyState, StatusDot, Track } from "@/components/ui";
+import { PageHeader, Panel, GhostButton, Kpi, AreaChart, SectionHeader, EmptyState, StatusDot, Track } from "@/components/ui";
 
 // Історія throughput на клієнті для спарклайнів
 const hist = new Map<string, { rx: number[]; tx: number[]; conn: number[] }>();
@@ -102,11 +102,11 @@ export default function TrafficPage() {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <Panel>
               <SectionHeader icon={ArrowDownToLine} title={t("Вхідний трафік")} right={<span className="num text-sm" style={{ color: "var(--info)" }}>{fmtBps(m.netRxBps ?? 0)}</span>} />
-              <Sparkline data={h ? scale(h.rx, rxMax) : []} stroke="var(--info)" height={60} />
+              <AreaChart data={h ? h.rx : []} color="var(--interactive)" fmt={fmtBps} height={72} />
             </Panel>
             <Panel>
               <SectionHeader icon={ArrowUpFromLine} title={t("Вихідний трафік")} right={<span className="num text-sm" style={{ color: "var(--success)" }}>{fmtBps(m.netTxBps ?? 0)}</span>} />
-              <Sparkline data={h ? scale(h.tx, txMax) : []} stroke="var(--success)" height={60} />
+              <AreaChart data={h ? h.tx : []} color="var(--success)" fmt={fmtBps} height={72} />
             </Panel>
           </div>
 

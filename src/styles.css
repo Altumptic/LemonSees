@@ -9,216 +9,86 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Space Grotesk", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Space Grotesk", "DM Sans", ui-sans-serif, sans-serif;
 }
 
 :root {
   --radius: 0.75rem;
 
-  /* Тема за замовчуванням — «Шампань»: чорнило + теплий акцент */
-  --background: oklch(0.13 0.005 250);
-  --foreground: oklch(0.94 0.01 90);
+  /* Dark — глибокий вугільний, зі шарами глибини (BetterStack-стиль) */
+  --background: #0a0a0b;
+  --ink: #08080a;
+  --surface: #141417;
+  --surface-raised: #1c1c20;
 
-  --primary: oklch(0.82 0.06 85);
-  --primary-foreground: oklch(0.13 0.005 250);
+  --foreground: #ededee; /* text-primary */
+  --fg-display: #ffffff; /* text-display */
+  --muted-foreground: #9a9aa3; /* text-secondary */
+  --text-disabled: #6a6a72;
 
-  --muted: oklch(0.98 0.01 90 / 0.04);
-  --muted-foreground: oklch(0.68 0.01 90);
+  /* Сигнальний акцент — впевнений червоний */
+  --primary: #e5484d;
+  --primary-foreground: #ffffff;
+  --accent-subtle: rgba(229, 72, 77, 0.14);
+  --interactive: #6e8bff;
 
-  --ring: oklch(0.82 0.06 85 / 0.4);
+  --ring: rgba(229, 72, 77, 0.45);
 
-  --success: oklch(0.74 0.09 150);
-  --warning: oklch(0.82 0.1 85);
-  --danger: oklch(0.65 0.16 25);
-  --info: oklch(0.7 0.1 240);
+  --success: #30a46c;
+  --warning: #e2a336;
+  --danger: #e5484d;
+  --info: #8a8f98;
 
-  --hairline: oklch(0.98 0.01 90 / 0.08);
-  --hairline-strong: oklch(0.98 0.01 90 / 0.14);
-  --ink: oklch(0.09 0.005 250);
+  --hairline: #212124; /* border */
+  --hairline-strong: #323238; /* border-visible */
 
-  /* Керовані з налаштувань */
-  --glass-color: oklch(0.98 0.01 90);
-  --glass-alpha: 0.025;
-  --glass-alpha-strong: 0.04;
-  --grid-color: oklch(0.98 0.01 90 / 0.035);
-  --modal-bg: oklch(0.14 0.005 250 / 0.97);
-  --topbar-bg: oklch(0.13 0.005 250 / 0.55);
+  --muted: rgba(255, 255, 255, 0.035);
+  --modal-bg: #141417;
+  --topbar-bg: rgba(10, 10, 11, 0.82);
+
+  /* Глибина — мʼякі тіні, а не плаский OLED */
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.5), 0 1px 3px -1px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 16px 40px -16px rgba(0, 0, 0, 0.75), 0 2px 8px -4px rgba(0, 0, 0, 0.6);
+  --glow: color-mix(in oklab, var(--primary) 7%, transparent);
 }
 
-/* ---- Теми ---- */
-
-:root[data-theme="ink"] {
-  --background: oklch(0.1 0 0);
-  --ink: oklch(0.04 0 0);
-  --modal-bg: oklch(0.1 0 0 / 0.97);
-  --topbar-bg: oklch(0.07 0 0 / 0.6);
-}
-
-:root[data-theme="ocean"] {
-  --primary: oklch(0.75 0.09 230);
-  --ring: oklch(0.75 0.09 230 / 0.4);
-  --warning: oklch(0.8 0.1 85);
-  --background: oklch(0.14 0.014 245);
-  --ink: oklch(0.1 0.014 245);
-  --modal-bg: oklch(0.15 0.014 245 / 0.97);
-  --topbar-bg: oklch(0.13 0.014 245 / 0.55);
-}
-
-:root[data-theme="forest"] {
-  --primary: oklch(0.76 0.1 155);
-  --ring: oklch(0.76 0.1 155 / 0.4);
-  --background: oklch(0.14 0.012 160);
-  --ink: oklch(0.1 0.012 160);
-  --modal-bg: oklch(0.15 0.012 160 / 0.97);
-  --topbar-bg: oklch(0.13 0.012 160 / 0.55);
-}
-
-:root[data-theme="violet"] {
-  --primary: oklch(0.75 0.11 300);
-  --ring: oklch(0.75 0.11 300 / 0.4);
-  --background: oklch(0.14 0.014 300);
-  --ink: oklch(0.1 0.014 300);
-  --modal-bg: oklch(0.15 0.014 300 / 0.97);
-  --topbar-bg: oklch(0.13 0.014 300 / 0.55);
-}
-
-:root[data-theme="midnight"] {
-  --primary: oklch(0.7 0.11 265);
-  --ring: oklch(0.7 0.11 265 / 0.4);
-  --background: oklch(0.14 0.02 265);
-  --ink: oklch(0.08 0.02 265);
-  --modal-bg: oklch(0.15 0.02 265 / 0.97);
-  --topbar-bg: oklch(0.12 0.02 265 / 0.55);
-}
-
-:root[data-theme="rose"] {
-  --primary: oklch(0.74 0.13 8);
-  --ring: oklch(0.74 0.13 8 / 0.4);
-  --background: oklch(0.14 0.012 350);
-  --ink: oklch(0.1 0.012 350);
-  --modal-bg: oklch(0.15 0.012 350 / 0.97);
-  --topbar-bg: oklch(0.13 0.012 350 / 0.55);
-}
-
-:root[data-theme="amber"] {
-  --primary: oklch(0.8 0.11 70);
-  --ring: oklch(0.8 0.11 70 / 0.4);
-  --warning: oklch(0.85 0.11 95);
-  --background: oklch(0.14 0.01 60);
-  --ink: oklch(0.1 0.01 60);
-  --modal-bg: oklch(0.15 0.01 60 / 0.97);
-  --topbar-bg: oklch(0.13 0.01 60 / 0.55);
-}
-
-:root[data-theme="crimson"] {
-  --primary: oklch(0.66 0.17 22);
-  --ring: oklch(0.66 0.17 22 / 0.4);
-  --background: oklch(0.13 0.014 20);
-  --ink: oklch(0.09 0.014 20);
-  --modal-bg: oklch(0.15 0.014 20 / 0.97);
-  --topbar-bg: oklch(0.12 0.014 20 / 0.55);
-}
-
-:root[data-theme="nord"] {
-  --primary: oklch(0.72 0.07 230);
-  --ring: oklch(0.72 0.07 230 / 0.4);
-  --foreground: oklch(0.92 0.01 250);
-  --muted-foreground: oklch(0.66 0.02 250);
-  --background: oklch(0.28 0.02 260);
-  --ink: oklch(0.24 0.02 260);
-  --hairline: oklch(0.98 0.01 250 / 0.1);
-  --hairline-strong: oklch(0.98 0.01 250 / 0.18);
-  --success: oklch(0.78 0.09 150);
-  --modal-bg: oklch(0.3 0.02 260 / 0.98);
-  --topbar-bg: oklch(0.27 0.02 260 / 0.6);
-}
-
-:root[data-theme="dracula"] {
-  --primary: oklch(0.78 0.13 320);
-  --ring: oklch(0.78 0.13 320 / 0.4);
-  --foreground: oklch(0.95 0.02 320);
-  --muted-foreground: oklch(0.7 0.03 300);
-  --background: oklch(0.24 0.03 285);
-  --ink: oklch(0.19 0.03 285);
-  --hairline: oklch(0.98 0.02 300 / 0.1);
-  --hairline-strong: oklch(0.98 0.02 300 / 0.18);
-  --success: oklch(0.85 0.16 140);
-  --warning: oklch(0.85 0.13 95);
-  --modal-bg: oklch(0.26 0.03 285 / 0.98);
-  --topbar-bg: oklch(0.23 0.03 285 / 0.6);
-}
-
-:root[data-theme="cyber"] {
-  --primary: oklch(0.86 0.2 150);
-  --ring: oklch(0.86 0.2 150 / 0.4);
-  --foreground: oklch(0.92 0.03 150);
-  --muted-foreground: oklch(0.66 0.05 150);
-  --background: oklch(0.11 0.02 155);
-  --ink: oklch(0.06 0.02 155);
-  --hairline: oklch(0.86 0.2 150 / 0.12);
-  --hairline-strong: oklch(0.86 0.2 150 / 0.22);
-  --grid-color: oklch(0.86 0.2 150 / 0.05);
-  --success: oklch(0.86 0.2 150);
-  --modal-bg: oklch(0.1 0.02 155 / 0.98);
-  --topbar-bg: oklch(0.08 0.02 155 / 0.6);
-}
-
-:root[data-theme="slate"] {
-  --primary: oklch(0.75 0.03 250);
-  --ring: oklch(0.75 0.03 250 / 0.4);
-  --background: oklch(0.18 0.008 250);
-  --ink: oklch(0.13 0.008 250);
-  --modal-bg: oklch(0.2 0.008 250 / 0.98);
-  --topbar-bg: oklch(0.17 0.008 250 / 0.6);
-}
+/* ---- Світла тема (єдина альтернатива темній) ---- */
 
 :root[data-theme="light"] {
-  --background: oklch(0.97 0.004 90);
-  --ink: oklch(0.95 0.004 90);
-  --foreground: oklch(0.22 0.01 250);
-  --muted-foreground: oklch(0.45 0.01 250);
-  --primary: oklch(0.55 0.09 85);
-  --ring: oklch(0.55 0.09 85 / 0.4);
-  --hairline: oklch(0.22 0.01 250 / 0.1);
-  --hairline-strong: oklch(0.22 0.01 250 / 0.2);
-  --glass-color: oklch(0.22 0.01 250);
-  --grid-color: oklch(0.22 0.01 250 / 0.05);
-  --modal-bg: oklch(0.97 0.004 90 / 0.98);
-  --topbar-bg: oklch(0.97 0.004 90 / 0.7);
-}
+  /* Light — теплий off-white з мʼякими шарами */
+  --background: #fafafa;
+  --ink: #f3f3f2;
+  --surface: #ffffff;
+  --surface-raised: #f7f7f6;
 
-:root[data-theme="solarized"] {
-  --background: oklch(0.96 0.02 95);
-  --ink: oklch(0.93 0.025 95);
-  --foreground: oklch(0.38 0.03 210);
-  --muted-foreground: oklch(0.55 0.03 200);
-  --primary: oklch(0.55 0.11 220);
-  --ring: oklch(0.55 0.11 220 / 0.4);
-  --hairline: oklch(0.4 0.03 210 / 0.12);
-  --hairline-strong: oklch(0.4 0.03 210 / 0.22);
-  --glass-color: oklch(0.4 0.03 210);
-  --grid-color: oklch(0.4 0.03 210 / 0.05);
-  --success: oklch(0.6 0.12 130);
-  --warning: oklch(0.68 0.12 60);
-  --danger: oklch(0.58 0.17 30);
-  --modal-bg: oklch(0.96 0.02 95 / 0.98);
-  --topbar-bg: oklch(0.96 0.02 95 / 0.7);
-}
+  --foreground: #1a1a1c;
+  --fg-display: #0a0a0a;
+  --muted-foreground: #62626a;
+  --text-disabled: #9a9aa0;
 
-:root[data-theme="sand"] {
-  --background: oklch(0.95 0.015 75);
-  --ink: oklch(0.92 0.02 75);
-  --foreground: oklch(0.3 0.02 60);
-  --muted-foreground: oklch(0.5 0.02 60);
-  --primary: oklch(0.58 0.1 55);
-  --ring: oklch(0.58 0.1 55 / 0.4);
-  --hairline: oklch(0.3 0.02 60 / 0.12);
-  --hairline-strong: oklch(0.3 0.02 60 / 0.22);
-  --glass-color: oklch(0.3 0.02 60);
-  --grid-color: oklch(0.3 0.02 60 / 0.05);
-  --modal-bg: oklch(0.95 0.015 75 / 0.98);
-  --topbar-bg: oklch(0.95 0.015 75 / 0.7);
+  --primary: #e5484d;
+  --primary-foreground: #ffffff;
+  --interactive: #3b5bdb;
+
+  --ring: rgba(229, 72, 77, 0.4);
+
+  --success: #2f9e63;
+  --warning: #b7791f;
+  --danger: #e5484d;
+  --info: #6b7280;
+
+  --hairline: #e9e9e7;
+  --hairline-strong: #d6d6d2;
+
+  --muted: rgba(0, 0, 0, 0.03);
+  --modal-bg: #ffffff;
+  --topbar-bg: rgba(250, 250, 250, 0.85);
+
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px -1px rgba(0, 0, 0, 0.05);
+  --shadow-raised: 0 16px 40px -18px rgba(0, 0, 0, 0.2), 0 2px 8px -4px rgba(0, 0, 0, 0.12);
+  --glow: color-mix(in oklab, var(--primary) 5%, transparent);
 }
 
 @layer base {
@@ -266,29 +136,55 @@
   }
 }
 
-/* Матові панелі — прозорість керується з налаштувань */
+/* Поверхні з мʼякою глибиною (тонка тінь + межа) */
 @utility glass {
-  background: color-mix(in oklab, var(--glass-color) calc(var(--glass-alpha) * 100%), transparent);
-  backdrop-filter: blur(20px) saturate(120%);
+  background: var(--surface);
   border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
 }
 
 @utility glass-strong {
-  background: color-mix(
-    in oklab,
-    var(--glass-color) calc(var(--glass-alpha-strong) * 100%),
-    transparent
-  );
-  backdrop-filter: blur(28px) saturate(130%);
+  background: var(--surface-raised);
   border: 1px solid var(--hairline-strong);
+  box-shadow: var(--shadow-raised);
 }
 
+/* Технічні ALL-CAPS лейбли (Space Mono) */
 @utility eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.22em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--muted-foreground);
-  font-weight: 500;
+  font-weight: 400;
+}
+
+/* Дисплейні цифри — чистий гротеск із табличними цифрами */
+@utility doto {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Бренд/герой-текст — монохром high-contrast */
+@utility irid-text {
+  color: var(--fg-display);
+}
+
+/* Активна вкладка — червоний сигнал-підкреслення, без тіней */
+@utility tab-glow {
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+/* Nothing hero-картка — інверсія (біле на чорному / чорне на білому), пласка */
+@utility hero-card {
+  background: var(--fg-display);
+  color: var(--background);
+  border: 1px solid var(--fg-display);
+}
+@utility hero-card-sub {
+  color: color-mix(in oklab, var(--background) 72%, transparent);
 }
 
 @keyframes pulse-dot {
@@ -305,6 +201,19 @@
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
+/* Nothing: перехід через прозорість (fade), без слайдів */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
 /* Зона перетягування вікна (Electron, прихований заголовок) */
 .drag-region {
   -webkit-app-region: drag;
@@ -315,52 +224,20 @@
   app-region: no-drag;
 }
 
-/* Скляне (акрилове) вікно: тіло напівпрозоре — крізь нього видно розмитий робочий стіл.
-   Прозорість регулюється тим самим повзунком «Прозорість панелей». */
-:root[data-glass="on"] body {
-  background-color: color-mix(in oklab, var(--ink) calc(78% - var(--glass-alpha) * 320%), transparent);
-}
-:root[data-glass="on"] .app-bg::after {
-  opacity: 0.12;
-}
-
-/* Кольорове сяйво навколо панелей — тінь у колір акценту */
-:root[data-glow="on"] .glass,
-:root[data-glow="on"] .glass-strong {
-  box-shadow: 0 12px 48px -12px color-mix(in oklab, var(--primary) 45%, transparent);
-}
-
-/* Сміливий фон: чорнило + великі акцентні сяйва (без сітки) */
+/* Мʼяке фонове сяйво з брендового акценту (глибина без гімміків) */
 .app-bg::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
   background:
-    radial-gradient(60% 55% at 15% -5%, color-mix(in oklab, var(--primary) 20%, transparent), transparent 70%),
-    radial-gradient(50% 45% at 100% 0%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 65%),
-    radial-gradient(70% 60% at 50% 120%, color-mix(in oklab, var(--primary) 8%, transparent), transparent 70%);
-  z-index: 0;
-}
-.app-bg::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.35;
-  mix-blend-mode: overlay;
-  z-index: 0;
-}
-:root[data-theme="light"] .app-bg::after,
-:root[data-theme="solarized"] .app-bg::after,
-:root[data-theme="sand"] .app-bg::after {
-  opacity: 0.12;
+    radial-gradient(58% 42% at 50% -12%, var(--glow), transparent 72%),
+    radial-gradient(40% 30% at 100% 0%, color-mix(in oklab, var(--interactive) 5%, transparent), transparent 70%);
 }
 
-/* Вимкнення фонових ефектів */
-:root[data-effects="off"] .app-bg::before,
-:root[data-effects="off"] .app-bg::after {
+/* Вимкнення фонового сяйва */
+:root[data-effects="off"] .app-bg::before {
   display: none;
 }
 
