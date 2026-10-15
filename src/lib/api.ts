@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type {
   HostInput,
   HostState,
@@ -30,16 +30,31 @@ import type {
   ConnectionsReport,
   ToolResult,
   IpIntel,
+  FimReport,
 } from "./types";
+import { settingsStore } from "./settings";
+// Демо-двигун вантажиться окремим чанком лише коли увімкнено демо-режим
+const loadDemo = () => import("./demo");
 
 /* ---------- REST ---------- */
 
+export class AuthError extends Error {}
+
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
+  if (settingsStore.value.demo) {
+    const body = typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
+    const { demoRequest } = await loadDemo();
+    return (await demoRequest(init?.method ?? "GET", url, body)) as T;
+  }
   const r = await fetch(url, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
   const data = await r.json().catch(() => ({}));
+  if (r.status === 401) {
+    store.setAuth(false);
+    throw new AuthError("Unauthorized");
+  }
   if (!r.ok) throw new Error((data as { error?: string }).error || `HTTP ${r.status}`);
   return data as T;
 }
@@ -116,6 +131,13 @@ export const api = {
   logtail: (hostId: string, path: string, lines = 200) =>
     req<{ path: string; lines: string[] }>(`/api/hosts/${hostId}/logtail?path=${encodeURIComponent(path)}&lines=${lines}`),
   history: (hostId: string) => req<{ history: MetricSample[] }>(`/api/hosts/${hostId}/history`),
+  fim: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim`, { method: "POST" }),
+  fimBaseline: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim-baseline`, { method: "POST" }),
+
+  // Доступ (веб-режим із токеном)
+  login: (token: string) => req<{ ok: boolean }>("/api/auth/login", { method: "POST", body: JSON.stringify({ token }) }),
+  logout: () => req<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
+  info: () => req<{ version: string; auth: boolean; platform: string; web: boolean }>("/api/info"),
 
   // Uptime-монітори
   listMonitors: () => req<Monitor[]>("/api/monitors"),
@@ -153,20 +175,63 @@ export const api = {
 
 type Listener = () => void;
 
+type Snapshot = { hosts: HostState[]; connected: boolean; authed: boolean; demo: boolean };
+
 class StateStore {
   hosts: HostState[] = [];
   connected = false;
+  authed = true;
+  snapshot: Snapshot = { hosts: [], connected: false, authed: true, demo: false };
+  private demoTimer: number | null = null;
+  private demoOn = false;
+  private lastRaw = "";
   private listeners = new Set<Listener>();
   private ws: WebSocket | null = null;
   private retry = 1000;
 
   subscribe(fn: Listener) {
     this.listeners.add(fn);
-    if (!this.ws) this.connect();
+    this.sync();
     return () => this.listeners.delete(fn);
   }
 
+  setAuth(ok: boolean) {
+    if (this.authed === ok) return;
+    this.authed = ok;
+    if (ok) this.sync();
+    this.emit();
+  }
+
+  /** Перемикання між живим двигуном і демо-режимом. */
+  sync() {
+    const demo = settingsStore.value.demo;
+    if (demo && !this.demoOn) {
+      this.demoOn = true;
+      this.ws?.close();
+      this.ws = null;
+      loadDemo().then(({ demoHosts }) => {
+        if (!this.demoOn) return;
+        const tick = () => {
+          this.hosts = demoHosts();
+          this.connected = true;
+          this.emit();
+        };
+        tick();
+        this.demoTimer = window.setInterval(tick, 3000);
+      });
+    } else if (!demo && this.demoOn) {
+      this.demoOn = false;
+      if (this.demoTimer) clearInterval(this.demoTimer);
+      this.hosts = [];
+      this.connected = false;
+      this.lastRaw = "";
+      this.emit();
+    }
+    if (!demo && !this.ws && this.authed) this.connect();
+  }
+
   private emit() {
+    this.snapshot = { hosts: this.hosts, connected: this.connected, authed: this.authed, demo: this.demoOn };
     for (const fn of this.listeners) fn();
   }
 
@@ -181,7 +246,11 @@ class StateStore {
     };
     ws.onmessage = (e) => {
       try {
-        const msg = JSON.parse(e.data as string);
+        const raw = e.data as string;
+        // Ідентичний стан — нічого не перемальовуємо
+        if (raw === this.lastRaw) return;
+        this.lastRaw = raw;
+        const msg = JSON.parse(raw);
         if (msg.type === "state") {
           this.hosts = msg.hosts as HostState[];
           this.emit();
@@ -191,10 +260,12 @@ class StateStore {
       }
     };
     const reconnect = () => {
+      if (this.demoOn || this.ws !== ws) return;
       this.connected = false;
       this.ws = null;
+      this.lastRaw = "";
       this.emit();
-      setTimeout(() => this.connect(), this.retry);
+      setTimeout(() => !this.demoOn && !this.ws && this.connect(), this.retry);
       this.retry = Math.min(this.retry * 1.6, 10000);
     };
     ws.onclose = reconnect;
@@ -203,14 +274,23 @@ class StateStore {
 }
 
 export const store = new StateStore();
+settingsStore.subscribe(() => store.sync());
 
-export function useAppState(): { hosts: HostState[]; connected: boolean } {
-  const [, force] = useState(0);
-  useEffect(() => {
-    const unsub = store.subscribe(() => force((v) => v + 1));
-    return () => {
-      unsub();
-    };
-  }, []);
-  return { hosts: store.hosts, connected: store.connected };
+const subscribeState = (fn: Listener) => store.subscribe(fn);
+const stateSnapshot = () => store.snapshot;
+
+export function useAppState(): Snapshot {
+  return useSyncExternalStore(subscribeState, stateSnapshot);
 }
+
+/** Глобально вибраний хост — спільний для верхньої панелі й усіх сторінок. */
+export function useHostSelection(): [string | null, (id: string | null) => void] {
+  const { hosts } = useAppState();
+  const id = useSyncExternalStore(
+    (fn) => settingsStore.subscribe(fn),
+    () => settingsStore.value.hostId,
+  );
+  const valid = id && hosts.some((h) => h.id === id) ? id : null;
+  return [valid, setHostSelection];
+}
+const setHostSelection = (id: string | null) => settingsStore.set({ hostId: id });

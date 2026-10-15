@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Cpu, RefreshCw, Activity, MemoryStick } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { fmtUptime, type ProcessReport } from "@/lib/types";
 import { PageHeader, HostBar, Panel, Kpi, Bar, BarList, SectionHeader, EmptyState } from "@/components/ui";
@@ -8,7 +8,7 @@ import { PageHeader, HostBar, Panel, Kpi, Bar, BarList, SectionHeader, EmptyStat
 export default function ProcessesPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [data, setData] = useState<ProcessReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -32,9 +32,9 @@ export default function ProcessesPage() {
       <PageHeader eyebrow="EDR" title={t("Процеси")} lede={t("Таблиця процесів хоста — топ за CPU та памʼяттю, наживо по SSH.")} />
       <HostBar hosts={hosts} value={active} onChange={setHostId} onRefresh={() => active && scan(active)} loading={loading} />
       {err ? (
-        <Panel><div className="mono py-10 text-center text-sm text-[var(--danger)]">{err}</div></Panel>
+        <Panel><div className="mono py-10 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>
       ) : loading && !data ? (
-        <Panel><div className="py-14 text-center text-sm text-muted-foreground">{t("Читаю таблицю процесів…")}</div></Panel>
+        <Panel><div className="py-14 text-center text-[14.5px] text-muted-foreground">{t("Читаю таблицю процесів…")}</div></Panel>
       ) : data ? (
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -57,11 +57,11 @@ export default function ProcessesPage() {
 
           <Panel>
             <div className="overflow-auto rounded-lg border border-[var(--hairline)]">
-              <table className="w-full text-left text-[12.5px]">
+              <table className="data-table w-full text-left text-[14px]">
                 <thead>
                   <tr className="border-b border-[var(--hairline)] bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]">
                     {["PID", t("Користувач"), "CPU %", "MEM %", t("Аптайм"), "STAT", t("Команда")].map((h) => (
-                      <th key={h} className="mono whitespace-nowrap px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{h}</th>
+                      <th key={h} className="whitespace-nowrap px-3 py-2 text-[12px] text-muted-foreground font-medium">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -71,11 +71,11 @@ export default function ProcessesPage() {
                       <td className="num px-3 py-1.5 text-muted-foreground">{p.pid}</td>
                       <td className="mono px-3 py-1.5">{p.user}</td>
                       <td className="px-3 py-1.5" style={{ width: 90 }}>
-                        <div className="num text-[11px]" style={{ color: p.cpu > 50 ? "var(--danger)" : p.cpu > 15 ? "var(--warning)" : undefined }}>{p.cpu}</div>
+                        <div className="num text-[12.5px]" style={{ color: p.cpu > 50 ? "var(--danger)" : p.cpu > 15 ? "var(--warning)" : undefined }}>{p.cpu}</div>
                         <div className="mt-0.5"><Bar value={Math.min(100, p.cpu)} tint={p.cpu > 50 ? "var(--danger)" : "var(--primary)"} /></div>
                       </td>
                       <td className="px-3 py-1.5" style={{ width: 90 }}>
-                        <div className="num text-[11px] text-muted-foreground">{p.mem}</div>
+                        <div className="num text-[12.5px] text-muted-foreground">{p.mem}</div>
                         <div className="mt-0.5"><Bar value={Math.min(100, p.mem)} /></div>
                       </td>
                       <td className="mono px-3 py-1.5 text-muted-foreground">{fmtUptime(p.uptimeSec)}</td>

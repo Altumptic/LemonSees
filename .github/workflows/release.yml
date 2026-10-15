@@ -1,0 +1,84 @@
+name: Release
+
+# Тег v* → портативні збірки для Windows і Linux + веб-архів у GitHub Release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+          - os: ubuntu-latest
+            script: dist:linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.script }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.zip
+            release/*.AppImage
+            release/*.tar.gz
+          if-no-files-found: error
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - run: npm run build
+      - name: Package web bundle
+        run: |
+          V=$(node -p "require('./package.json').version")
+          mkdir -p out/LemonSees-$V-web
+          cp -r dist server package.json package-lock.json lemonsees.sh LemonSees.bat LICENSE README.md SECURITY.md out/LemonSees-$V-web/
+          tar -C out -czf LemonSees-$V-web.tar.gz LemonSees-$V-web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: LemonSees-*-web.tar.gz
+
+  publish:
+    needs: [desktop, web]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* \
+            --title "LemonSees $GITHUB_REF_NAME" \
+            --notes-file CHANGELOG.md --verify-tag || \
+          gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber

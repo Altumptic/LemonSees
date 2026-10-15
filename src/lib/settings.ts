@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export type Lang = "uk" | "en" | "ru" | "pl" | "zh";
 
@@ -7,23 +7,39 @@ export type ThemeId = "dark" | "light";
 export type AppSettings = {
   lang: Lang;
   theme: ThemeId;
-  scale: number; // 80..140 масштаб UI
-  effects: boolean; // dot-matrix фон
+  scale: number; // 80..150 масштаб UI
+  effects: boolean; // мʼяке фонове сяйво
+  sidebar: boolean; // розгорнутий сайдбар
   reduceMotion: boolean;
   confirmDestructive: boolean;
   geoip: boolean; // гео-IP збагачення атакуючих (зовнішній запит)
+  demo: boolean; // демо-режим: локальні правдоподібні дані замість двигуна
+  hostId: string | null; // глобально вибраний хост (верхня панель)
+  clock24: boolean; // 24-годинний формат часу
+  refreshSec: number; // автооновлення сторінок зі сканами (0 — вручну)
+  notify: boolean; // сповіщення в застосунку про нові інциденти
+  v?: number; // версія схеми налаштувань
 };
+
+const VERSION = 3;
 
 const KEY = "shok.settings";
 
 export const DEFAULTS: AppSettings = {
   lang: "uk",
-  theme: "dark",
-  scale: 100,
+  theme: "light",
+  scale: 110,
   effects: true,
+  sidebar: true,
   reduceMotion: false,
   confirmDestructive: true,
   geoip: true,
+  demo: false,
+  hostId: null,
+  clock24: true,
+  refreshSec: 0,
+  notify: true,
+  v: VERSION,
 };
 
 type Listener = () => void;
@@ -35,7 +51,13 @@ class SettingsStore {
   constructor() {
     let v = DEFAULTS;
     try {
-      v = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+      const saved = JSON.parse(localStorage.getItem(KEY) || "{}") as Partial<AppSettings>;
+      // Міграція на v3: кремова тема + комфортний масштаб за замовчуванням
+      if ((saved.v ?? 0) < VERSION) {
+        delete saved.theme;
+        delete saved.scale;
+      }
+      v = { ...DEFAULTS, ...saved, v: VERSION };
     } catch {
       /* ignore */
     }
@@ -72,30 +94,27 @@ class SettingsStore {
     root.dataset.effects = v.effects ? "on" : "off";
     root.dataset.motion = v.reduceMotion ? "reduced" : "full";
 
-    // Nothing — монохром + сигнальний червоний; чистимо будь-які старі inline-акценти
+    // Чистимо будь-які старі inline-акценти
     root.style.removeProperty("--primary");
     root.style.removeProperty("--accent");
     root.style.removeProperty("--ring");
 
-    document.body.style.zoom = String(Math.max(80, Math.min(140, v.scale)) / 100);
+    const zoom = Math.max(80, Math.min(150, v.scale)) / 100;
+    root.style.setProperty("--zoom", String(zoom));
+    document.body.style.zoom = String(zoom);
   }
 }
 
 export const settingsStore = new SettingsStore();
 
+const subscribe = (fn: Listener) => settingsStore.subscribe(fn);
+const snapshot = () => settingsStore.value;
+const setSettings = (p: Partial<AppSettings>) => settingsStore.set(p);
+const resetSettings = () => settingsStore.reset();
+
 export function useSettings() {
-  const [, force] = useState(0);
-  useEffect(() => {
-    const unsub = settingsStore.subscribe(() => force((x) => x + 1));
-    return () => {
-      unsub();
-    };
-  }, []);
-  return {
-    settings: settingsStore.value,
-    set: (p: Partial<AppSettings>) => settingsStore.set(p),
-    reset: () => settingsStore.reset(),
-  };
+  const settings = useSyncExternalStore(subscribe, snapshot);
+  return { settings, set: setSettings, reset: resetSettings };
 }
 
 export const isElectron = navigator.userAgent.includes("Electron");

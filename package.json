@@ -1,16 +1,20 @@
 {
   "name": "lemonsees",
-  "version": "2.0.0",
-  "description": "LemonSees — agentless SOC platform for L1/L2/L3 analysts over SSH: SIEM/XDR, EDR, NDR, CTI, SOAR, GRC. Windows desktop app.",
-  "author": "kiurakku",
+  "version": "3.0.0",
+  "description": "LemonSees by Altumptic — agentless SOC platform over SSH: SIEM, EDR, FIM, NDR, CTI with MITRE ATT&CK, SOAR and GRC. Runs as a web app or a portable desktop app for Windows and Linux.",
+  "author": {
+    "name": "Altumptic",
+    "email": "security@altumptic.com",
+    "url": "https://altumptic.com"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kiurakku/LemonSees.git"
+    "url": "https://github.com/Altumptic/LemonSees.git"
   },
-  "homepage": "https://github.com/kiurakku/LemonSees#readme",
+  "homepage": "https://github.com/Altumptic/LemonSees#readme",
   "bugs": {
-    "url": "https://github.com/kiurakku/LemonSees/issues"
+    "url": "https://github.com/Altumptic/LemonSees/issues"
   },
   "keywords": [
     "soc",
@@ -24,21 +28,35 @@
     "ssh",
     "security",
     "electron",
-    "windows"
+    "windows",
+    "wazuh-alternative",
+    "mitre-attack",
+    "fim",
+    "linux",
+    "web",
+    "portable"
   ],
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "typecheck": "tsc --noEmit -p .",
     "server": "node server/index.js",
     "start": "node server/index.js",
+    "start:web": "node server/index.js --no-open",
     "app": "electron .",
-    "dist:win": "electron-builder --win dir"
+    "dist:win": "npm run build && electron-builder --win portable zip",
+    "dist:linux": "npm run build && electron-builder --linux AppImage tar.gz",
+    "dist:dir": "npm run build && electron-builder --dir",
+    "assets": "electron scripts/render.cjs icons",
+    "shots": "electron scripts/render.cjs shots",
+    "world-dots": "node scripts/world-dots.mjs"
   },
   "build": {
-    "appId": "com.lemonsees.app",
+    "appId": "com.altumptic.lemonsees",
     "productName": "LemonSees",
+    "copyright": "Copyright © 2026 Altumptic",
     "directories": {
       "buildResources": "buildResources",
       "output": "release"
@@ -48,16 +66,41 @@
       "electron/**",
       "server/**",
       "dist/**",
-      "package.json"
+      "package.json",
+      "!**/*.map"
     ],
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "win": {
       "target": [
-        "dir"
+        "portable",
+        "zip"
       ],
-      "icon": "buildResources/icon.png"
+      "icon": "buildResources/icon.png",
+      "legalTrademarks": "LemonSees by Altumptic"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "icon": "buildResources/icon.png",
+      "category": "Network",
+      "maintainer": "Altumptic <security@altumptic.com>",
+      "vendor": "Altumptic",
+      "synopsis": "Agentless SOC platform",
+      "executableName": "lemonsees"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.AppImage"
     }
   },
   "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.1",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "express": "^4.21.2",
@@ -78,10 +121,13 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
+    "d3-geo": "^3.1.1",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
     "tailwindcss": "^4.2.1",
+    "topojson-client": "^3.1.0",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "world-atlas": "^2.0.2"
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, RefreshCw, Globe, UserX, ShieldCheck, Radio, MapPin } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { fmtWhen, type ThreatReport } from "@/lib/types";
@@ -28,7 +28,7 @@ export default function ThreatsPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
   const { settings } = useSettings();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [data, setData] = useState<ThreatReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -90,7 +90,7 @@ export default function ThreatsPage() {
             <select
               value={active ?? ""}
               onChange={(e) => setHostId(e.target.value)}
-              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]"
+              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]"
             >
               {hosts.map((h) => (
                 <option key={h.id} value={h.id} className="bg-[var(--ink)]">{h.name}</option>
@@ -104,15 +104,15 @@ export default function ThreatsPage() {
       />
 
       {host && host.status !== "online" && (
-        <div className="mono mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-[var(--warning)]">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[12.5px] text-[var(--warning)] font-medium">
           <StatusDot status={host.status} /> {t("Хост не онлайн — дані можуть бути недоступні")}
         </div>
       )}
 
       {loading && !data ? (
-        <Panel><div className="py-16 text-center text-sm text-muted-foreground">{t("Аналізую журнали атак…")}</div></Panel>
+        <Panel><div className="py-16 text-center text-[14.5px] text-muted-foreground">{t("Аналізую журнали атак…")}</div></Panel>
       ) : err ? (
-        <Panel><div className="mono py-10 text-center text-sm text-[var(--danger)]">{err}</div></Panel>
+        <Panel><div className="mono py-10 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>
       ) : data ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -136,9 +136,9 @@ export default function ThreatsPage() {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Топ атакуючих */}
             <Panel className="xl:col-span-2">
-              <SectionHeader icon={Crosshair} title={t("Топ атакуючих IP")} sub={settings.geoip ? t("з гео-IP збагаченням") : t("гео-IP вимкнено в налаштуваннях")} right={<span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{fmtWhen(data.at)}</span>} />
+              <SectionHeader icon={Crosshair} title={t("Топ атакуючих IP")} sub={settings.geoip ? t("з гео-IP збагаченням") : t("гео-IP вимкнено в налаштуваннях")} right={<span className="text-[12px] text-muted-foreground font-medium">{fmtWhen(data.at)}</span>} />
               {data.attackers.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">{t("Атак не зафіксовано.")}</div>
+                <div className="py-8 text-center text-[14.5px] text-muted-foreground">{t("Атак не зафіксовано.")}</div>
               ) : (
                 <div className="space-y-1.5">
                   {data.attackers.slice(0, 15).map((a) => (
@@ -146,13 +146,13 @@ export default function ThreatsPage() {
                       <span className="text-base leading-none">{flag(a.geo?.countryCode || "")}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="mono truncate text-[12.5px] font-medium">{a.ip}</span>
-                          <span className="num shrink-0 text-xs text-[var(--danger)]">{a.count.toLocaleString()}</span>
+                          <span className="mono truncate text-[14px] font-medium">{a.ip}</span>
+                          <span className="num shrink-0 text-[13px] text-[var(--danger)]">{a.count.toLocaleString()}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2">
                           <div className="flex-1"><Track value={(a.count / maxCount) * 100} tone="critical" /></div>
                           {a.geo && (a.geo.country || a.geo.isp) && (
-                            <span className="mono shrink-0 truncate text-[10px] text-muted-foreground" style={{ maxWidth: 200 }}>
+                            <span className="mono shrink-0 truncate text-[12px] text-muted-foreground" style={{ maxWidth: 200 }}>
                               {[a.geo.city, a.geo.country].filter(Boolean).join(", ")}{a.geo.isp ? ` · ${a.geo.isp}` : ""}
                             </span>
                           )}
@@ -168,7 +168,7 @@ export default function ThreatsPage() {
             <Panel>
               <SectionHeader icon={Globe} title={t("Географія атак")} />
               {data.countries.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">{settings.geoip ? t("Немає даних") : t("Увімкни гео-IP")}</div>
+                <div className="py-6 text-center text-[14.5px] text-muted-foreground">{settings.geoip ? t("Немає даних") : t("Увімкни гео-IP")}</div>
               ) : (
                 <ul className="space-y-2">
                   {data.countries.map((c) => (
@@ -176,8 +176,8 @@ export default function ThreatsPage() {
                       <span className="text-base leading-none">{flag(c.cc)}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-[12.5px]">{c.country || c.cc}</span>
-                          <span className="num shrink-0 text-[11px] text-muted-foreground">{c.count.toLocaleString()}</span>
+                          <span className="truncate text-[14px]">{c.country || c.cc}</span>
+                          <span className="num shrink-0 text-[12.5px] text-muted-foreground">{c.count.toLocaleString()}</span>
                         </div>
                         <div className="mt-1"><Track value={(c.count / (data.countries[0]?.count || 1)) * 100} tone="warning" /></div>
                       </div>
@@ -191,7 +191,7 @@ export default function ThreatsPage() {
             <Panel>
               <SectionHeader icon={UserX} title={t("Цільові логіни")} sub={t("Які імена підбирають")} />
               {data.users.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">{t("Немає даних")}</div>
+                <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Немає даних")}</div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {data.users.map((u) => (
@@ -205,11 +205,11 @@ export default function ThreatsPage() {
             <Panel className="xl:col-span-2">
               <SectionHeader icon={ShieldCheck} title={t("Успішні входи")} sub={t("Звідки реально заходили — перевір, чи знайомі")} />
               {data.accepted.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">{t("Успішних входів у журналі немає.")}</div>
+                <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Успішних входів у журналі немає.")}</div>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
                   {data.accepted.map((a) => (
-                    <div key={a.ip} className="mono flex items-center justify-between gap-3 border-b border-[var(--hairline)] px-4 py-2 text-[12px] last:border-0">
+                    <div key={a.ip} className="mono flex items-center justify-between gap-3 border-b border-[var(--hairline)] px-4 py-2 text-[13.5px] last:border-0">
                       <span className="truncate">{a.ip}</span>
                       <span className="text-muted-foreground">{a.count} {t("входів")}</span>
                     </div>
@@ -219,7 +219,7 @@ export default function ThreatsPage() {
             </Panel>
           </div>
 
-          <div className="mono flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-medium">
             <span className="live-dot h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
             {t("Автоінциденти вмикаються в Налаштуваннях. Гео-IP надсилає лише публічні IP атакуючих у сервіс геолокації.")}
           </div>

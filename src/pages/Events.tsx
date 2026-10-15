@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ScrollText, RefreshCw, FileText } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { fmtWhen, type AuditEvent } from "@/lib/types";
 import { PageHeader, HostBar, Panel, GhostButton, SectionHeader, Histogram, EmptyState, Tag } from "@/components/ui";
@@ -24,7 +24,7 @@ function lineTone(l: string): string | undefined {
 export default function EventsPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [path, setPath] = useState(LOGS[1]);
   const [custom, setCustom] = useState("");
   const [lines, setLines] = useState<string[]>([]);
@@ -94,7 +94,7 @@ export default function EventsPage() {
           <div className="mb-3 flex flex-wrap items-center gap-1.5">
             {LOGS.map((l) => (
               <GhostButton key={l} active={!custom && path === l} onClick={() => { setCustom(""); setPath(l); }}>
-                <span className="mono text-[10px]">{l.replace("/var/log/", "")}</span>
+                <span className="mono text-[12px]">{l.replace("/var/log/", "")}</span>
               </GhostButton>
             ))}
             <input
@@ -102,12 +102,12 @@ export default function EventsPage() {
               onChange={(e) => setCustom(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && active && tail(active, custom || path)}
               placeholder="/var/log/…"
-              className="mono w-40 rounded-md border border-[var(--hairline)] bg-transparent px-2 py-1 text-[11px] outline-none focus:border-[var(--hairline-strong)]"
+              className="mono w-40 rounded-md border border-[var(--hairline)] bg-transparent px-2 py-1 text-[12.5px] outline-none focus:border-[var(--hairline-strong)]"
             />
           </div>
           {/* Зведення важливості логів */}
           <div className="mb-3">
-            <div className="mono mb-1.5 flex items-center gap-3 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="mb-1.5 flex items-center gap-3 text-[12px] text-muted-foreground font-medium">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[var(--danger)]" />{t("помилки")} {sev.error}</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[var(--warning)]" />{t("увага")} {sev.warn}</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-[var(--success)]" />ok {sev.ok}</span>
@@ -121,9 +121,9 @@ export default function EventsPage() {
             </div>
           </div>
           {err ? (
-            <div className="mono rounded-lg border border-[var(--danger)]/40 px-3 py-3 text-[12px] text-[var(--danger)]">{err}</div>
+            <div className="mono rounded-lg border border-[var(--danger)]/40 px-3 py-3 text-[13.5px] text-[var(--danger)]">{err}</div>
           ) : (
-            <div className="mono h-[520px] overflow-auto rounded-lg border border-[var(--hairline)] bg-black/30 p-3 text-[11.5px] leading-relaxed">
+            <div className="mono h-[520px] overflow-auto rounded-lg border border-[var(--hairline)] bg-[var(--code-bg)] p-3 text-[13px] leading-relaxed">
               {lines.map((l, i) => (
                 <div key={i} style={{ color: lineTone(l) }} className={lineTone(l) ? "" : "text-muted-foreground"}>{l || " "}</div>
               ))}
@@ -137,18 +137,18 @@ export default function EventsPage() {
           {buckets.length > 1 && (
             <div className="mb-4">
               <Histogram buckets={buckets} height={48} color="var(--primary)" />
-              <div className="mono mt-1 flex justify-between text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+              <div className="mt-1 flex justify-between text-[11px] text-muted-foreground font-medium">
                 <span>{audit.length ? fmtWhen(Math.min(...audit.map((e) => e.at))) : ""}</span>
                 <span>{t("зараз")}</span>
               </div>
             </div>
           )}
           {audit.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">{t("Поки тихо.")}</div>
+            <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Поки тихо.")}</div>
           ) : (
             <ul className="space-y-2">
               {audit.map((e, i) => (
-                <li key={i} className="flex items-center justify-between gap-2 border-b border-[var(--hairline)] pb-2 text-[11.5px] last:border-0">
+                <li key={i} className="flex items-center justify-between gap-2 border-b border-[var(--hairline)] pb-2 text-[13px] last:border-0">
                   <span className="mono min-w-0">
                     <span className={e.action.startsWith("incident.auto") ? "text-[var(--danger)]" : "text-foreground/85"}>{e.action}</span>
                     {e.target && <span className="ml-1 truncate text-muted-foreground">{e.target}</span>}
@@ -158,7 +158,7 @@ export default function EventsPage() {
               ))}
             </ul>
           )}
-          <div className="mono mt-3 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="mt-3 flex items-center gap-1.5 text-[12px] text-muted-foreground font-medium">
             <Tag>SIEM</Tag> {t("логи хоста + журнал застосунку")}
           </div>
         </Panel>
