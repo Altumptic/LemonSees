@@ -1,0 +1,18 @@
+// Знак LemonSees (by Altumptic): лимон-«око» на глиняному тлі.
+export function BrandMark({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} role="img" aria-label="LemonSees">
+      <rect width="64" height="64" rx="16" fill="#C15F3C" />
+      <g transform="rotate(-24 32 32)">
+        <path
+          d="M8 32c1.6-.9 3.2-2 4.6-3.2C15 21.4 22.8 17 32 17s17 4.4 19.4 11.8c1.4 1.2 3 2.3 4.6 3.2-1.6.9-3.2 2-4.6 3.2C49 42.6 41.2 47 32 47s-17-4.4-19.4-11.8C11.2 34 9.6 32.9 8 32Z"
+          fill="#FAF9F5"
+        />
+        <circle cx="32" cy="32" r="9" fill="#1F1E1D" />
+        <circle cx="32" cy="32" r="4.2" fill="#C15F3C" />
+        <circle cx="35.2" cy="28.8" r="2.1" fill="#FAF9F5" />
+      </g>
+      <path d="M46 13.5c3.6-1.6 7.4-1 9.5.6-1.5 3-5.3 5-9.7 4.4-.6-1.9-.5-3.6.2-5Z" fill="#FAF9F5" opacity=".92" />
+    </svg>
+  );
+}

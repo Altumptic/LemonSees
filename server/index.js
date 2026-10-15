@@ -1,5 +1,6 @@
-// ШОК — локальний двигун моніторингу.
-// Слухає лише 127.0.0.1. На віддалені сервери нічого не встановлюється.
+// LemonSees by Altumptic — двигун SOC-платформи.
+// За замовчуванням слухає лише 127.0.0.1. Веб-режим (LEMONSEES_HOST=0.0.0.0) вимагає LEMONSEES_TOKEN.
+// На віддалені сервери нічого не встановлюється.
 import http from "node:http";
 import path from "node:path";
 import fs from "node:fs";
@@ -29,7 +30,12 @@ import {
   loadMonitors,
   saveMonitors,
   sanitizeMonitor,
+  pruneAudit,
+  loadFimBaselines,
+  saveFimBaselines,
 } from "./config.js";
+import { scanFim, diffFim } from "./fim.js";
+import { mountAuth, isAuthed, authEnabled } from "./auth.js";
 import { Uptime } from "./uptime.js";
 import { HostConnection } from "./ssh.js";
 import { Poller } from "./collector.js";
@@ -43,8 +49,20 @@ import { geoLookup } from "./geoip.js";
 import { collectProcesses, collectPersistence } from "./edr.js";
 import { collectConnections, runTool, investigateIp } from "./netops.js";
 
-const PORT = parseInt(process.env.SHOK_PORT || "5199", 10);
-const HOST = "127.0.0.1";
+const PORT = parseInt(process.env.LEMONSEES_PORT || process.env.SHOK_PORT || "5199", 10);
+const LOOPBACK = ["127.0.0.1", "::1", "localhost"];
+let HOST = process.env.LEMONSEES_HOST || "127.0.0.1";
+if (!LOOPBACK.includes(HOST) && !authEnabled()) {
+  console.error(`\n  ✖ LEMONSEES_HOST=${HOST} без LEMONSEES_TOKEN небезпечно (SSH-доступ і термінал були б відкриті в мережу).\n    Задай LEMONSEES_TOKEN або слухай лише 127.0.0.1. Переходжу на 127.0.0.1.\n`);
+  HOST = "127.0.0.1";
+}
+const VERSION = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+  } catch {
+    return "dev";
+  }
+})();
 const NO_OPEN = process.argv.includes("--no-open") || process.env.SHOK_NO_OPEN === "1";
 
 let hosts = loadHosts();
@@ -105,9 +123,18 @@ function evaluateBruteforce(h, failed, threshold) {
   audit("incident.auto", inc.id, { rule, failed, host: h.name });
 }
 
-// Перша перевірка через 45с після старту, далі кожні 5 хв.
-setTimeout(threatSweep, 45000);
-setInterval(threatSweep, 5 * 60 * 1000);
+// Перша перевірка через 45с після старту, далі — з інтервалом із налаштувань SOC.
+function scheduleSweep(delay) {
+  setTimeout(async () => {
+    await threatSweep().catch(() => {});
+    scheduleSweep((loadSoc().sweepMinutes || 5) * 60 * 1000);
+  }, delay);
+}
+scheduleSweep(45000);
+
+// Ретеншн журналу аудиту — раз на 6 год
+setInterval(() => pruneAudit(loadSoc().retentionDays || 90), 6 * 3600 * 1000);
+setTimeout(() => pruneAudit(loadSoc().retentionDays || 90), 60000);
 const pollers = new Map(); // id -> Poller
 const hostStates = new Map(); // id -> state
 
@@ -186,7 +213,19 @@ for (const h of hosts) startHost(h);
 /* ---------------- HTTP API ---------------- */
 
 const app = express();
-app.use(express.json());
+app.disable("x-powered-by");
+app.use(express.json({ limit: "1mb" }));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  next();
+});
+
+app.get("/api/info", (req, res) =>
+  res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic" }),
+);
+mountAuth(app, { secure: process.env.LEMONSEES_SECURE_COOKIE === "1" });
 
 app.get("/api/state", (req, res) => res.json(snapshot()));
 
@@ -200,6 +239,7 @@ let monitors = loadMonitors();
 const uptime = new Uptime();
 uptime.onEvent = (evt) => {
   audit(evt.ok ? "monitor.up" : "monitor.down", evt.name, { url: evt.url, status: evt.status });
+  if (loadSoc().notifyDowntime === false) return;
   try {
     globalThis.__lemonNotify?.(
       evt.ok ? `✅ ${evt.name}` : `🔴 ${evt.name}`,
@@ -713,6 +753,69 @@ app.delete("/api/incidents/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+/* ---------------- FIM — цілісність файлів ---------------- */
+
+let fimBaselines = loadFimBaselines();
+
+function fimIncident(h, report) {
+  const soc = loadSoc();
+  if (!soc.autoIncidents || !report.changed) return;
+  const rule = "fim-change";
+  const changed = report.files.filter((f) => f.status === "modified" || f.status === "added" || f.status === "missing").map((f) => f.path);
+  const openInc = incidents.find((i) => i.rule === rule && i.hostId === h.id && i.status !== "closed");
+  if (openInc) return;
+  const critical = changed.some((p) => /shadow|sudoers|authorized_keys|sshd|ld\.so\.preload|pam\.d/.test(p));
+  const inc = sanitizeIncident({
+    title: `FIM: змінено ${changed.length} критичн. файл(ів) на ${h.name}`,
+    severity: critical ? "high" : "medium",
+    status: "open",
+    hostId: h.id,
+    category: "integrity",
+    detail: `Змінені файли: ${changed.join(", ")}. Перевір, чи це плановані зміни; якщо ні — ізолюй хост і проаналізуй.`,
+    auto: true,
+    rule,
+  });
+  inc.timeline = [{ at: Date.now(), text: `Автостворено FIM: ${changed.join(", ")}` }];
+  incidents.unshift(inc);
+  saveIncidents(incidents);
+  audit("incident.auto", inc.id, { rule, host: h.name });
+}
+
+app.post("/api/hosts/:id/fim", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  const h = hosts.find((x) => x.id === req.params.id);
+  if (!conn || !h) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    const files = await scanFim(conn);
+    // Перше сканування автоматично стає базовою лінією
+    if (!fimBaselines[h.id]) {
+      fimBaselines[h.id] = { at: Date.now(), files };
+      saveFimBaselines(fimBaselines);
+      audit("fim.baseline", h.name, { files: files.length, auto: true });
+    }
+    const report = diffFim(files, fimBaselines[h.id]);
+    fimIncident(h, report);
+    res.json(report);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/hosts/:id/fim-baseline", async (req, res) => {
+  const conn = conns.get(req.params.id);
+  const h = hosts.find((x) => x.id === req.params.id);
+  if (!conn || !h) return res.status(400).json({ error: "Хост не підключено" });
+  try {
+    const files = await scanFim(conn);
+    fimBaselines[h.id] = { at: Date.now(), files };
+    saveFimBaselines(fimBaselines);
+    audit("fim.baseline", h.name, { files: files.length });
+    res.json(diffFim(files, fimBaselines[h.id]));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /* ---------------- Аудит (GRC) ---------------- */
 
 app.get("/api/audit", (req, res) => {
@@ -723,8 +826,12 @@ app.get("/api/audit", (req, res) => {
 /* ---------------- статика (зібраний фронт) ---------------- */
 
 const DIST = path.join(APP_ROOT, "dist");
+// security.txt / PGP-ключ Altumptic (RFC 9116)
+const WELL_KNOWN = fs.existsSync(path.join(DIST, ".well-known")) ? path.join(DIST, ".well-known") : path.join(APP_ROOT, "public", ".well-known");
+app.use("/.well-known", express.static(WELL_KNOWN, { setHeaders: (res) => res.setHeader("Content-Type", "text/plain; charset=utf-8") }));
+
 if (fs.existsSync(DIST)) {
-  app.use(express.static(DIST));
+  app.use(express.static(DIST, { maxAge: "1h", setHeaders: (res, p) => /[\\/]assets[\\/]/.test(p) && res.setHeader("Cache-Control", "public, max-age=31536000, immutable") }));
   app.get("*path", (req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next();
     res.sendFile(path.join(DIST, "index.html"));
@@ -738,6 +845,11 @@ const wssState = new WebSocketServer({ noServer: true });
 const wssTerm = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
+  if (!isAuthed(req)) {
+    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    socket.destroy();
+    return;
+  }
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname === "/ws/state") {
     wssState.handleUpgrade(req, socket, head, (ws) => wssState.emit("connection", ws, req));
@@ -799,8 +911,8 @@ wssTerm.on("connection", async (ws, req) => {
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;
-  console.log(`\n  ШОК · моніторинг запущено → ${url}\n  Хостів у конфігу: ${hosts.length}. Закрий це вікно, щоб зупинити.\n`);
-  if (!NO_OPEN && process.platform === "win32" && fs.existsSync(DIST)) {
+  console.log(`\n  LemonSees ${VERSION} by Altumptic → ${url}\n  Хостів у конфігу: ${hosts.length}. Доступ: ${authEnabled() ? "токен (LEMONSEES_TOKEN)" : "лише локально"}. Ctrl+C — зупинити.\n`);
+  if (!NO_OPEN && process.platform === "win32" && fs.existsSync(DIST) && LOOPBACK.includes(HOST)) {
     cpExec(`start "" "${url}"`, { shell: "cmd.exe" });
   }
 });

@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { MonitorSmartphone, Cpu, MemoryStick, HardDrive, Boxes, Server } from "lucide-react";
-import { useAppState } from "@/lib/api";
+import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { fmtUptime, type HostState } from "@/lib/types";
+import { fmtUptime, type HostState, type MetricSample } from "@/lib/types";
 import { PageHeader, Panel, Kpi, StatusDot, MiniMeter, EmptyState, Pill, STATUS_LABEL } from "@/components/ui";
+import { MiniTrend } from "@/components/charts";
 
 function endpointRisk(h: HostState): number {
   if (h.status !== "online") return 70;
@@ -49,20 +50,21 @@ export default function EndpointsPage() {
                 <div className="flex min-w-0 items-center gap-2.5">
                   <StatusDot status={h.status} />
                   <div className="min-w-0">
-                    <div className="truncate text-[14px] font-semibold">{h.name}</div>
-                    <div className="mono truncate text-[10px] text-muted-foreground">{h.user}@{h.host}:{h.port}</div>
+                    <div className="truncate text-[15px] font-semibold">{h.name}</div>
+                    <div className="mono truncate text-[12px] text-muted-foreground">{h.user}@{h.host}:{h.port}</div>
                   </div>
                 </div>
                 <Pill color={risk >= 60 ? "var(--danger)" : risk >= 35 ? "var(--warning)" : risk >= 15 ? "var(--info)" : "var(--success)"}>{t("ризик")} {risk}</Pill>
               </div>
               {m ? (
                 <>
+                  <HostTrend id={h.id} />
                   <div className="grid grid-cols-3 gap-3">
                     <MiniMeter label="CPU" value={m.cpu} />
                     <MiniMeter label="RAM" value={m.memPct} />
                     <MiniMeter label={t("Диск")} value={m.diskPct} />
                   </div>
-                  <dl className="mono mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-[var(--hairline)] pt-3 text-[10.5px]">
+                  <dl className="mono mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-[var(--hairline)] pt-3 text-[12.5px]">
                     <Meta icon={Cpu} k={t("Ядро")} v={m.kernel} />
                     <Meta icon={MemoryStick} k="Docker" v={h.dockerVersion} />
                     <Meta icon={Boxes} k={t("Контейнери")} v={`${h.containers.filter((c) => c.state === "running").length}/${h.containers.length}`} />
@@ -70,7 +72,7 @@ export default function EndpointsPage() {
                   </dl>
                 </>
               ) : (
-                <div className="py-4 text-center text-[12px] text-muted-foreground">{t(STATUS_LABEL[h.status])}</div>
+                <div className="py-4 text-center text-[13.5px] text-muted-foreground">{t(STATUS_LABEL[h.status])}</div>
               )}
             </Panel>
           );
@@ -80,10 +82,38 @@ export default function EndpointsPage() {
   );
 }
 
+/** Тренд CPU/RAM хоста за останні хвилини. */
+function HostTrend({ id }: { id: string }) {
+  const [h, setH] = useState<MetricSample[]>([]);
+  useEffect(() => {
+    let alive = true;
+    const load = () => api.history(id).then((r) => alive && setH(r.history.slice(-60))).catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [id]);
+  if (h.length < 2) return <div className="mb-3 h-[52px]" />;
+  return (
+    <div className="mb-3 rounded-xl bg-[var(--surface-raised)] px-3 pb-1 pt-2">
+      <div className="flex justify-between text-[11.5px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c1)]" />CPU</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c2)]" />RAM</span>
+      </div>
+      <div className="relative h-[34px]">
+        <div className="absolute inset-0"><MiniTrend data={h.map((s) => s.cpu)} color="var(--c1)" height={34} /></div>
+        <div className="absolute inset-0"><MiniTrend data={h.map((s) => s.memPct)} color="var(--c2)" height={34} /></div>
+      </div>
+    </div>
+  );
+}
+
 function Meta({ icon: Icon, k, v }: { icon: typeof Cpu; k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="flex items-center gap-1 uppercase tracking-[0.1em] text-muted-foreground"><Icon className="h-2.5 w-2.5" />{k}</dt>
+      <dt className="flex items-center gap-1 text-muted-foreground font-medium"><Icon className="h-2.5 w-2.5" />{k}</dt>
       <dd className="truncate text-foreground/85">{v}</dd>
     </div>
   );

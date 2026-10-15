@@ -1,0 +1,8 @@
+node_modules
+dist
+release
+config
+.git
+.github
+.claude
+*.log

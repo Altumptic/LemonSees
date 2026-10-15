@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Wrench, Play } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { ToolResult } from "@/lib/types";
 import { HostBar, Panel, PrimaryButton, GhostButton, SectionHeader, EmptyState } from "@/components/ui";
@@ -18,7 +18,7 @@ const TOOLS = [
 export default function ToolkitPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [tool, setTool] = useState("dig");
   const [target, setTarget] = useState("");
   const [port, setPort] = useState("443");
@@ -47,7 +47,7 @@ export default function ToolkitPage() {
         <div className="mb-3 flex flex-wrap gap-1.5">
           {TOOLS.map((x) => (
             <GhostButton key={x.id} active={tool === x.id} onClick={() => setTool(x.id)}>
-              <span className="mono text-[11px]">{x.label}</span>
+              <span className="mono text-[12.5px]">{x.label}</span>
             </GhostButton>
           ))}
         </div>
@@ -57,22 +57,22 @@ export default function ToolkitPage() {
             onChange={(e) => setTarget(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && run()}
             placeholder={cur.needsPort ? "хост або IP" : "домен або IP (напр. github.com)"}
-            className="mono min-w-[220px] flex-1 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
+            className="mono min-w-[220px] flex-1 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
           />
           {cur.needsPort && (
-            <input value={port} onChange={(e) => setPort(e.target.value)} placeholder="порт" className="mono w-24 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)]" />
+            <input value={port} onChange={(e) => setPort(e.target.value)} placeholder="порт" className="mono w-24 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)]" />
           )}
           <PrimaryButton onClick={run} disabled={loading}><Play className="h-3 w-3" /> {loading ? t("Виконую…") : t("Запустити")}</PrimaryButton>
         </div>
       </Panel>
 
-      {err && <Panel><div className="mono py-4 text-center text-sm text-[var(--danger)]">{err}</div></Panel>}
+      {err && <Panel><div className="mono py-4 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>}
       {res && (
         <Panel>
-          <div className="mono mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="mb-2 flex items-center gap-2 text-[12.5px] text-muted-foreground font-medium">
             <span className="text-[var(--primary)]">{res.tool}</span> · {res.target}
           </div>
-          <pre className="mono max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--hairline)] bg-black/30 p-4 text-[12px] leading-relaxed text-foreground/85">{res.output}</pre>
+          <pre className="mono max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--hairline)] bg-[var(--code-bg)] p-4 text-[13.5px] leading-relaxed text-foreground/85">{res.output}</pre>
         </Panel>
       )}
     </>

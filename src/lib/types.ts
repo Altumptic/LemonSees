@@ -1,3 +1,5 @@
+import { settingsStore } from "./settings";
+
 export type HostStatus = "online" | "connecting" | "offline" | "error";
 
 export type ContainerState = "running" | "restarting" | "paused" | "exited" | "created" | "dead";
@@ -193,7 +195,26 @@ export type ThreatReport = {
   uniqueIps: number;
   at: number;
 };
-export type SocConfig = { autoIncidents: boolean; bruteThreshold: number };
+export type SocConfig = {
+  autoIncidents: boolean;
+  bruteThreshold: number;
+  notifyDowntime?: boolean; // desktop-сповіщення про даунтайм моніторів
+  retentionDays?: number; // скільки днів тримати аудит
+  sweepMinutes?: number; // як часто перевіряти брутфорс
+};
+
+/* ---------------- FIM (контроль цілісності файлів) ---------------- */
+
+export type FimFile = {
+  path: string;
+  sha256: string;
+  size: number;
+  mode: string;
+  owner: string;
+  mtime: number;
+  status: "ok" | "modified" | "added" | "missing" | "new";
+};
+export type FimReport = { baselineAt: number | null; at: number; files: FimFile[]; changed: number };
 
 export type VulnFinding = {
   id: string;
@@ -308,12 +329,13 @@ export function fmtBps(bps: number): string {
 export function fmtWhen(ts: number): string {
   if (!ts) return "—";
   const d = new Date(ts);
+  const hour12 = !settingsStore.value.clock24;
   const now = Date.now();
   const diff = Math.floor((now - ts) / 1000);
   if (diff < 60) return "щойно";
   if (diff < 3600) return `${Math.floor(diff / 60)} хв тому`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} год тому`;
-  return d.toLocaleString();
+  return d.toLocaleString(undefined, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12 });
 }
 
 export function fmtUptime(sec: number): string {

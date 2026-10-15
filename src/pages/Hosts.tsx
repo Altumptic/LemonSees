@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useIntent } from "@/lib/intent";
 import { Cpu, HardDrive, MemoryStick, Server, Pencil, Trash2, Plug } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -36,6 +37,7 @@ export default function Hosts() {
   const { t } = useI18n();
   const [editing, setEditing] = useState<HostState | null>(null);
   const [adding, setAdding] = useState(false);
+  useIntent("new", () => setAdding(true));
 
   return (
     <>
@@ -48,12 +50,12 @@ export default function Hosts() {
 
       <Panel eyebrow={`${hosts.length} ${t("серверів")}`} title={t("Інвентар флоту")}>
         {hosts.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
+          <div className="py-12 text-center text-[14.5px] text-muted-foreground">
             {t("Поки що порожньо. Натисни «Додати хост» і вкажи адресу сервера.")}
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
-            <div className={`mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] ${HEAD_TINT} px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground`}>
+            <div className={`mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] ${HEAD_TINT} px-4 py-2.5 text-[12px] text-muted-foreground font-medium`}>
               <div className="col-span-3">{t("Хост")}</div>
               <div className="col-span-2">{t("Статус")}</div>
               <div className="col-span-3">{t("CPU / RAM / Диск")}</div>
@@ -70,15 +72,15 @@ export default function Hosts() {
                 <div className="col-span-3 min-w-0">
                   <div className="flex items-center gap-2">
                     <Server className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="truncate text-sm font-medium">{h.name}</span>
+                    <span className="truncate text-[14.5px] font-medium">{h.name}</span>
                   </div>
-                  <div className="mono truncate text-[11px] text-muted-foreground">
+                  <div className="mono truncate text-[12.5px] text-muted-foreground">
                     {h.user}@{h.host}:{h.port}
                   </div>
                 </div>
                 <div className="col-span-2 flex items-center gap-2">
                   <StatusDot status={h.status} />
-                  <span className="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <span className="text-[12px] text-muted-foreground font-medium">
                     {t(STATUS_LABEL[h.status])}
                   </span>
                 </div>
@@ -87,11 +89,11 @@ export default function Hosts() {
                   <MiniStat icon={MemoryStick} value={h.metrics?.memPct ?? 0} />
                   <MiniStat icon={HardDrive} value={h.metrics?.diskPct ?? 0} />
                 </div>
-                <div className="num col-span-1 text-right text-sm">
+                <div className="num col-span-1 text-right text-[14.5px]">
                   {h.containers.filter((c) => c.state === "running").length}
                   <span className="text-muted-foreground">/{h.containers.length}</span>
                 </div>
-                <div className="mono col-span-1 text-right text-xs text-muted-foreground">
+                <div className="mono col-span-1 text-right text-[13px] text-muted-foreground">
                   {h.metrics ? fmtUptime(h.metrics.uptimeSec) : "—"}
                 </div>
                 <div className="col-span-2 flex items-center justify-end gap-1">
@@ -147,7 +149,7 @@ export default function Hosts() {
 function MiniStat({ icon: Icon, value }: { icon: typeof Cpu; value: number }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between text-[12px] text-muted-foreground">
         <Icon className="h-3 w-3" />
         <span className="num">{Math.round(value)}%</span>
       </div>
@@ -255,7 +257,7 @@ function HostForm({
         )}
 
         {testResult && (
-          <div className="mono rounded-md border border-[var(--hairline)] px-3 py-2 text-[11px] text-muted-foreground">
+          <div className="mono rounded-md border border-[var(--hairline)] px-3 py-2 text-[12.5px] text-muted-foreground">
             {testResult}
           </div>
         )}

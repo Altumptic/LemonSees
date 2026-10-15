@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Activity, ArrowDownToLine, ArrowUpFromLine, Cable, Globe, RefreshCw } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { fmtBps, type Peer } from "@/lib/types";
@@ -18,7 +18,7 @@ export default function TrafficPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
   const { settings } = useSettings();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [peersLoading, setPeersLoading] = useState(false);
   const [, force] = useState(0);
@@ -72,7 +72,7 @@ export default function TrafficPage() {
         lede={t("Пропускна здатність rx/tx, активні зʼєднання й топ віддалених вузлів. Дані з /proc/net/dev по SSH.")}
         action={
           <div className="flex items-center gap-2">
-            <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]">
+            <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]">
               {hosts.map((x) => <option key={x.id} value={x.id} className="bg-[var(--ink)]">{x.name}</option>)}
             </select>
             <GhostButton onClick={() => active && loadPeers(active)} disabled={peersLoading}>
@@ -83,13 +83,13 @@ export default function TrafficPage() {
       />
 
       {host && host.status !== "online" && (
-        <div className="mono mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-[var(--warning)]">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[12.5px] text-[var(--warning)] font-medium">
           <StatusDot status={host.status} /> {t("Хост не онлайн — дані можуть бути недоступні")}
         </div>
       )}
 
       {!m ? (
-        <Panel><div className="py-16 text-center text-sm text-muted-foreground">{t("Чекаю метрики…")}</div></Panel>
+        <Panel><div className="py-16 text-center text-[14.5px] text-muted-foreground">{t("Чекаю метрики…")}</div></Panel>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -101,21 +101,21 @@ export default function TrafficPage() {
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <Panel>
-              <SectionHeader icon={ArrowDownToLine} title={t("Вхідний трафік")} right={<span className="num text-sm" style={{ color: "var(--info)" }}>{fmtBps(m.netRxBps ?? 0)}</span>} />
+              <SectionHeader icon={ArrowDownToLine} title={t("Вхідний трафік")} right={<span className="num text-[14.5px]" style={{ color: "var(--info)" }}>{fmtBps(m.netRxBps ?? 0)}</span>} />
               <AreaChart data={h ? h.rx : []} color="var(--interactive)" fmt={fmtBps} height={72} />
             </Panel>
             <Panel>
-              <SectionHeader icon={ArrowUpFromLine} title={t("Вихідний трафік")} right={<span className="num text-sm" style={{ color: "var(--success)" }}>{fmtBps(m.netTxBps ?? 0)}</span>} />
+              <SectionHeader icon={ArrowUpFromLine} title={t("Вихідний трафік")} right={<span className="num text-[14.5px]" style={{ color: "var(--success)" }}>{fmtBps(m.netTxBps ?? 0)}</span>} />
               <AreaChart data={h ? h.tx : []} color="var(--success)" fmt={fmtBps} height={72} />
             </Panel>
           </div>
 
           <Panel>
-            <SectionHeader icon={Globe} title={t("Топ віддалених вузлів")} sub={settings.geoip ? t("established-зʼєднання з гео-IP") : t("гео-IP вимкнено")} right={<span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{peers.length}</span>} />
+            <SectionHeader icon={Globe} title={t("Топ віддалених вузлів")} sub={settings.geoip ? t("established-зʼєднання з гео-IP") : t("гео-IP вимкнено")} right={<span className="text-[12px] text-muted-foreground font-medium">{peers.length}</span>} />
             {peersLoading ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">{t("Завантажую…")}</div>
+              <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Завантажую…")}</div>
             ) : peers.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">{t("Активних зовнішніх зʼєднань немає.")}</div>
+              <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Активних зовнішніх зʼєднань немає.")}</div>
             ) : (
               <div className="space-y-1.5">
                 {peers.map((p) => {
@@ -125,13 +125,13 @@ export default function TrafficPage() {
                       <span className="text-base leading-none">{flag(p.geo?.countryCode || "")}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="mono truncate text-[12.5px]">{p.ip}</span>
-                          <span className="num shrink-0 text-xs text-muted-foreground">{p.count}</span>
+                          <span className="mono truncate text-[14px]">{p.ip}</span>
+                          <span className="num shrink-0 text-[13px] text-muted-foreground">{p.count}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2">
                           <div className="flex-1"><Track value={(p.count / max) * 100} tone="info" /></div>
                           {p.geo && (p.geo.country || p.geo.isp) && (
-                            <span className="mono shrink-0 truncate text-[10px] text-muted-foreground" style={{ maxWidth: 220 }}>
+                            <span className="mono shrink-0 truncate text-[12px] text-muted-foreground" style={{ maxWidth: 220 }}>
                               {[p.geo.city, p.geo.country].filter(Boolean).join(", ")}{p.geo.isp ? ` · ${p.geo.isp}` : ""}
                             </span>
                           )}

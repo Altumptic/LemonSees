@@ -1,0 +1,9 @@
+# LemonSees by Altumptic — vulnerability disclosure (RFC 9116)
+# Report security issues in LemonSees itself to Altumptic.
+Contact: mailto:thefear078@gmail.com
+Contact: https://t.me/thefear078
+Encryption: https://altumptic.com/.well-known/pgp-key.txt
+Encryption: openpgp4fpr:117BA978F33280B512EE84B5D2783C4FDE430CA6
+Expires: 2027-10-15T06:26:43.995Z
+Preferred-Languages: en, uk
+Policy: https://altumptic.com/security

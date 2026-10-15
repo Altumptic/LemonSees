@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, Globe, ShieldAlert, ShieldCheck, Server } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import type { IpIntel } from "@/lib/types";
@@ -15,7 +15,7 @@ export default function InvestigatePage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
   const { settings } = useSettings();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [ip, setIp] = useState("");
   const [data, setData] = useState<IpIntel | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,13 +45,13 @@ export default function InvestigatePage() {
             onChange={(e) => setIp(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && run()}
             placeholder="напр. 91.92.47.35"
-            className="mono flex-1 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
+            className="mono flex-1 rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
           />
           <PrimaryButton onClick={run} disabled={loading}><Search className="h-3 w-3" /> {loading ? t("Шукаю…") : t("Дослідити")}</PrimaryButton>
         </div>
       </Panel>
 
-      {err && <Panel className="mb-5"><div className="mono py-4 text-center text-sm text-[var(--danger)]">{err}</div></Panel>}
+      {err && <Panel className="mb-5"><div className="mono py-4 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>}
 
       {data && (
         <div className="space-y-5">
@@ -65,7 +65,7 @@ export default function InvestigatePage() {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <Panel>
               <SectionHeader icon={Globe} title={t("Геолокація")} />
-              <dl className="mono space-y-1.5 text-[12px]">
+              <dl className="mono space-y-1.5 text-[13.5px]">
                 <Row k="IP" v={data.ip} />
                 <Row k={t("Країна")} v={data.geo ? `${data.geo.country} (${data.geo.countryCode})` : "—"} />
                 <Row k={t("Місто")} v={data.geo?.city || "—"} />
@@ -78,9 +78,9 @@ export default function InvestigatePage() {
             <Panel>
               <SectionHeader icon={Server} title="WHOIS" />
               {data.whois.length === 0 ? (
-                <div className="py-4 text-center text-sm text-muted-foreground">{t("whois недоступний на хості")}</div>
+                <div className="py-4 text-center text-[14.5px] text-muted-foreground">{t("whois недоступний на хості")}</div>
               ) : (
-                <pre className="mono max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--hairline)] bg-black/20 p-3 text-[11px] text-muted-foreground">{data.whois.join("\n")}</pre>
+                <pre className="mono max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-[var(--hairline)] bg-[var(--code-bg)] p-3 text-[12.5px] text-muted-foreground">{data.whois.join("\n")}</pre>
               )}
             </Panel>
           </div>
@@ -93,7 +93,7 @@ export default function InvestigatePage() {
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-[var(--hairline)] py-1.5 last:border-0">
-      <dt className="uppercase tracking-[0.12em] text-muted-foreground">{k}</dt>
+      <dt className="text-muted-foreground font-medium">{k}</dt>
       <dd className="truncate text-foreground/90">{v}</dd>
     </div>
   );

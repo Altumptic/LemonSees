@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { useAppState } from "@/lib/api";
+import { useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { PageHeader, Panel, GhostButton, statusColor } from "@/components/ui";
 
 export default function TerminalPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [sessionKey, setSessionKey] = useState(0);
 
   const activeId = hostId ?? hosts[0]?.id ?? null;
@@ -37,11 +37,11 @@ export default function TerminalPage() {
               className="h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: statusColor(h.status) }}
             />
-            <span className="mono text-[10px] uppercase tracking-[0.16em]">{h.name}</span>
+            <span className="text-[12px] font-medium">{h.name}</span>
           </GhostButton>
         ))}
         {hosts.length === 0 && (
-          <span className="text-sm text-muted-foreground">{t("Спершу додай хост на сторінці «Хости».")}</span>
+          <span className="text-[14.5px] text-muted-foreground">{t("Спершу додай хост на сторінці «Хости».")}</span>
         )}
         {activeHost && (
           <span className="ml-auto">
@@ -53,7 +53,7 @@ export default function TerminalPage() {
       {activeHost && (
         <Panel eyebrow={`${t("Підключено")} · ${activeHost.name}`} title="tty · ssh">
           <TermView key={`${activeHost.id}:${sessionKey}`} hostId={activeHost.id} />
-          <div className="mono mt-3 flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="mt-3 flex items-center justify-between text-[12px] text-muted-foreground font-medium">
             <span>{t("сесія · ефемерна")}</span>
             <span>
               {activeHost.user}@{activeHost.host}:{activeHost.port}
@@ -73,14 +73,15 @@ function TermView({ hostId }: { hostId: string }) {
     if (!el) return;
 
     const term = new XTerm({
-      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-      fontSize: 12.5,
+      fontFamily: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+      fontSize: 14,
+      lineHeight: 1.25,
       cursorBlink: true,
       theme: {
         background: "#00000000",
-        foreground: "#e8e6df",
-        cursor: "#d4b483",
-        selectionBackground: "#d4b48333",
+        foreground: "#ecebe4",
+        cursor: "#d97757",
+        selectionBackground: "#d9775740",
       },
       allowTransparency: true,
     });
@@ -134,7 +135,7 @@ function TermView({ hostId }: { hostId: string }) {
   }, [hostId]);
 
   return (
-    <div className="term-wrap relative overflow-hidden rounded-lg border border-[var(--hairline)] bg-black/50">
+    <div className="term-wrap relative overflow-hidden rounded-lg border border-[var(--hairline)]">
       <div ref={boxRef} className="h-[460px] w-full" />
     </div>
   );

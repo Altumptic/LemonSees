@@ -1,218 +1,197 @@
 <div align="center">
 
-<img src=".github/assets/banner.svg" alt="LemonSees — SOC Platform" width="100%" />
+<img src=".github/assets/banner.svg" alt="LemonSees by Altumptic" width="100%" />
 
-# 🍋 LemonSees
+# LemonSees
 
-**Agentless SOC platform for L1 / L2 / L3 analysts — SIEM/XDR, EDR, NDR, CTI, SOAR & GRC over SSH**
+**The calm, agentless SOC — by [Altumptic](https://altumptic.com)**
 
-[![Release](https://img.shields.io/github/v/release/kiurakku/LemonSees?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kiurakku/LemonSees/releases)
-[![License](https://img.shields.io/github/license/kiurakku/LemonSees?style=for-the-badge&color=blue)](LICENSE)
-[![Platform](https://img.shields.io/badge/Windows-10%2F11-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kiurakku/LemonSees/releases)
-[![Electron](https://img.shields.io/badge/Electron-43-47848F?style=for-the-badge&logo=electron&logoColor=white)](https://www.electronjs.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+SIEM · EDR · File Integrity · NDR · Threat Intel with MITRE ATT&CK · SOAR · GRC — over plain SSH.<br/>
+Runs as a **self-hosted web app**, a **portable Windows `.exe`** or a **Linux AppImage**.
 
-[⬇️ Download v2.0.0](https://github.com/kiurakku/LemonSees/releases/latest) · [🐛 Report a bug](https://github.com/kiurakku/LemonSees/issues/new) · [📖 Quick start](#-quick-start)
+[![Release](https://img.shields.io/github/v/release/Altumptic/LemonSees?style=flat-square&color=c15f3c)](https://github.com/Altumptic/LemonSees/releases)
+[![License](https://img.shields.io/github/license/Altumptic/LemonSees?style=flat-square&color=56688c)](LICENSE)
+[![Platforms](https://img.shields.io/badge/web%20·%20windows%20·%20linux-ready-4f7a3a?style=flat-square)](#-install)
+[![Security policy](https://img.shields.io/badge/security.txt-RFC%209116-1f1e1d?style=flat-square)](SECURITY.md)
+
+[Download](https://github.com/Altumptic/LemonSees/releases/latest) · [Try the demo](#-try-it-in-30-seconds) · [Install](#-install) · [Security](SECURITY.md)
+
+<br/>
+
+<img src=".github/assets/screens/overview.png" alt="LemonSees overview dashboard" width="100%" />
 
 </div>
 
 ---
 
-## ✨ About
+## Why LemonSees
 
-**LemonSees** turns your SSH keychain into a full **Security Operations Center** on the desktop. You sit in one bold, tabbed console and monitor your fleet; each host is treated as a managed endpoint where **the SSH session is the agent** — nothing is installed on the server. Built for the day-to-day of **L1 / L2 / L3** analysts: triage, investigate, respond, report.
+Wazuh, Security Onion and friends are powerful — and heavy: agents on every host, an indexer cluster,
+a dashboard stack, days of tuning. **LemonSees treats the SSH session as the agent.** Point it at a
+server and within seconds you have live telemetry, threat intel, integrity monitoring, incidents and
+compliance — in an interface that stays quiet until something actually needs you.
 
-| | |
-|---|---|
-| 🖥️ **Platform** | Windows 10/11 (ready-to-run `.exe`) |
-| 🔌 **Connection** | SSH key or password — the session is the agent |
-| 🧭 **Console** | Cloudflare-style sections → tabs → detail |
-| 🛰️ **Domains** | SIEM/XDR · EDR · NDR · CTI · SOAR · GRC |
-| 🗄️ **Databases** | 39 engines — query, browse, REST console |
-| 🌍 **Languages** | Ukrainian, English, Russian, Polish, Chinese |
-| 🎨 **Design** | Clean, data-dense UI (BetterStack-inspired), light + dark themes |
-| 🔒 **Security** | Engine binds to `127.0.0.1` only, no agents, no background services |
+|  | **LemonSees** | Typical agent-based SIEM |
+|---|---|---|
+| Install on servers | **Nothing** — SSH key is enough | Agent per host + manager + indexer |
+| Time to first insight | **Seconds** | Hours to days |
+| Footprint | One Node.js process (~100 MB) | Multi-node cluster, GBs of RAM |
+| Deployment | Web app · portable `.exe` · AppImage · Docker | Server cluster |
+| MITRE ATT&CK mapping | **Built in**, automatic | Rules / add-ons |
+| File integrity (FIM) | **SHA-256 baselines over SSH** | Agent syscheck |
+| Compliance (CIS · NIST · ISO 27001 · GDPR) | **Automated + attested** with reports | Varies |
+| Interface | Calm, readable, scales 80–150 % | Data-dense dashboards |
 
----
+## ✨ Highlights
 
-## 🆕 What's new in v2.0.0
-
-- **🍋 Brand — LemonSees** — minimal new logo and a polished, **BetterStack-inspired** UI: deep-charcoal surfaces with soft depth, tabular metrics, a subtle brand glow, and clean **light + dark** themes. Design system documented in [DESIGN.md](DESIGN.md).
-- **🧭 SOC information architecture** — reorganised into analyst domains with **sections → sub-tabs** (Cloudflare-style): Console/SIEM, Endpoints/EDR, Network/NDR, Intel/CTI, Response/SOAR, Governance/GRC, Infrastructure, Utilities.
-- **🖥️ EDR** — live **process table** (CPU/MEM/uptime) and **persistence** view (cron, systemd services, timers, startup) collected over SSH.
-- **🔌 NDR** — full **connections** view (established + listening + owning process) alongside live traffic.
-- **🔎 CTI** — **IP investigation** (geo, reverse DNS, WHOIS, cross-check against your attacker list) run from the host.
-- **🧰 Utilities** — analyst **network toolkit** (dig, reverse DNS, whois, ping, traceroute, HTTP check, TCP port check) executed on the remote host.
-- **🗒️ SIEM events** — remote **log viewer** (auth.log/syslog/nginx/…) + the app event journal in one place.
-- **⚙️ SOAR** — playbooks view + the auto-incident brute-force rule.
-
-> Every module runs on **real data over SSH** — no agents deployed, nothing installed on your servers. Deployable EDR agents and malware sandboxing are intentionally out of scope for the agentless model.
-
----
-
-## 🧭 The console
+- **SOC analytics** — alert volume by severity, MTTA / MTTR, activity heatmap (day × hour), most affected hosts, analyst workload.
+- **MITRE ATT&CK matrix** — every incident is mapped to tactics & techniques automatically; click a cell to drill into incidents.
+- **File integrity monitoring** — SHA-256 + mode/owner of `/etc/shadow`, `sudoers`, `sshd_config`, `authorized_keys`, cron, systemd units…; drift opens an incident.
+- **Threat intel** — brute-force sources with geo-IP on a world map, targeted usernames, successful logins to double-check, IP investigation (rDNS, WHOIS, reputation).
+- **EDR** — processes, persistence (cron / services / timers / rc), security posture with a hardening radar, configuration vulnerabilities with remediation.
+- **NDR** — live traffic, TCP states, listening sockets, top peers.
+- **SOAR** — incident register with timeline, auto-incidents (SSH brute force, FIM drift), playbooks.
+- **GRC** — CIS / NIST / ISO 27001 / GDPR controls, human attestations, coverage by framework, printable reports, immutable audit log with CSV export.
+- **Infrastructure** — hosts, metrics history, Docker containers / networks / volumes, uptime monitors and a public status board, SSH terminal, 39 database engines.
+- **Built for people** — functional top bar (clickable breadcrumbs, global host switcher, alerts inbox, quick create), <kbd>Ctrl</kbd>+<kbd>K</kbd> command palette, `g`-shortcuts, five languages (EN · UK · RU · PL · ZH), Ivory & Graphite themes, UI scale presets.
 
 <table>
-<tr><td width="50%">
-
-### 📟 Console · SIEM
-Fleet **dashboard** (KPIs, risk-by-host, posture ring, incidents, activity) + a unified **events** view: remote log viewer with color-coded severities and the app journal.
-
-### 🖥️ Endpoints · EDR
-Hosts as managed endpoints; **processes** (top CPU/MEM), **persistence** (cron / services / timers / startup), **posture** (risk score), **vulnerabilities** (config/exposure scan with remediation).
-
-### 🌐 Network · NDR
-Live **traffic** (rx/tx, top peers with geo-IP) and full **connections** (established + listening + process, public/local flags).
-
-</td><td width="50%">
-
-### 🔎 Intel · CTI
-**Threat intelligence** (top attackers, geo-map, targeted usernames) and **IP investigation** (geo · rDNS · WHOIS · attacker cross-check).
-
-### 🚨 Response · SOAR
-**Incident** register with severity, status workflow and timeline; **playbooks** incl. the auto-incident brute-force rule.
-
-### ⚖️ Governance · GRC
-**Compliance** (CIS/NIST/ISO controls + attestations), **standards reports** (CIS/NIST/ISO/GDPR coverage, HTML export), **audit** log with CSV export.
-
-### 🧰 Utilities
-Network **toolkit**, built-in **SSH terminal**, and the **database** hub (39 engines).
-
-</td></tr>
+<tr>
+<td width="50%"><img src=".github/assets/screens/analytics.png" alt="SOC analytics" /><br/><sub><b>SOC analytics</b> — trends, response times, heatmap</sub></td>
+<td width="50%"><img src=".github/assets/screens/mitre.png" alt="MITRE ATT&CK" /><br/><sub><b>MITRE ATT&CK</b> — automatic technique mapping</sub></td>
+</tr>
+<tr>
+<td><img src=".github/assets/screens/threats.png" alt="Threat map" /><br/><sub><b>Threat intel</b> — attack sources on a world map</sub></td>
+<td><img src=".github/assets/screens/compliance.png" alt="Compliance" /><br/><sub><b>Compliance</b> — CIS · NIST · ISO 27001 · GDPR</sub></td>
+</tr>
+<tr>
+<td><img src=".github/assets/screens/fim.png" alt="File integrity" /><br/><sub><b>File integrity</b> — baselines and drift</sub></td>
+<td><img src=".github/assets/screens/overview-dark.png" alt="Graphite theme" /><br/><sub><b>Graphite</b> dark theme</sub></td>
+</tr>
 </table>
 
----
+## ⚡ Try it in 30 seconds
 
-## 🗄️ Database engines
+No servers needed: open LemonSees and click **Try the demo** (or **Settings → Demo mode**).
+You get six realistic hosts, a month of incidents, attacks from around the world, FIM drift and
+compliance results — everything is generated locally; demo IPs come from documentation ranges (RFC 5737).
 
-**Full support (query + browse):** PostgreSQL · TimescaleDB · CockroachDB · YugabyteDB · QuestDB · Redshift · MySQL · MariaDB · Redis · KeyDB · Valkey · Dragonfly · MongoDB · SQLite (WASM over SSH)
-**REST console:** Elasticsearch · OpenSearch · CouchDB · ClickHouse · Meilisearch · Typesense · Qdrant · Weaviate · Chroma · ArangoDB · InfluxDB · Prometheus
-**Planned (needs driver):** MS SQL · Oracle · Cassandra · ScyllaDB · Neo4j · Memgraph · Memcached · Milvus
-**Cloud (API keys, not via SSH):** DynamoDB · BigQuery · Snowflake · Firebase · Firestore · Pinecone · Neptune
+## 📦 Install
 
----
+### Windows — portable
 
-## ⬇️ Installation
+Download `LemonSees-<version>-portable.exe` from [Releases](https://github.com/Altumptic/LemonSees/releases/latest) and run it.
+No installer, no admin rights. Data is stored next to the `.exe` in `LemonSees-data/`, so you can carry it on a USB stick.
+A `.zip` build is also published.
 
-1. Download [`LemonSees-v2.0.0-win.zip`](https://github.com/kiurakku/LemonSees/releases/latest) from [Releases](https://github.com/kiurakku/LemonSees/releases)
-2. Extract and run `LemonSees.exe`
-
-> Close the window — everything stops. No background services.
-
-### From source
+### Linux — AppImage
 
 ```bash
-git clone https://github.com/kiurakku/LemonSees.git
-cd LemonSees
-npm install
-npm run build
-npm run dist:win    # → release/win-unpacked/LemonSees.exe
+chmod +x LemonSees-*-x86_64.AppImage
+./LemonSees-*-x86_64.AppImage
 ```
 
----
+Settings live in `~/.config/LemonSees`. To make it fully portable, create a `LemonSees-data/` folder next to the AppImage.
+A `.tar.gz` build is also published.
+
+### Web — any OS with Node.js 22+
+
+```bash
+git clone https://github.com/Altumptic/LemonSees.git && cd LemonSees
+npm ci && npm run build
+npm start                      # → http://127.0.0.1:5199
+```
+
+On Windows you can double-click `LemonSees.bat`; on Linux/macOS run `./lemonsees.sh`.
+
+**Serving on a network** requires an access token — LemonSees refuses to bind to a public interface without one:
+
+```bash
+LEMONSEES_HOST=0.0.0.0 LEMONSEES_TOKEN="$(openssl rand -hex 24)" npm start
+```
+
+Put it behind TLS (nginx, Caddy, Traefik) and set `LEMONSEES_SECURE_COOKIE=1`.
+
+### Docker
+
+```bash
+docker build -t lemonsees .
+docker run -d --name lemonsees -p 5199:5199 \
+  -e LEMONSEES_TOKEN="$(openssl rand -hex 24)" \
+  -v lemonsees-data:/data lemonsees
+```
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `LEMONSEES_HOST` | `127.0.0.1` | Bind address. Non-loopback requires a token. |
+| `LEMONSEES_PORT` | `5199` | HTTP / WebSocket port |
+| `LEMONSEES_TOKEN` | — | Access token for the web UI and API (sessions are HttpOnly cookies) |
+| `LEMONSEES_SECURE_COOKIE` | — | `1` to mark the session cookie `Secure` behind HTTPS |
+| `SHOK_CONFIG_DIR` | `./config` | Where hosts, incidents, baselines and audit are stored |
 
 ## 🚀 Quick start
 
-1. Launch **LemonSees**
-2. **Infrastructure → Hosts → Add host** — enter IP + SSH key (recommended) or password → **Test connection** → **Add**
-3. Within seconds the host appears as an **endpoint**. Then:
-   - **Endpoints → Processes / Persistence** — see what's running and what persists
-   - **Network → Traffic / Connections** — who's talking to the box
-   - **Intel → Threats / IP intel** — who's attacking, and investigate any IP
-   - **Governance → Compliance / Reports** — CIS/NIST checks and a downloadable report
+1. **Add a host** — top bar **+** → *Host (SSH)*: address, user and an SSH key (passwords work too).
+2. Watch **Overview** fill with live metrics, risk and alerts.
+3. Open **Endpoints → File integrity** — the first scan becomes the baseline; later drift raises an incident.
+4. Check **Intel → Threats** and **MITRE ATT&CK**, then run **Governance → Compliance** and export a report.
 
----
+Keyboard: <kbd>Ctrl</kbd>+<kbd>K</kbd> search · <kbd>Ctrl</kbd>+<kbd>B</kbd> sidebar · <kbd>?</kbd> all shortcuts · <kbd>g</kbd> <kbd>o</kbd> overview · <kbd>g</kbd> <kbd>i</kbd> incidents · <kbd>g</kbd> <kbd>m</kbd> MITRE.
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│            Electron (LemonSees.exe)              │
-│  ┌──────────────┐      ┌──────────────────────┐  │
-│  │   React UI   │◄────►│   Node.js Engine     │  │
-│  │  (sections   │  WS  │   (127.0.0.1)        │  │
-│  │   → tabs)    │      └──────────┬───────────┘  │
-│  └──────────────┘                 │              │
-└───────────────────────────────────┼──────────────┘
-                                    │ SSH (port 22)  ← the session IS the agent
-                         ┌──────────┴──────────────┐
-                         │      Linux Server(s)     │
-                         │ /proc · docker · db      │
-                         │ auth.log · ss · ps · cron│
-                         └──────────────────────────┘
+┌──────────── Browser · Electron (Windows / Linux) ────────────┐
+│  React UI — lazy-loaded pages, SVG charts, demo engine        │
+└───────────────┬──────────────────────────────────────────────┘
+                │ HTTP + WebSocket (token-protected in web mode)
+┌───────────────┴──────────────────────────────────────────────┐
+│  LemonSees engine (Node.js)                                   │
+│  collectors · threat sweep · FIM · uptime · incidents · audit │
+└───────────────┬──────────────────────────────────────────────┘
+                │ SSH — the session is the agent
+        ┌───────┴────────┐
+        │ Linux servers   │  /proc · ps · ss · cron · systemd · auth.log · docker · sha256sum
+        └────────────────┘
 ```
 
-- **One persistent SSH connection** per host (multiplexing), separate channels per task
-- **Metrics/traffic:** single script per poll (`/proc/stat`, `/proc/net/dev`, `free`, `df`, `docker`); deltas in one round-trip
-- **EDR/NDR/CTI:** `ps`, `ss`, `cron`/`systemctl`, `auth.log`, `dig`/`whois` — parsed server-side, enriched with batch geo-IP
-- **Databases:** SSH port-forward to native drivers or HTTP proxy for REST engines; SQLite streamed and opened locally with `sql.js`
-
----
+- One multiplexed SSH connection per host; metrics are collected in a single round-trip per poll.
+- Nothing runs on your servers between polls; credentials never leave the machine running LemonSees.
+- Every page is its own chunk and warms up in the background; live state uses `useSyncExternalStore`, identical frames are dropped.
 
 ## 🛠️ Development
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Frontend with HMR (requires running `server`) |
-| `npm run server` | Engine standalone |
-| `npm run app` | Electron in dev mode |
-| `npm run build` | Build frontend → `dist/` |
-| `npm run dist:win` | Build `LemonSees.exe` → `release/win-unpacked/` |
-
-**Requirements:** Windows 10/11 (pre-built exe needs nothing else) · Node.js 18+ (dev) · Linux servers with SSH.
-
----
-
-## 🔐 Data & privacy
-
-| What | Where |
-|------|-------|
-| Hosts / DBs / incidents / audit | `%APPDATA%\LemonSees\config\` (local only) |
-| Passwords | Plain text — **use SSH keys** |
-| Outbound traffic | None, except optional geo-IP (attacker/peer public IPs only) |
-
-> The engine binds to `127.0.0.1` only. Geo-IP enrichment (togglable in **Settings**) sends only public IPs of attackers/peers to a geolocation service; everything else stays on your machine.
-
----
-
-## 📁 Project structure
-
-```
-LemonSees/
-├── electron/            # Electron main process (frameless window, config migration)
-├── server/              # Node.js SSH engine
-│   ├── collector.js     # Host metrics + traffic
-│   ├── security.js      # Posture · vulns.js — vulnerability scan
-│   ├── threats.js       # CTI — auth.log · geoip.js — geo lookup
-│   ├── edr.js           # EDR — processes + persistence
-│   ├── netops.js        # NDR/CTI — connections, tools, IP intel
-│   ├── compliance.js    # GRC — CIS/NIST controls
-│   ├── db.js            # 39 DB engines, engines.js — registry
-│   └── config.js        # Hosts, DBs, incidents, audit, SOC config
-├── src/
-│   ├── pages/           # Dashboard, Events, Endpoints, Processes, Persistence,
-│   │                    #   Security, Vulnerabilities, Traffic, Connections,
-│   │                    #   Threats, Investigate, Incidents, Playbooks,
-│   │                    #   Compliance, Reports, Audit, Toolkit, …
-│   ├── components/ui.tsx # Design system (Tabs, KPIs, rings, badges)
-│   └── lib/             # api, engines, i18n (5 langs), settings
-├── buildResources/      # App icon
-└── .github/assets/      # Banner, logo
+```bash
+npm ci
+npm run server      # engine on :5199
+npm run dev         # UI on :5198 with hot reload (proxies /api and /ws)
+npm run app         # Electron shell
+npm run typecheck
+npm run dist:win    # portable .exe + zip   → release/
+npm run dist:linux  # AppImage + tar.gz     → release/
+npm run assets      # regenerate PNG icons from public/logo.svg
+npm run shots       # regenerate README screenshots from the demo (needs npm run dev)
 ```
 
----
+Tagging `v*` builds Windows, Linux and web bundles in GitHub Actions and attaches them to a release.
+Design tokens and rules live in [DESIGN.md](DESIGN.md).
+
+## 🔐 Security
+
+LemonSees is a security tool, so its own security matters. Please report vulnerabilities privately —
+see **[SECURITY.md](SECURITY.md)**. Every instance also serves the Altumptic contact at `/.well-known/security.txt`.
+
+| | |
+|---|---|
+| PGP key | [`/.well-known/pgp-key.txt`](https://altumptic.com/.well-known/pgp-key.txt) |
+| Fingerprint | `117B A978 F332 80B5 12EE 84B5 D278 3C4F DE43 0CA6` |
+| Key type | Ed25519 / Cv25519 · expires 13 Oct 2028 |
+| Machine-readable | [`/.well-known/security.txt`](https://altumptic.com/.well-known/security.txt) |
 
 ## 🤝 Contributing
 
-Issues and PRs welcome. For large changes, open an issue first.
+Issues and pull requests are welcome — see [CONTRIBUTORS.md](CONTRIBUTORS.md). Please run `npm run typecheck && npm run build` before opening a PR.
 
----
+## 📄 License
 
-<div align="center">
-
-**Built with 🍋 for analysts who want a real SOC without the bloat**
-
-MIT © [kiurakku](https://github.com/kiurakku)
-
-</div>
+[MIT](LICENSE) © 2026 [Altumptic](https://altumptic.com) and LemonSees contributors.
