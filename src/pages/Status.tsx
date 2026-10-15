@@ -53,7 +53,7 @@ export default function StatusPage() {
             <div className="doto text-[28px] leading-none" style={{ color: bannerColor }}>
               {state.down > 0 ? t("Є недоступні сервіси") : state.active === 0 ? t("Очікую перші перевірки") : t("Усі системи в нормі")}
             </div>
-            <div className="mono mt-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="mt-2 text-[12.5px] text-muted-foreground font-medium">
               {state.active - state.down}/{state.total} {t("онлайн")} · {state.down} {t("офлайн")}
             </div>
           </div>
@@ -72,15 +72,15 @@ export default function StatusPage() {
               <div key={m.id} className="flex flex-wrap items-center gap-4 py-3">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${has && s!.up ? "live-dot" : ""}`} style={{ background: color }} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{m.name}</div>
-                  <div className="mono truncate text-[11px] text-muted-foreground">{m.url}</div>
+                  <div className="truncate text-[14.5px] font-medium">{m.name}</div>
+                  <div className="mono truncate text-[12.5px] text-muted-foreground">{m.url}</div>
                 </div>
                 <div className="hidden w-40 shrink-0 sm:block">
                   <StatusBars data={tls[m.id]?.length ? tls[m.id] : [{ ok: null }]} height={26} />
                 </div>
                 <div className="w-16 shrink-0 text-right">
                   <div className="doto text-base leading-none" style={{ color }}>{has ? `${s!.uptimePct}%` : "—"}</div>
-                  <div className="mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{has ? t(s!.up ? "онлайн" : "офлайн") : "—"}</div>
+                  <div className="text-[11px] text-muted-foreground font-medium">{has ? t(s!.up ? "онлайн" : "офлайн") : "—"}</div>
                 </div>
               </div>
             );
@@ -92,19 +92,19 @@ export default function StatusPage() {
       <Panel>
         <SectionHeader icon={Bell} title={t("Сповіщення про даунтайм")} sub={t("Переходи стану сервісів (desktop-сповіщення надсилаються)")} />
         {events.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">{t("Змін стану ще не було.")}</div>
+          <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Змін стану ще не було.")}</div>
         ) : (
           <ul className="space-y-2">
             {events.map((e, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 border-b border-[var(--hairline)] pb-2 text-[12.5px] last:border-0">
+              <li key={i} className="flex items-center justify-between gap-3 border-b border-[var(--hairline)] pb-2 text-[14px] last:border-0">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: e.ok ? "var(--success)" : "var(--danger)" }} />
                   <span className="truncate font-medium">{e.name}</span>
-                  <span className="mono shrink-0 text-[11px]" style={{ color: e.ok ? "var(--success)" : "var(--danger)" }}>
+                  <span className="mono shrink-0 text-[12.5px]" style={{ color: e.ok ? "var(--success)" : "var(--danger)" }}>
                     {e.ok ? t("відновився") : t("недоступний")}
                   </span>
                 </span>
-                <span className="mono shrink-0 text-[11px] text-muted-foreground">
+                <span className="mono shrink-0 text-[12.5px] text-muted-foreground">
                   {e.ok ? `HTTP ${e.status} · ${e.ms}ms` : e.error || `HTTP ${e.status}`} · {fmtWhen(e.at)}
                 </span>
               </li>

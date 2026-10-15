@@ -97,7 +97,7 @@ export default function DatabasePage() {
         <aside className="space-y-2">
           <div className="eyebrow px-1">{t("Підключення")}</div>
           {dbs.length === 0 && (
-            <div className="rounded-lg border border-dashed border-[var(--hairline)] px-3 py-8 text-center text-[12px] text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-[var(--hairline)] px-3 py-8 text-center text-[13.5px] text-muted-foreground">
               {t("Ще немає баз. «Знайти на сервері» підтягне їх автоматично, або додай вручну.")}
             </div>
           )}
@@ -118,8 +118,8 @@ export default function DatabasePage() {
                     <DbIcon className="h-3 w-3" style={{ color: engineAccent(d.type) }} />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-medium">{d.name}</span>
-                    <span className="mono block truncate text-[10px] text-muted-foreground">
+                    <span className="block truncate text-[14.5px] font-medium">{d.name}</span>
+                    <span className="mono block truncate text-[12px] text-muted-foreground">
                       {eng.label} · {hostName(d.hostId)}
                     </span>
                   </span>
@@ -168,7 +168,7 @@ export default function DatabasePage() {
             <DbWorkspace key={sel.id} db={sel} hostName={hostName(sel.hostId)} />
           ) : (
             <Panel>
-              <div className="py-20 text-center text-sm text-muted-foreground">
+              <div className="py-20 text-center text-[14.5px] text-muted-foreground">
                 {dbs.length === 0 ? t("Додай першу базу, щоб почати.") : t("Обери базу зліва.")}
               </div>
             </Panel>
@@ -244,7 +244,7 @@ function DbWorkspace({ db, hostName }: { db: DbConn; hostName: string }) {
           <span className="flex flex-wrap items-center gap-2">
             <DbIcon className="h-4 w-4" style={{ color: engineAccent(db.type) }} />
             {db.name}
-            <span className="mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <span className="text-[12px] text-muted-foreground font-medium">
               {isFileBased(db.type) ? db.dbFile : `${db.dbHost}:${db.dbPort}${db.database ? ` / ${db.database}` : ""}`}
             </span>
           </span>
@@ -271,15 +271,15 @@ function DbWorkspace({ db, hostName }: { db: DbConn; hostName: string }) {
         }
       >
         {loading ? (
-          <div className="py-16 text-center text-sm text-muted-foreground">{t("З'єднуюся з базою…")}</div>
+          <div className="py-16 text-center text-[14.5px] text-muted-foreground">{t("З'єднуюся з базою…")}</div>
         ) : err ? (
-          <div className="mono whitespace-pre-wrap rounded-lg border border-[var(--danger)]/40 bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] px-4 py-6 text-center text-sm text-[var(--danger)]">
+          <div className="mono whitespace-pre-wrap rounded-lg border border-[var(--danger)]/40 bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] px-4 py-6 text-center text-[14.5px] text-[var(--danger)]">
             {err}
           </div>
         ) : (
           <>
             {readOnlyNote && tab !== "query" && (
-              <div className="mono mb-3 flex items-center gap-2 rounded-md border border-[var(--hairline)] px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <div className="mb-3 flex items-center gap-2 rounded-md border border-[var(--hairline)] px-3 py-1.5 text-[12px] text-muted-foreground font-medium">
                 <Lock className="h-3 w-3" /> {readOnlyNote}
               </div>
             )}
@@ -311,7 +311,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[11px] font-medium transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[12.5px] font-medium transition-colors ${
         active ? "bg-[color-mix(in_oklab,var(--primary)_16%,transparent)] text-[var(--primary)]" : "text-muted-foreground hover:text-foreground"
       }`}
     >
@@ -337,13 +337,13 @@ function Structure({
   if (schema.kind === "http") {
     return (
       <div className="space-y-3">
-        <div className="text-[12px] text-muted-foreground">{t("Швидкі запити — клікни, щоб підставити в консоль:")}</div>
+        <div className="text-[13.5px] text-muted-foreground">{t("Швидкі запити — клікни, щоб підставити в консоль:")}</div>
         <div className="grid gap-2">
           {schema.hints.map((h, i) => (
             <button
               key={i}
               onClick={() => onPrefill(h)}
-              className="mono flex items-start gap-2 rounded-lg border border-[var(--hairline)] px-3 py-2 text-left text-[12px] hover:border-[var(--primary)]/50"
+              className="mono flex items-start gap-2 rounded-lg border border-[var(--hairline)] px-3 py-2 text-left text-[13.5px] hover:border-[var(--primary)]/50"
             >
               <Play className="mt-0.5 h-3 w-3 shrink-0 text-[var(--primary)]" />
               <span className="whitespace-pre-wrap">{h}</span>
@@ -367,7 +367,7 @@ function Structure({
           <div className="eyebrow mb-2">{t("Ключі (зразок)")}</div>
           <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
             {schema.keys.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("Порожньо")}</div>
+              <div className="px-4 py-8 text-center text-[14.5px] text-muted-foreground">{t("Порожньо")}</div>
             )}
             {schema.keys.map((k) => (
               <button
@@ -375,11 +375,11 @@ function Structure({
                 onClick={() => onPrefill(k.type === "string" ? `GET ${k.key}` : `TYPE ${k.key}`)}
                 className="flex w-full items-center justify-between gap-3 border-b border-[var(--hairline)] px-4 py-2 text-left last:border-b-0 hover:bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]"
               >
-                <span className="mono flex min-w-0 items-center gap-2 text-[12px]">
+                <span className="mono flex min-w-0 items-center gap-2 text-[13.5px]">
                   <KeyRound className="h-3 w-3 shrink-0 text-muted-foreground" />
                   <span className="truncate">{k.key}</span>
                 </span>
-                <span className="mono shrink-0 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{k.type}</span>
+                <span className="shrink-0 text-[12px] text-muted-foreground font-medium">{k.type}</span>
               </button>
             ))}
           </div>
@@ -389,7 +389,7 @@ function Structure({
   }
 
   if (schema.tables.length === 0)
-    return <div className="py-12 text-center text-sm text-muted-foreground">{t("Немає таблиць.")}</div>;
+    return <div className="py-12 text-center text-[14.5px] text-muted-foreground">{t("Немає таблиць.")}</div>;
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -402,18 +402,18 @@ function Structure({
           <div className="flex items-center justify-between gap-2 border-b border-[var(--hairline)] bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)] px-3 py-2">
             <span className="flex min-w-0 items-center gap-2">
               <TableIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate text-[13px] font-medium">{tbl.name}</span>
+              <span className="truncate text-[14.5px] font-medium">{tbl.name}</span>
             </span>
-            <span className="mono shrink-0 text-[10px] text-muted-foreground">{tbl.columns.length}</span>
+            <span className="mono shrink-0 text-[12px] text-muted-foreground">{tbl.columns.length}</span>
           </div>
           <div className="max-h-44 overflow-auto p-1">
             {tbl.columns.map((c) => (
-              <div key={c.name} className="flex items-center justify-between gap-3 rounded px-2 py-1 text-[12px]">
+              <div key={c.name} className="flex items-center justify-between gap-3 rounded px-2 py-1 text-[13.5px]">
                 <span className="flex min-w-0 items-center gap-1.5">
                   {c.pk && <KeyRound className="h-2.5 w-2.5 shrink-0 text-[var(--primary)]" />}
                   <span className={`truncate ${c.pk ? "font-medium text-[var(--primary)]" : ""}`}>{c.name}</span>
                 </span>
-                <span className="mono shrink-0 text-[10px] text-muted-foreground">{c.type}</span>
+                <span className="mono shrink-0 text-[12px] text-muted-foreground">{c.type}</span>
               </div>
             ))}
           </div>
@@ -499,7 +499,7 @@ function DataBrowser({
         <select
           value={cur ? `${cur.schema}.${cur.name}` : ""}
           onChange={(e) => setCur(tables.find((tb) => `${tb.schema}.${tb.name}` === e.target.value) ?? null)}
-          className="mono min-w-[160px] rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]"
+          className="mono min-w-[160px] rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]"
         >
           {tables.length === 0 && <option>{t("немає таблиць")}</option>}
           {tables.map((tb) => (
@@ -508,12 +508,12 @@ function DataBrowser({
             </option>
           ))}
         </select>
-        <span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <span className="text-[12px] text-muted-foreground font-medium">
           {canEdit ? t("подвійний клік — редагувати") : t("лише перегляд")}
         </span>
         <div className="ml-auto flex items-center gap-2">
           {data && (
-            <span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="text-[12px] text-muted-foreground font-medium">
               {data.total === 0 ? "0" : `${page * limit + 1}–${Math.min((page + 1) * limit, data.total)}`} / {data.total}
             </span>
           )}
@@ -527,11 +527,11 @@ function DataBrowser({
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">{t("Завантажую…")}</div>
+        <div className="py-12 text-center text-[14.5px] text-muted-foreground">{t("Завантажую…")}</div>
       ) : err ? (
-        <div className="mono rounded-lg border border-[var(--danger)]/40 px-4 py-4 text-sm text-[var(--danger)]">{err}</div>
+        <div className="mono rounded-lg border border-[var(--danger)]/40 px-4 py-4 text-[14.5px] text-[var(--danger)]">{err}</div>
       ) : data && data.rows.length === 0 ? (
-        <div className="rounded-lg border border-[var(--hairline)] px-4 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-[var(--hairline)] px-4 py-10 text-center text-[14.5px] text-muted-foreground">
           {t("Таблиця порожня.")}
         </div>
       ) : data ? (
@@ -610,9 +610,9 @@ function QueryConsole({ db, prefill }: { db: DbConn; prefill: string }) {
           }}
           placeholder={placeholder}
           spellCheck={false}
-          className="mono min-h-[120px] w-full resize-y rounded-lg border border-[var(--hairline)] bg-black/30 p-3 text-[12.5px] leading-relaxed outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
+          className="mono min-h-[120px] w-full resize-y rounded-lg border border-[var(--hairline)] bg-[var(--code-bg)] p-3 text-[14px] leading-relaxed outline-none focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
         />
-        <div className="mono pointer-events-none absolute bottom-2 right-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60">
+        <div className="pointer-events-none absolute bottom-2 right-3 text-[12px] text-muted-foreground/60 font-medium">
           Ctrl+Enter
         </div>
       </div>
@@ -620,22 +620,22 @@ function QueryConsole({ db, prefill }: { db: DbConn; prefill: string }) {
         <PrimaryButton onClick={run} disabled={busy}>
           <Play className="h-3 w-3" /> {busy ? t("Виконую…") : t("Виконати")}
         </PrimaryButton>
-        <span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{eng.label}</span>
+        <span className="text-[12px] text-muted-foreground font-medium">{eng.label}</span>
         {res && (
-          <span className="mono ml-auto text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          <span className="ml-auto text-[12px] text-muted-foreground font-medium">
             {res.command} · {res.rowCount} {t("рядків")}
           </span>
         )}
       </div>
 
       {err && (
-        <div className="mono whitespace-pre-wrap rounded-lg border border-[var(--danger)]/40 bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] px-4 py-3 text-[12px] text-[var(--danger)]">
+        <div className="mono whitespace-pre-wrap rounded-lg border border-[var(--danger)]/40 bg-[color-mix(in_oklab,var(--danger)_8%,transparent)] px-4 py-3 text-[13.5px] text-[var(--danger)]">
           {err}
         </div>
       )}
       {res && !err && (
         res.rows.length === 0 ? (
-          <div className="rounded-lg border border-[var(--hairline)] px-4 py-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-lg border border-[var(--hairline)] px-4 py-6 text-center text-[14.5px] text-muted-foreground">
             {t("Готово. Рядків не повернуто.")}
           </div>
         ) : (
@@ -675,11 +675,11 @@ function ResultGrid({
 }) {
   return (
     <div className="overflow-auto rounded-lg border border-[var(--hairline)]">
-      <table className="w-full border-collapse text-left text-[12.5px]">
+      <table className="data-table w-full border-collapse text-left text-[14px]">
         <thead>
           <tr className="border-b border-[var(--hairline)] bg-[color-mix(in_oklab,var(--foreground)_3%,transparent)]">
             {columns.map((c) => (
-              <th key={c} className="mono whitespace-nowrap px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <th key={c} className="whitespace-nowrap px-3 py-2 text-[12px] text-muted-foreground font-medium">
                 <span className="inline-flex items-center gap-1">
                   {pkCols.includes(c) && <KeyRound className="h-2.5 w-2.5 text-[var(--primary)]" />}
                   {c}
@@ -711,7 +711,7 @@ function ResultGrid({
                           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           if (e.key === "Escape") onEdit?.(null);
                         }}
-                        className="mono w-full min-w-[80px] rounded border border-[var(--primary)]/50 bg-black/40 px-1 py-0.5 text-[12.5px] outline-none"
+                        className="mono w-full min-w-[80px] rounded border border-[var(--primary)]/50 bg-[var(--code-bg)] px-1 py-0.5 text-[14px] outline-none"
                       />
                     ) : (
                       <span className={nullish ? "text-muted-foreground/50 italic" : ""}>{text}</span>
@@ -749,7 +749,7 @@ function EnginePicker({ value, onPick }: { value: string; onPick: (id: string) =
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t("Пошук рушія…")}
-          className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent py-2 pl-9 pr-3 text-xs outline-none placeholder:text-muted-foreground focus:border-[var(--hairline-strong)]"
+          className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent py-2 pl-9 pr-3 text-[13px] outline-none placeholder:text-muted-foreground focus:border-[var(--hairline-strong)]"
         />
       </div>
       <div className="max-h-[240px] space-y-3 overflow-auto pr-1">
@@ -767,7 +767,7 @@ function EnginePicker({ value, onPick }: { value: string; onPick: (id: string) =
                   <button
                     key={e.id}
                     onClick={() => onPick(e.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[12px] transition-colors ${
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[13.5px] transition-colors ${
                       active
                         ? "border-[var(--primary)]/60 bg-[color-mix(in_oklab,var(--primary)_14%,transparent)] text-[var(--primary)]"
                         : usable
@@ -849,7 +849,7 @@ function DbForm({
         </div>
 
         {!usable ? (
-          <div className="mono flex items-start gap-2 rounded-lg border border-[var(--hairline)] px-4 py-4 text-[12px] text-muted-foreground">
+          <div className="mono flex items-start gap-2 rounded-lg border border-[var(--hairline)] px-4 py-4 text-[13.5px] text-muted-foreground">
             {fam === "cloud" ? <Cloud className="mt-0.5 h-4 w-4 shrink-0" /> : <Clock className="mt-0.5 h-4 w-4 shrink-0" />}
             <span>
               {fam === "cloud"
@@ -864,7 +864,7 @@ function DbForm({
               <select
                 value={form.hostId}
                 onChange={(e) => set("hostId", e.target.value)}
-                className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)]"
+                className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)]"
               >
                 {hosts.map((h) => (
                   <option key={h.id} value={h.id} className="bg-[var(--ink)]">
@@ -916,7 +916,7 @@ function DbForm({
             )}
 
             {testResult && (
-              <div className="mono rounded-md border border-[var(--hairline)] px-3 py-2 text-[11px] text-muted-foreground">{testResult}</div>
+              <div className="mono rounded-md border border-[var(--hairline)] px-3 py-2 text-[12.5px] text-muted-foreground">{testResult}</div>
             )}
           </>
         )}
@@ -981,7 +981,7 @@ function DetectModal({
             <select
               value={hostId}
               onChange={(e) => setHostId(e.target.value)}
-              className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)]"
+              className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)]"
             >
               {hosts.map((h) => (
                 <option key={h.id} value={h.id} className="bg-[var(--ink)]">
@@ -995,16 +995,16 @@ function DetectModal({
           </PrimaryButton>
         </div>
 
-        <p className="text-[12px] text-muted-foreground">
+        <p className="text-[13.5px] text-muted-foreground">
           {t("Шукаємо Docker-контейнери БД, слухаючі порти й файли SQLite.")}
         </p>
 
-        {err && <div className="mono rounded-md border border-[var(--danger)]/40 px-3 py-2 text-[12px] text-[var(--danger)]">{err}</div>}
+        {err && <div className="mono rounded-md border border-[var(--danger)]/40 px-3 py-2 text-[13.5px] text-[var(--danger)]">{err}</div>}
 
         {found && (
           <div className="space-y-2">
             {found.length === 0 && (
-              <div className="rounded-lg border border-[var(--hairline)] px-4 py-8 text-center text-sm text-muted-foreground">
+              <div className="rounded-lg border border-[var(--hairline)] px-4 py-8 text-center text-[14.5px] text-muted-foreground">
                 {t("Нічого не знайдено. Додай базу вручну.")}
               </div>
             )}
@@ -1015,8 +1015,8 @@ function DetectModal({
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: engineAccent(d.type) }} />
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-medium">{eng.label}</div>
-                      <div className="mono truncate text-[10px] text-muted-foreground">{d.source}</div>
+                      <div className="truncate text-[14.5px] font-medium">{eng.label}</div>
+                      <div className="mono truncate text-[12px] text-muted-foreground">{d.source}</div>
                     </div>
                   </div>
                   <GhostButton

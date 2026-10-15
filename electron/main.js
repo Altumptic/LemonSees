@@ -1,5 +1,6 @@
-// LemonSees — десктопна SOC-оболонка. Двигун (Express + SSH) живе в цьому ж процесі:
-// закрив вікно — все зупинилось.
+// LemonSees by Altumptic — десктопна SOC-оболонка для Windows і Linux.
+// Двигун (Express + SSH) живе в цьому ж процесі: закрив вікно — все зупинилось.
+// Портативний режим: дані лежать поруч із LemonSees-*-portable.exe / AppImage у теці LemonSees-data.
 import { app, BrowserWindow, Menu, shell, Notification } from "electron";
 import path from "node:path";
 import fs from "node:fs";
@@ -24,8 +25,28 @@ if (!gotLock) {
 
   process.env.SHOK_NO_OPEN = "1";
   process.env.SHOK_PORT = String(PORT);
-  // Конфіг хостів — у профілі користувача (переживає оновлення програми)
-  const configDir = path.join(app.getPath("userData"), "config");
+  app.setAppUserModelId("com.altumptic.lemonsees");
+
+  // Де зберігати конфіг: поруч із портативним exe/AppImage (якщо можна писати),
+  // інакше — у профілі користувача (переживає оновлення програми).
+  function resolveConfigDir() {
+    const portableRoot = process.env.PORTABLE_EXECUTABLE_DIR || (process.env.APPIMAGE ? path.dirname(process.env.APPIMAGE) : "");
+    if (portableRoot) {
+      const dir = path.join(portableRoot, "LemonSees-data");
+      // AppImage — лише якщо теку створено свідомо; portable.exe — завжди
+      if (process.env.PORTABLE_EXECUTABLE_DIR || fs.existsSync(dir)) {
+        try {
+          fs.mkdirSync(dir, { recursive: true });
+          fs.accessSync(dir, fs.constants.W_OK);
+          return dir;
+        } catch {
+          /* немає прав — падаємо назад у профіль */
+        }
+      }
+    }
+    return path.join(app.getPath("userData"), "config");
+  }
+  const configDir = resolveConfigDir();
   process.env.SHOK_CONFIG_DIR = configDir;
 
   // Міграція конфігу зі старого імені (ШОК → LemonSees), щоб не втратити хости
@@ -79,14 +100,14 @@ if (!gotLock) {
       show: false,
       // Прозорий фон вікна + акриловий матеріал Windows 11 — «скляний» блюр робочого столу.
       // Поки в застосунку не ввімкнено скляний режим, тіло непрозоре й вікно виглядає звично.
-      backgroundColor: "#00000000",
-      backgroundMaterial: "acrylic",
-      title: "LemonSees — SOC Platform",
+      backgroundColor: process.platform === "win32" ? "#00000000" : "#faf9f5",
+      ...(process.platform === "win32" ? { backgroundMaterial: "acrylic" } : {}),
+      title: "LemonSees — by Altumptic",
       icon: path.join(__dirname, "..", "buildResources", "icon.png"),
       autoHideMenuBar: true,
-      // Ховаємо системний заголовок — лишаються тільки темні кнопки вікна
+      // Ховаємо системний заголовок — нейтральні кнопки вікна читаються на обох темах
       titleBarStyle: "hidden",
-      titleBarOverlay: { color: "#00000000", symbolColor: "#e8e6df", height: 42 },
+      titleBarOverlay: { color: "#00000000", symbolColor: "#8a877d", height: 60 },
       webPreferences: { contextIsolation: true, nodeIntegration: false },
     });
     // Одразу на весь екран

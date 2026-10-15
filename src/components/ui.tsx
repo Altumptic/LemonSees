@@ -1,7 +1,10 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { HostStatus, ContainerState } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { MiniTrend } from "./charts";
+import { WORLD, WORLD_ROWS } from "@/lib/worldDots";
+import { useSettings } from "@/lib/settings";
 
 /* -------- Каркас -------- */
 
@@ -19,17 +22,17 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`glass rounded-xl ${className}`}>
+    <section className={`glass rounded-2xl ${className}`}>
       {(title || eyebrow || action) && (
-        <header className="flex items-end justify-between gap-4 border-b border-[var(--hairline)] px-5 py-3.5">
-          <div>
-            {eyebrow && <div className="eyebrow mb-1">{eyebrow}</div>}
-            {title && <h2 className="text-[15px] font-medium tracking-tight">{title}</h2>}
+        <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--hairline)] px-6 py-4">
+          <div className="min-w-0">
+            {eyebrow && <div className="eyebrow mb-0.5">{eyebrow}</div>}
+            {title && <h2 className="text-[16.5px] font-semibold tracking-tight">{title}</h2>}
           </div>
           {action}
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-6">{children}</div>
     </section>
   );
 }
@@ -46,16 +49,13 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--hairline)] pb-4">
-      <div className="max-w-2xl">
-        <div className="mb-1.5 flex items-center gap-2">
-          <span className="h-2.5 w-1 rounded-full bg-[var(--primary)]" />
-          <span className="eyebrow">{eyebrow}</span>
-        </div>
-        <h1 className="text-[23px] font-semibold leading-tight tracking-tight md:text-[26px]">{title}</h1>
-        {lede && <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-muted-foreground">{lede}</p>}
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+      <div className="max-w-3xl">
+        <div className="eyebrow mb-2 text-[var(--primary)]">{eyebrow}</div>
+        <h1 className="serif text-[32px] font-medium leading-[1.12] tracking-[-0.015em] md:text-[38px]">{title}</h1>
+        {lede && <p className="mt-3 max-w-2xl text-[15.5px] leading-relaxed text-muted-foreground">{lede}</p>}
       </div>
-      {action}
+      {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
     </div>
   );
 }
@@ -78,7 +78,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-lg bg-[var(--fg-display)] px-4 py-2 text-xs font-semibold tracking-wide text-[var(--background)] shadow-[var(--shadow-card)] transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-40"
+      className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4.5 py-2.5 text-[14px] font-medium text-[var(--primary-foreground)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--primary-hover)] active:translate-y-px disabled:pointer-events-none disabled:opacity-45"
     >
       {children}
     </button>
@@ -100,10 +100,10 @@ export function GhostButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+      className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[13.5px] font-medium transition-colors disabled:opacity-50 ${
         active
-          ? "border-[var(--primary)]/50 bg-[color-mix(in_oklab,var(--primary)_16%,transparent)] text-[var(--primary)]"
-          : "border-[var(--hairline)] bg-transparent text-muted-foreground hover:border-[var(--hairline-strong)] hover:text-foreground"
+          ? "border-[color-mix(in_oklab,var(--primary)_45%,transparent)] bg-[var(--accent-subtle)] text-[var(--primary)]"
+          : "border-[var(--hairline-strong)] bg-[var(--surface)] text-foreground/80 hover:bg-[var(--surface-raised)] hover:text-foreground"
       }`}
     >
       {children}
@@ -130,18 +130,18 @@ export function HeroStat({
 }) {
   const ink = "var(--background)";
   return (
-    <div className={`hero-card relative overflow-hidden rounded-xl p-5 ${className}`}>
+    <div className={`hero-card relative overflow-hidden rounded-2xl p-6 ${className}`}>
       <div className="flex items-center justify-between">
-        <span className="mono text-[11px] uppercase tracking-[0.09em]" style={{ color: `color-mix(in oklab, ${ink} 62%, transparent)` }}>
+        <span className="text-[13px] font-medium" style={{ color: `color-mix(in oklab, ${ink} 66%, transparent)` }}>
           {label}
         </span>
         {Icon && <Icon className="h-4 w-4" style={{ color: `color-mix(in oklab, ${ink} 55%, transparent)` }} />}
       </div>
-      <div className="doto mt-3 text-[44px] leading-none" style={{ color: ink }}>
+      <div className="doto mt-3 text-[52px] leading-none" style={{ color: ink }}>
         {value}
       </div>
       {sub && (
-        <div className="mt-2 text-[12px] font-medium" style={{ color: `color-mix(in oklab, ${ink} 72%, transparent)` }}>
+        <div className="mt-2.5 text-[14px]" style={{ color: `color-mix(in oklab, ${ink} 72%, transparent)` }}>
           {sub}
         </div>
       )}
@@ -155,7 +155,7 @@ export function HeroAction({ children, onClick }: { children: ReactNode; onClick
   return (
     <button
       onClick={onClick}
-      className="mono inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.06em] transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-opacity hover:opacity-85"
       style={{ background: "color-mix(in oklab, var(--background) 16%, transparent)", color: "var(--background)" }}
     >
       {children}
@@ -181,7 +181,7 @@ export function IconBtn({
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className={`grid h-7 w-7 place-items-center rounded-md border border-[var(--hairline)] bg-transparent text-muted-foreground transition-colors hover:border-[var(--hairline-strong)] disabled:opacity-40 ${
+      className={`grid h-9 w-9 place-items-center rounded-lg border border-[var(--hairline)] bg-[var(--surface)] text-muted-foreground transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-40 ${
         danger ? "hover:text-[var(--danger)]" : "hover:text-foreground"
       }`}
     >
@@ -208,9 +208,9 @@ export function statusColor(status: HostStatus): string {
 export function StatusDot({ status }: { status: HostStatus }) {
   const c = statusColor(status);
   return (
-    <span className="relative grid h-4 w-4 place-items-center">
+    <span className="relative grid h-4 w-4 place-items-center" title={status}>
       <span
-        className={`h-1.5 w-1.5 rounded-full ${status === "online" || status === "connecting" ? "live-dot" : ""}`}
+        className={`h-2 w-2 rounded-full ${status === "online" || status === "connecting" ? "live-dot" : ""}`}
         style={{
           backgroundColor: c,
           boxShadow: `0 0 0 3px color-mix(in oklab, ${c} 18%, transparent)`,
@@ -234,15 +234,14 @@ export function StatePill({ state }: { state: ContainerState }) {
   const { c, label } = STATE_MAP[state] ?? STATE_MAP.exited;
   return (
     <span
-      className="mono inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] uppercase tracking-[0.16em]"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium"
       style={{
         color: c,
-        background: `color-mix(in oklab, ${c} 10%, transparent)`,
-        border: `1px solid color-mix(in oklab, ${c} 28%, transparent)`,
+        background: `color-mix(in oklab, ${c} 11%, transparent)`,
       }}
     >
       <span
-        className={`h-1 w-1 rounded-full ${state === "running" || state === "restarting" ? "live-dot" : ""}`}
+        className={`h-1.5 w-1.5 rounded-full ${state === "running" || state === "restarting" ? "live-dot" : ""}`}
         style={{ backgroundColor: c }}
       />
       {t(label)}
@@ -260,11 +259,10 @@ export function SeverityTag({ level }: { level: "critical" | "warning" | "info" 
   const { c, label } = map[level];
   return (
     <span
-      className="mono inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] uppercase tracking-[0.16em]"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium"
       style={{
         color: c,
-        background: `color-mix(in oklab, ${c} 10%, transparent)`,
-        border: `1px solid color-mix(in oklab, ${c} 26%, transparent)`,
+        background: `color-mix(in oklab, ${c} 11%, transparent)`,
       }}
     >
       {t(label)}
@@ -277,7 +275,7 @@ export function SeverityTag({ level }: { level: "critical" | "warning" | "info" 
 export function Bar({ value, tint }: { value: number; tint?: string }) {
   const color = tint ?? "var(--foreground)";
   return (
-    <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/[0.05]">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--hairline)]">
       <div
         className="h-full transition-[width] duration-700"
         style={{ width: `${Math.min(100, Math.max(2, value))}%`, background: color, opacity: 0.85 }}
@@ -289,9 +287,9 @@ export function Bar({ value, tint }: { value: number; tint?: string }) {
 export function MiniMeter({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-[10px] tracking-[0.16em] text-muted-foreground">
-        <span className="uppercase">{label}</span>
-        <span className="num text-foreground/80">{String(Math.round(value)).padStart(2, "0")}%</span>
+      <div className="mb-1.5 flex items-center justify-between text-[12.5px] text-muted-foreground">
+        <span>{label}</span>
+        <span className="num text-foreground/85">{String(Math.round(value)).padStart(2, "0")}%</span>
       </div>
       <Bar value={value} />
     </div>
@@ -313,7 +311,7 @@ export function RadialMetric({
   const c = 2 * Math.PI * r;
   const off = c - (Math.min(100, value) / 100) * c;
   return (
-    <div className="glass-strong flex items-center gap-4 rounded-lg p-4">
+    <div className="flex items-center gap-4 rounded-xl border border-[var(--hairline)] bg-[var(--surface-raised)] p-4">
       <svg viewBox="0 0 72 72" className="h-14 w-14 -rotate-90">
         <circle cx="36" cy="36" r={r} stroke="var(--hairline)" strokeWidth="3" fill="none" />
         <circle
@@ -330,10 +328,10 @@ export function RadialMetric({
         />
       </svg>
       <div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          <Icon className="h-3 w-3" /> {label}
+        <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          <Icon className="h-3.5 w-3.5" /> {label}
         </div>
-        <div className="num mt-0.5 text-2xl font-medium tracking-tight">
+        <div className="doto mt-0.5 text-[28px]">
           {Math.round(value)}
           <span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>
         </div>
@@ -385,13 +383,13 @@ export function StatCard({
   icon: LucideIcon;
 }) {
   return (
-    <div className="glass rounded-xl p-5 transition-colors hover:border-[var(--hairline-strong)]">
+    <div className="glass rounded-2xl p-6 transition-colors hover:border-[var(--hairline-strong)]">
       <div className="flex items-center justify-between">
         <span className="eyebrow">{label}</span>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <Icon className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div className="doto mt-3 text-[32px] leading-none">{value}</div>
-      {sub && <div className="mt-2 text-[11px] text-muted-foreground">{sub}</div>}
+      <div className="doto mt-3 text-[40px] leading-none text-[var(--fg-display)]">{value}</div>
+      {sub && <div className="mt-2.5 text-[13px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -419,23 +417,45 @@ export function Kpi({
   sub,
   icon: Icon,
   tone = "neutral",
+  trend,
+  onClick,
 }: {
   label: string;
   value: ReactNode;
   sub?: ReactNode;
   icon?: LucideIcon;
   tone?: Tone;
+  trend?: number[];
+  onClick?: () => void;
 }) {
   const c = toneColor(tone);
   return (
-    <div className="glass relative overflow-hidden rounded-xl p-5 transition-colors hover:border-[var(--hairline-strong)]">
-      <span className="absolute inset-x-0 top-0 h-[2px]" style={{ background: c, opacity: tone === "neutral" ? 0.25 : 0.7 }} />
-      <div className="flex items-center justify-between">
-        <span className="eyebrow">{label}</span>
-        {Icon && <Icon className="h-3.5 w-3.5" style={{ color: tone === "neutral" ? "var(--muted-foreground)" : c }} />}
+    <div
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      className={`glass relative overflow-hidden rounded-2xl p-6 transition-colors hover:border-[var(--hairline-strong)] ${onClick ? "cursor-pointer" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="eyebrow flex items-center gap-2">
+          {tone !== "neutral" && <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c }} />}
+          {label}
+        </span>
+        {Icon && (
+          <span
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+            style={{ background: tone === "neutral" ? "var(--surface-raised)" : `color-mix(in oklab, ${c} 11%, transparent)` }}
+          >
+            <Icon className="h-4 w-4" style={{ color: tone === "neutral" ? "var(--muted-foreground)" : c }} />
+          </span>
+        )}
       </div>
-      <div className="doto mt-3 text-[32px] leading-none">{value}</div>
-      {sub && <div className="mt-2 text-[11px] text-muted-foreground">{sub}</div>}
+      <div className="doto mt-3 text-[40px] leading-none text-[var(--fg-display)]">{value}</div>
+      {sub && <div className="mt-2.5 text-[13px] text-muted-foreground">{sub}</div>}
+      {trend && trend.length > 1 && (
+        <div className="mt-3 -mb-1">
+          <MiniTrend data={trend} color={tone === "neutral" ? "var(--c2)" : c} />
+        </div>
+      )}
     </div>
   );
 }
@@ -478,11 +498,11 @@ export function ScoreRing({
         />
       </svg>
       <div className="absolute grid place-items-center text-center">
-        <span className="num text-lg font-medium leading-none">
+        <span className="doto text-[22px] leading-none">
           {Math.round(v)}
-          <span className="text-[10px] text-muted-foreground">{suffix}</span>
+          <span className="text-[11px] text-muted-foreground">{suffix}</span>
         </span>
-        {label && <span className="mono mt-0.5 text-[8px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>}
+        {label && <span className="mt-0.5 text-[10.5px] text-muted-foreground">{label}</span>}
       </div>
     </div>
   );
@@ -534,14 +554,13 @@ export function ControlBadge({ status, labelText }: { status: string; labelText?
 export function Pill({ children, color, dot }: { children: ReactNode; color: string; dot?: boolean }) {
   return (
     <span
-      className="mono inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[10px] uppercase tracking-[0.14em]"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium"
       style={{
         color,
-        background: `color-mix(in oklab, ${color} 10%, transparent)`,
-        border: `1px solid color-mix(in oklab, ${color} 28%, transparent)`,
+        background: `color-mix(in oklab, ${color} 11%, transparent)`,
       }}
     >
-      {dot && <span className="h-1 w-1 rounded-full" style={{ backgroundColor: color }} />}
+      {dot && <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />}
       {children}
     </span>
   );
@@ -549,7 +568,7 @@ export function Pill({ children, color, dot }: { children: ReactNode; color: str
 
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="mono rounded border border-[var(--hairline)] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+    <span className="whitespace-nowrap rounded-md border border-[var(--hairline)] bg-[var(--surface-raised)] px-2 py-0.5 text-[11.5px] font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -567,16 +586,16 @@ export function SectionHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-      <div className="flex items-center gap-2.5">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="flex items-center gap-3">
         {Icon && (
-          <span className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--hairline)] bg-white/[0.02]">
-            <Icon className="h-4 w-4 text-[var(--primary)]" />
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--accent-subtle)]">
+            <Icon className="h-4.5 w-4.5 text-[var(--primary)]" />
           </span>
         )}
         <div>
-          <div className="text-[15px] font-medium tracking-tight">{title}</div>
-          {sub && <div className="text-[11px] text-muted-foreground">{sub}</div>}
+          <div className="text-[17px] font-semibold tracking-tight text-[var(--fg-display)]">{title}</div>
+          {sub && <div className="text-[13px] text-muted-foreground">{sub}</div>}
         </div>
       </div>
       {right}
@@ -596,18 +615,15 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="glass grid place-items-center gap-4 rounded-2xl px-6 py-16 text-center">
+    <div className="glass grid place-items-center gap-5 rounded-2xl px-6 py-16 text-center">
       {Icon && (
-        <span
-          className="grid h-14 w-14 place-items-center rounded-2xl border border-[var(--hairline-strong)] text-[var(--primary)]"
-          style={{ background: "var(--surface-raised)" }}
-        >
-          <Icon className="h-6 w-6" />
+        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--accent-subtle)] text-[var(--primary)]">
+          <Icon className="h-7 w-7" />
         </span>
       )}
       <div>
-        <div className="text-[15px] font-semibold tracking-tight">{title}</div>
-        {hint && <div className="mx-auto mt-1.5 max-w-md text-[13px] leading-relaxed text-muted-foreground">{hint}</div>}
+        <div className="serif text-[24px] font-medium tracking-tight text-[var(--fg-display)]">{title}</div>
+        {hint && <div className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-muted-foreground">{hint}</div>}
       </div>
       {action && <div className="mt-1">{action}</div>}
     </div>
@@ -617,15 +633,18 @@ export function EmptyState({
 /** Права висувна панель. */
 export function Drawer({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-end" style={{ background: "var(--scrim)" }} onClick={onClose}>
       <div
-        className="glass-strong h-full w-full max-w-md overflow-y-auto p-6"
+        role="dialog"
+        aria-modal="true"
+        className="glass-strong fade-in h-full w-full max-w-lg overflow-y-auto p-7"
         style={{ background: "var(--modal-bg)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <h2 className="text-base font-medium tracking-tight">{title}</h2>
-          <button onClick={onClose} className="grid h-7 w-7 place-items-center rounded-md border border-[var(--hairline)] text-muted-foreground hover:text-foreground">
+        <EscClose onClose={onClose} />
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <h2 className="serif text-[22px] font-medium tracking-tight">{title}</h2>
+          <button onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-[var(--hover)] hover:text-foreground">
             ✕
           </button>
         </div>
@@ -638,7 +657,7 @@ export function Drawer({ title, onClose, children }: { title: ReactNode; onClose
 /** Тонка смуга-трек для прогресу/скору. */
 export function Track({ value, tone = "neutral" }: { value: number; tone?: Tone }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--hairline)]">
       <div className="h-full transition-[width] duration-700" style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: toneColor(tone) }} />
     </div>
   );
@@ -660,14 +679,26 @@ export function HostBar({
   loading?: boolean;
   right?: ReactNode;
 }) {
+  const { settings } = useSettings();
+  // Автооновлення з налаштувань (0 — вручну). Не стріляємо, поки йде попередній скан.
+  const latest = useRef({ onRefresh, loading });
+  latest.current = { onRefresh, loading };
+  useEffect(() => {
+    if (!settings.refreshSec || !onRefresh) return;
+    const id = setInterval(() => {
+      const l = latest.current;
+      if (!l.loading && document.visibilityState === "visible") l.onRefresh?.();
+    }, settings.refreshSec * 1000);
+    return () => clearInterval(id);
+  }, [settings.refreshSec, !!onRefresh]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-2 rounded-md border border-[var(--hairline)] bg-white/[0.02] px-2 py-1">
+    <div className="mb-6 flex flex-wrap items-center gap-2.5">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] py-1.5 pl-3 pr-2 shadow-[var(--shadow-card)]">
         {value && <StatusDot status={hosts.find((h) => h.id === value)?.status ?? "offline"} />}
         <select
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className="mono bg-transparent text-xs outline-none"
+          className="min-w-[160px] cursor-pointer bg-transparent py-0.5 text-[14px] font-medium outline-none"
         >
           {hosts.map((h) => (
             <option key={h.id} value={h.id} className="bg-[var(--ink)]">
@@ -677,13 +708,20 @@ export function HostBar({
         </select>
       </div>
       {right}
+      {onRefresh && settings.refreshSec > 0 && (
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+          <span className="live-dot h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+          {settings.refreshSec >= 60 ? `${settings.refreshSec / 60} min` : `${settings.refreshSec} s`}
+        </span>
+      )}
       {onRefresh && (
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="ml-auto inline-flex items-center gap-2 rounded-md border border-[var(--hairline)] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--hairline-strong)] hover:text-foreground disabled:opacity-50"
+          title="Refresh"
+          className={`${settings.refreshSec > 0 ? "" : "ml-auto"} inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-3.5 text-[14px] text-muted-foreground transition-colors hover:bg-[var(--surface-raised)] hover:text-foreground disabled:opacity-50`}
         >
-          <span className={loading ? "animate-spin" : ""}>↻</span>
+          <span className={`inline-block ${loading ? "animate-spin" : ""}`}>↻</span>
         </button>
       )}
     </div>
@@ -701,7 +739,7 @@ export function Tabs({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-1 border-b border-[var(--hairline)]">
+    <div className="no-scrollbar mb-7 flex items-center gap-1 overflow-x-auto border-b border-[var(--hairline)]">
       {items.map((it) => {
         const on = active === it.id;
         const Icon = it.icon;
@@ -709,14 +747,14 @@ export function Tabs({
           <button
             key={it.id}
             onClick={() => onChange(it.id)}
-            className={`group relative -mb-px inline-flex items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium transition-colors ${
+            className={`group relative -mb-px inline-flex shrink-0 items-center gap-2 px-4 py-3 text-[14.5px] font-medium transition-colors ${
               on ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {Icon && <Icon className={`h-3.5 w-3.5 ${on ? "text-[var(--primary)]" : ""}`} />}
+            {Icon && <Icon className={`h-4 w-4 ${on ? "text-[var(--primary)]" : ""}`} />}
             {it.label}
             {it.badge != null && (
-              <span className="mono rounded-full bg-[color-mix(in_oklab,var(--primary)_20%,transparent)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--primary)]">
+              <span className="rounded-full bg-[var(--accent-subtle)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--primary)]">
                 {it.badge}
               </span>
             )}
@@ -773,7 +811,7 @@ export function AreaChart({
         <polygon points={area} fill={`url(#ac-${color.replace(/\W/g, "")})`} />
         <polyline points={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       </svg>
-      <div className="mono absolute right-1 top-0 text-[10px] text-muted-foreground">
+      <div className="num absolute right-1 top-0 text-[12px] text-muted-foreground">
         {fmt ? fmt(cur) : cur}
         {unit ? ` ${unit}` : ""}
       </div>
@@ -807,16 +845,16 @@ export function StatusBars({ data, height = 34 }: { data: { ok: boolean | null }
 export function BarList({ items }: { items: { label: string; value: number; max?: number; sub?: string; color?: string }[] }) {
   const max = Math.max(1, ...items.map((i) => i.max ?? i.value));
   return (
-    <div className="space-y-2">
+    <div className="space-y-3.5">
       {items.map((it, i) => (
         <div key={i}>
-          <div className="mb-1 flex items-center justify-between gap-3 text-[12px]">
+          <div className="mb-1.5 flex items-center justify-between gap-3 text-[14px]">
             <span className="truncate">{it.label}</span>
             <span className="num shrink-0 text-muted-foreground">
               {it.sub ?? it.value}
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-[1px] bg-white/[0.06]">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--hairline)]">
             <div className="h-full" style={{ width: `${Math.min(100, (it.value / max) * 100)}%`, background: it.color ?? "var(--primary)" }} />
           </div>
         </div>
@@ -842,43 +880,46 @@ export function Histogram({ buckets, height = 64, color = "var(--primary)" }: { 
   );
 }
 
-/** Геокарта (equirectangular) — точки атак за координатами. */
-export function MapPlot({ points, height = 260 }: { points: { lon: number; lat: number; count: number; label: string }[]; height?: number }) {
-  const w = 560;
-  const h = height;
+/** Геокарта (equirectangular): крапковий світ + джерела атак. */
+const LAND = (() => {
+  const pts: [number, number][] = [];
+  WORLD_ROWS.forEach((hex, r) => {
+    const bits = BigInt("0x" + hex).toString(2).padStart(WORLD.cols, "0");
+    for (let c = 0; c < WORLD.cols; c++) if (bits[c] === "1") pts.push([c, r]);
+  });
+  return pts;
+})();
+
+export function MapPlot({ points }: { points: { lon: number; lat: number; count: number; label: string }[]; height?: number }) {
+  const cell = 6;
+  const w = WORLD.cols * cell;
+  const h = WORLD.rows * cell;
   const toX = (lon: number) => ((lon + 180) / 360) * w;
-  const toY = (lat: number) => ((90 - lat) / 180) * h;
+  const toY = (lat: number) => ((WORLD.latTop - lat) / WORLD.latSpan) * h;
   const max = Math.max(1, ...points.map((p) => p.count));
-  const pid = "mapdots";
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
-      <svg viewBox={`0 0 ${w} ${h}`} className="h-auto w-full" style={{ background: "var(--surface)" }}>
-        <defs>
-          <pattern id={pid} width="11" height="11" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.7" fill="var(--hairline-strong)" />
-          </pattern>
-        </defs>
-        <rect width={w} height={h} fill={`url(#${pid})`} opacity="0.5" />
-        {Array.from({ length: 11 }, (_, i) => (
-          <line key={`v${i}`} x1={(i * w) / 11} y1={0} x2={(i * w) / 11} y2={h} stroke="var(--hairline)" strokeWidth="0.4" />
+    <div className="overflow-hidden rounded-xl border border-[var(--hairline)] bg-[var(--surface-raised)]">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-auto w-full">
+        {LAND.map(([c, r]) => (
+          <circle key={`${c}-${r}`} cx={c * cell + cell / 2} cy={r * cell + cell / 2} r={1.55} fill="var(--hairline-strong)" />
         ))}
-        {Array.from({ length: 6 }, (_, i) => (
-          <line key={`h${i}`} x1={0} y1={(i * h) / 6} x2={w} y2={(i * h) / 6} stroke="var(--hairline)" strokeWidth="0.4" />
-        ))}
-        <line x1={0} y1={h / 2} x2={w} y2={h / 2} stroke="var(--hairline-strong)" strokeWidth="0.7" />
-        {points.filter((p) => p.lat || p.lon).map((p, i) => {
-          const r = 2.5 + (p.count / max) * 7;
-          const x = toX(p.lon);
-          const y = toY(p.lat);
-          return (
-            <g key={i}>
-              <circle cx={x} cy={y} r={r + 4} fill="var(--danger)" opacity="0.12" />
-              <circle cx={x} cy={y} r={r} fill="var(--danger)" opacity="0.85">
-                <title>{p.label}: {p.count}</title>
-              </circle>
-            </g>
-          );
-        })}
+        {points
+          .filter((p) => p.lat || p.lon)
+          .sort((a, b) => a.count - b.count)
+          .map((p, i) => {
+            const r = 4 + Math.sqrt(p.count / max) * 13;
+            const x = toX(p.lon);
+            const y = toY(Math.max(-56, Math.min(84, p.lat)));
+            return (
+              <g key={i}>
+                <circle cx={x} cy={y} r={r * 1.9} fill="var(--danger)" opacity="0.08" />
+                <circle cx={x} cy={y} r={r} fill="var(--danger)" opacity="0.22" />
+                <circle cx={x} cy={y} r={Math.max(2.5, r * 0.42)} fill="var(--danger)">
+                  <title>{p.label}: {p.count}</title>
+                </circle>
+              </g>
+            );
+          })}
       </svg>
     </div>
   );
@@ -901,13 +942,13 @@ export function TextInput({
 }) {
   return (
     <label className="block">
-      <div className="eyebrow mb-1">{label}</div>
+      <div className="mb-1.5 text-[13.5px] font-medium text-foreground/85">{label}</div>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50 focus:border-[var(--hairline-strong)] focus:ring-1 focus:ring-[var(--ring)]"
+        className="w-full rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-3.5 py-2.5 text-[14.5px] outline-none transition-shadow placeholder:text-muted-foreground/60 focus:border-[var(--primary)] focus:ring-3 focus:ring-[var(--ring)]"
       />
     </label>
   );
@@ -925,23 +966,56 @@ export function Modal({
   wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: "var(--scrim)" }} onClick={onClose}>
       <div
-        className={`glass-strong max-h-[85vh] w-full overflow-y-auto rounded-xl p-6 ${wide ? "max-w-3xl" : "max-w-lg"}`}
+        role="dialog"
+        aria-modal="true"
+        className={`glass-strong pop-in max-h-[88vh] w-full overflow-y-auto rounded-2xl p-7 ${wide ? "max-w-4xl" : "max-w-xl"}`}
         onClick={(e) => e.stopPropagation()}
         style={{ background: "var(--modal-bg)" }}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-medium tracking-tight">{title}</h2>
+        <EscClose onClose={onClose} />
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="serif text-[24px] font-medium tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="grid h-7 w-7 place-items-center rounded-md border border-[var(--hairline)] text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-[var(--hover)] hover:text-foreground"
           >
             ✕
           </button>
         </div>
         {children}
       </div>
+    </div>
+  );
+}
+
+/** Закриття модалок/панелей клавішею Escape. */
+function EscClose({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [onClose]);
+  return null;
+}
+
+/** Плейсхолдер сторінки, поки довантажується її код. */
+export function PageSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-6">
+      <div className="space-y-3">
+        <div className="skeleton h-4 w-28" />
+        <div className="skeleton h-10 w-80" />
+        <div className="skeleton h-4 w-[28rem] max-w-full" />
+      </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="skeleton h-32" />
+        ))}
+      </div>
+      <div className="skeleton h-72" />
     </div>
   );
 }

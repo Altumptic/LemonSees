@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { FileText, Download, Play, ShieldCheck, Bug, Crosshair, Siren } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import {
@@ -52,7 +52,7 @@ export default function ReportsPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
   const { settings } = useSettings();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -117,7 +117,7 @@ export default function ReportsPage() {
         lede={t("Зводить постуру, комплаєнс, вразливості, загрози та інциденти в звіт із мапінгом на CIS / NIST / ISO / GDPR.")}
         action={
           <div className="flex items-center gap-2">
-            <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]">
+            <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]">
               {hosts.map((h) => <option key={h.id} value={h.id} className="bg-[var(--ink)]">{h.name}</option>)}
             </select>
             <PrimaryButton onClick={generate} disabled={loading}><Play className="h-3 w-3" /> {loading ? t("Генерую…") : t("Згенерувати звіт")}</PrimaryButton>
@@ -126,15 +126,15 @@ export default function ReportsPage() {
       />
 
       {loading ? (
-        <Panel><div className="py-16 text-center text-sm text-muted-foreground">{progress || t("Збираю дані…")}</div></Panel>
+        <Panel><div className="py-16 text-center text-[14.5px] text-muted-foreground">{progress || t("Збираю дані…")}</div></Panel>
       ) : err ? (
-        <Panel><div className="mono py-10 text-center text-sm text-[var(--danger)]">{err}</div></Panel>
+        <Panel><div className="mono py-10 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>
       ) : !bundle ? (
         <EmptyState icon={FileText} title={t("Звіт ще не згенеровано")} hint={t("Обери хост і натисни «Згенерувати звіт» — зберемо всі модулі й покриття стандартів.")} action={<PrimaryButton onClick={generate}>{t("Згенерувати звіт")}</PrimaryButton>} />
       ) : (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="text-[13px] text-muted-foreground">{t("Звіт для")} <span className="font-medium text-foreground">{bundle.host}</span> · {fmtWhen(bundle.at)}</div>
+            <div className="text-[14.5px] text-muted-foreground">{t("Звіт для")} <span className="font-medium text-foreground">{bundle.host}</span> · {fmtWhen(bundle.at)}</div>
             <GhostButton onClick={download}><Download className="h-3 w-3" /> {t("Завантажити HTML")}</GhostButton>
           </div>
 
@@ -146,7 +146,7 @@ export default function ReportsPage() {
                 <div>
                   <div className="eyebrow mb-1">{t("Загальна постура")}</div>
                   <div className="num text-xl font-medium" style={{ color: toneColor(scoreTone(posture)) }}>{posture}%</div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">{t("ризик")} {bundle.security.risk}</div>
+                  <div className="mt-1 text-[12.5px] text-muted-foreground">{t("ризик")} {bundle.security.risk}</div>
                 </div>
               </div>
             </Panel>
@@ -164,14 +164,14 @@ export default function ReportsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {cov.map((f) => (
                 <div key={f.key}>
-                  <div className="mb-1.5 flex items-center justify-between text-[12px]">
+                  <div className="mb-1.5 flex items-center justify-between text-[13.5px]">
                     <span className="flex items-center gap-2">{f.label} <Tag>{f.key}</Tag></span>
                     <span className="num text-muted-foreground">{f.passed}/{f.total} · {f.pct}%</span>
                   </div>
                   <Track value={f.pct} tone={scoreTone(f.pct)} />
                 </div>
               ))}
-              {cov.length === 0 && <div className="text-sm text-muted-foreground">{t("Немає даних для мапінгу.")}</div>}
+              {cov.length === 0 && <div className="text-[14.5px] text-muted-foreground">{t("Немає даних для мапінгу.")}</div>}
             </div>
           </Panel>
 
@@ -181,24 +181,24 @@ export default function ReportsPage() {
               <SectionHeader icon={Bug} title={t("Топ вразливостей")} />
               <ul className="space-y-2">
                 {bundle.vulns.findings.filter((f) => f.status === "vuln").slice(0, 6).map((f) => (
-                  <li key={f.id} className="flex items-start justify-between gap-3 text-[13px]">
-                    <span className="min-w-0"><span className="truncate">{f.title}</span><div className="mono text-[10px] text-muted-foreground">{f.remediation}</div></span>
-                    <span className="mono shrink-0 text-[10px] uppercase" style={{ color: f.severity === "critical" || f.severity === "high" ? "var(--danger)" : "var(--warning)" }}>{f.severity}</span>
+                  <li key={f.id} className="flex items-start justify-between gap-3 text-[14.5px]">
+                    <span className="min-w-0"><span className="truncate">{f.title}</span><div className="mono text-[12px] text-muted-foreground">{f.remediation}</div></span>
+                    <span className="shrink-0 text-[12px] font-medium" style={{ color: f.severity === "critical" || f.severity === "high" ? "var(--danger)" : "var(--warning)" }}>{f.severity}</span>
                   </li>
                 ))}
-                {bundle.vulns.vulnCount === 0 && <li className="text-sm text-muted-foreground">{t("Вразливостей не знайдено.")}</li>}
+                {bundle.vulns.vulnCount === 0 && <li className="text-[14.5px] text-muted-foreground">{t("Вразливостей не знайдено.")}</li>}
               </ul>
             </Panel>
             <Panel>
               <SectionHeader icon={Crosshair} title={t("Топ атакуючих")} />
               <ul className="space-y-1.5">
                 {bundle.threats.attackers.slice(0, 6).map((a) => (
-                  <li key={a.ip} className="mono flex items-center justify-between gap-2 text-[12px]">
+                  <li key={a.ip} className="mono flex items-center justify-between gap-2 text-[13.5px]">
                     <span className="truncate">{a.ip} {a.geo?.countryCode ? `· ${a.geo.countryCode}` : ""}</span>
                     <span className="shrink-0 text-[var(--danger)]">{a.count.toLocaleString()}</span>
                   </li>
                 ))}
-                {bundle.threats.attackers.length === 0 && <li className="text-sm text-muted-foreground">{t("Атак не зафіксовано.")}</li>}
+                {bundle.threats.attackers.length === 0 && <li className="text-[14.5px] text-muted-foreground">{t("Атак не зафіксовано.")}</li>}
               </ul>
             </Panel>
           </div>

@@ -34,7 +34,7 @@ export default function Volumes() {
         <select
           value={hostFilter}
           onChange={(e) => setHostFilter(e.target.value)}
-          className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs uppercase tracking-[0.14em] text-muted-foreground outline-none focus:border-[var(--hairline-strong)]"
+          className="rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] text-muted-foreground outline-none focus:border-[var(--hairline-strong)] font-medium"
         >
           <option value="all" className="bg-[var(--ink)]">
             {t("Всі хости")}
@@ -45,14 +45,14 @@ export default function Volumes() {
             </option>
           ))}
         </select>
-        <span className="mono ml-auto text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="ml-auto text-[12px] text-muted-foreground font-medium">
           {rows.length} {t("з")} {all.length}
         </span>
       </div>
 
       <Panel eyebrow={`${rows.length} ${t("томів")}`} title={t("Реєстр сховищ")}>
         <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
-          <div className={`mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] ${HEAD_TINT} px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground`}>
+          <div className={`mono grid grid-cols-12 gap-3 border-b border-[var(--hairline)] ${HEAD_TINT} px-4 py-2.5 text-[12px] text-muted-foreground font-medium`}>
             <div className="col-span-4">{t("Назва")}</div>
             <div className="col-span-2">{t("Драйвер")}</div>
             <div className="col-span-4">{t("Точка монтування")}</div>
@@ -60,7 +60,7 @@ export default function Volumes() {
           </div>
 
           {rows.length === 0 && (
-            <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+            <div className="px-4 py-12 text-center text-[14.5px] text-muted-foreground">
               {t("Немає томів (або дані ще не зібрано).")}
             </div>
           )}
@@ -68,7 +68,7 @@ export default function Volumes() {
           {rows.map((v) => (
             <div
               key={`${v.hostId}:${v.name}`}
-              className={`grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-3 text-sm last:border-b-0 ${ROW_TINT}`}
+              className={`grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-3 text-[14.5px] last:border-b-0 ${ROW_TINT}`}
             >
               <div className="col-span-4 min-w-0">
                 <div className="flex items-center gap-2">
@@ -76,11 +76,11 @@ export default function Volumes() {
                   <span className="truncate font-medium">{v.name}</span>
                 </div>
               </div>
-              <div className="mono col-span-2 text-xs text-muted-foreground">{v.driver}</div>
-              <div className="mono col-span-4 truncate text-[11px] text-muted-foreground">
+              <div className="mono col-span-2 text-[13px] text-muted-foreground">{v.driver}</div>
+              <div className="mono col-span-4 truncate text-[12.5px] text-muted-foreground">
                 {v.mountpoint || "—"}
               </div>
-              <div className="mono col-span-2 truncate text-xs text-muted-foreground">{v.hostName}</div>
+              <div className="mono col-span-2 truncate text-[13px] text-muted-foreground">{v.hostName}</div>
             </div>
           ))}
         </div>

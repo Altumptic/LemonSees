@@ -15,5 +15,21 @@ export default defineConfig({
       "/ws": { target: "ws://127.0.0.1:5199", ws: true },
     },
   },
-  build: { outDir: "dist" },
+  build: {
+    outDir: "dist",
+    target: "es2022",
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        // Важкі бібліотеки — окремими чанками, щоб кешувались і не гальмували старт
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@xterm")) return "xterm";
+          if (id.includes("sql.js")) return "sqljs";
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("react")) return "react";
+        },
+      },
+    },
+  },
 });

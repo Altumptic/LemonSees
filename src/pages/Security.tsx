@@ -11,7 +11,7 @@ import {
   Lock,
   Terminal as TermIcon,
 } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { fmtWhen, type SecurityPosture } from "@/lib/types";
 import {
@@ -27,11 +27,12 @@ import {
   toneColor,
   StatusDot,
 } from "@/components/ui";
+import { Donut, Radar } from "@/components/charts";
 
 export default function SecurityPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [data, setData] = useState<SecurityPosture | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -78,7 +79,7 @@ export default function SecurityPage() {
             <select
               value={active ?? ""}
               onChange={(e) => setHostId(e.target.value)}
-              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]"
+              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]"
             >
               {hosts.map((h) => (
                 <option key={h.id} value={h.id} className="bg-[var(--ink)]">
@@ -94,15 +95,15 @@ export default function SecurityPage() {
       />
 
       {host && host.status !== "online" && (
-        <div className="mono mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-[var(--warning)]">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[12.5px] text-[var(--warning)] font-medium">
           <StatusDot status={host.status} /> {t("Хост не онлайн — дані можуть бути недоступні")}
         </div>
       )}
 
       {loading ? (
-        <Panel><div className="py-16 text-center text-sm text-muted-foreground">{t("Оцінюю постуру безпеки…")}</div></Panel>
+        <Panel><div className="py-16 text-center text-[14.5px] text-muted-foreground">{t("Оцінюю постуру безпеки…")}</div></Panel>
       ) : err ? (
-        <Panel><div className="mono py-10 text-center text-sm text-[var(--danger)]">{err}</div></Panel>
+        <Panel><div className="mono py-10 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>
       ) : data ? (
         <div className="space-y-6">
           {/* Ризик + KPI */}
@@ -115,7 +116,7 @@ export default function SecurityPage() {
                   <div className="text-xl font-medium capitalize" style={{ color: riskColor }}>
                     {t(gradeLabel(data.grade))}
                   </div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">
+                  <div className="mt-1 text-[12.5px] text-muted-foreground">
                     {data.findings.length} {t("знахідок")} · {fmtWhen(data.at)}
                   </div>
                 </div>
@@ -132,11 +133,42 @@ export default function SecurityPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <Panel>
+              <SectionHeader icon={ShieldAlert} title={t("Знахідки за рівнем")} />
+              <Donut
+                size={140}
+                thickness={18}
+                items={[
+                  { label: t("критично"), value: data.findings.filter((f) => f.severity === "critical").length, color: "var(--danger)" },
+                  { label: t("увага"), value: data.findings.filter((f) => f.severity === "warning").length, color: "var(--warning)" },
+                  { label: t("інфо"), value: data.findings.filter((f) => f.severity === "info").length, color: "var(--info)" },
+                ]}
+                sub={t("знахідок")}
+              />
+            </Panel>
+            <Panel className="xl:col-span-2">
+              <SectionHeader icon={KeyRound} title={t("Профіль хардненгу")} sub={t("100 — найкращий стан")} />
+              <Radar
+                size={280}
+                items={[
+                  { label: "SSH root", value: data.ssh.rootLogin === "no" ? 100 : data.ssh.rootLogin === "prohibit-password" ? 80 : 10 },
+                  { label: t("Паролі SSH"), value: data.ssh.passwordAuth === "no" ? 100 : 15 },
+                  { label: "Firewall", value: data.firewall.active ? 100 : 0 },
+                  { label: "fail2ban", value: data.fail2ban ? 100 : 20 },
+                  { label: t("Патчі"), value: Math.max(0, 100 - data.updates * 4) },
+                  { label: t("Експозиція"), value: Math.max(0, 100 - data.publicPortCount * 15) },
+                  { label: t("Брутфорс"), value: Math.max(0, 100 - Math.min(100, data.failedLogins / 20)) },
+                ]}
+              />
+            </Panel>
+          </div>
+
           {/* Знахідки */}
           <Panel>
             <SectionHeader icon={ShieldAlert} title={t("Знахідки")} sub={t("Рекомендації з підсилення захисту")} />
             {data.findings.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">{t("Проблем не виявлено. Хост у гарному стані.")}</div>
+              <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Проблем не виявлено. Хост у гарному стані.")}</div>
             ) : (
               <ul className="divide-y divide-[var(--hairline)]">
                 {data.findings.map((f, i) => (
@@ -144,7 +176,7 @@ export default function SecurityPage() {
                     <Pill color={f.severity === "critical" ? "var(--danger)" : f.severity === "warning" ? "var(--warning)" : "var(--muted-foreground)"}>
                       {t(f.severity === "critical" ? "критично" : f.severity === "warning" ? "увага" : "інфо")}
                     </Pill>
-                    <span className="text-sm">{f.text}</span>
+                    <span className="text-[14.5px]">{f.text}</span>
                   </li>
                 ))}
               </ul>
@@ -155,7 +187,7 @@ export default function SecurityPage() {
             {/* SSH hardening */}
             <Panel>
               <SectionHeader icon={KeyRound} title={t("SSH-хардненг")} />
-              <dl className="mono grid grid-cols-1 gap-y-2 text-[12px]">
+              <dl className="mono grid grid-cols-1 gap-y-2 text-[13.5px]">
                 <SshRow k="PermitRootLogin" v={data.ssh.rootLogin} good={["no", "prohibit-password"].includes(data.ssh.rootLogin)} />
                 <SshRow k="PasswordAuthentication" v={data.ssh.passwordAuth} good={data.ssh.passwordAuth === "no"} />
                 <SshRow k="PermitEmptyPasswords" v={data.ssh.emptyPasswords} good={data.ssh.emptyPasswords === "no"} />
@@ -166,9 +198,9 @@ export default function SecurityPage() {
 
             {/* Порти */}
             <Panel>
-              <SectionHeader icon={Network} title={t("Слухаючі порти")} right={<span className="mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{data.ports.length}</span>} />
+              <SectionHeader icon={Network} title={t("Слухаючі порти")} right={<span className="text-[12px] text-muted-foreground font-medium">{data.ports.length}</span>} />
               <div className="max-h-64 overflow-auto">
-                <table className="w-full text-left text-[12px]">
+                <table className="data-table w-full text-left text-[13.5px]">
                   <tbody>
                     {data.ports.map((p, i) => (
                       <tr key={i} className="border-b border-[var(--hairline)] last:border-0">
@@ -189,11 +221,11 @@ export default function SecurityPage() {
             <Panel>
               <SectionHeader icon={Users} title={t("Активні сесії")} />
               {data.sessions.length === 0 ? (
-                <div className="py-4 text-center text-sm text-muted-foreground">{t("Немає активних сесій")}</div>
+                <div className="py-4 text-center text-[14.5px] text-muted-foreground">{t("Немає активних сесій")}</div>
               ) : (
                 <ul className="divide-y divide-[var(--hairline)]">
                   {data.sessions.map((s, i) => (
-                    <li key={i} className="mono flex items-center justify-between py-2 text-[12px]">
+                    <li key={i} className="mono flex items-center justify-between py-2 text-[13.5px]">
                       <span className="flex items-center gap-2"><TermIcon className="h-3 w-3 text-muted-foreground" />{s.user}</span>
                       <span className="text-muted-foreground">{s.tty} · {s.from}</span>
                     </li>
@@ -206,11 +238,11 @@ export default function SecurityPage() {
             <Panel>
               <SectionHeader icon={KeyRound} title={t("Останні входи")} />
               {data.lastLogins.length === 0 ? (
-                <div className="py-4 text-center text-sm text-muted-foreground">{t("Немає даних")}</div>
+                <div className="py-4 text-center text-[14.5px] text-muted-foreground">{t("Немає даних")}</div>
               ) : (
                 <ul className="space-y-1">
                   {data.lastLogins.map((l, i) => (
-                    <li key={i} className="mono truncate text-[11px] text-muted-foreground">{l}</li>
+                    <li key={i} className="mono truncate text-[12.5px] text-muted-foreground">{l}</li>
                   ))}
                 </ul>
               )}

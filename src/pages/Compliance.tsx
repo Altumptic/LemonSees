@@ -1,26 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, RefreshCw, ClipboardCheck, FileCheck2, Check, X, Minus } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { ControlDef, ControlResult, Attestations } from "@/lib/types";
-import {
-  PageHeader,
-  Panel,
-  GhostButton,
-  ScoreRing,
-  Kpi,
-  ControlBadge,
-  Tag,
-  SectionHeader,
-  EmptyState,
-  scoreTone,
-  toneColor,
-} from "@/components/ui";
+import { PageHeader, Panel, GhostButton, ScoreRing, Kpi, ControlBadge, Tag, SectionHeader, EmptyState, scoreTone, toneColor, Track } from "@/components/ui";
+import { Donut } from "@/components/charts";
 
 export default function CompliancePage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [manual, setManual] = useState<ControlDef[]>([]);
   const [attest, setAttest] = useState<Attestations>({});
   const [results, setResults] = useState<ControlResult[] | null>(null);
@@ -94,7 +83,7 @@ export default function CompliancePage() {
             <select
               value={active ?? ""}
               onChange={(e) => setHostId(e.target.value)}
-              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]"
+              className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]"
             >
               {hosts.map((h) => (
                 <option key={h.id} value={h.id} className="bg-[var(--ink)]">{h.name}</option>
@@ -114,7 +103,7 @@ export default function CompliancePage() {
             <div>
               <div className="eyebrow mb-1">{t("Загальний скор")}</div>
               <div className="num text-xl font-medium" style={{ color: toneColor(st) }}>{score.pass}/{score.total}</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">{t("контролів пройдено")}</div>
+              <div className="mt-1 text-[12.5px] text-muted-foreground">{t("контролів пройдено")}</div>
             </div>
           </div>
         </Panel>
@@ -126,20 +115,55 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      {err && <Panel className="mb-6"><div className="mono py-4 text-center text-sm text-[var(--danger)]">{err}</div></Panel>}
+      {err && <Panel className="mb-6"><div className="mono py-4 text-center text-[14.5px] text-[var(--danger)]">{err}</div></Panel>}
+
+      {(results?.length ?? 0) > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <Panel>
+            <SectionHeader icon={ClipboardCheck} title={t("Результати")} sub={t("Авто + ручні контролі")} />
+            <Donut
+              size={150}
+              thickness={20}
+              items={[
+                { label: t("пройдено"), value: score.autoPass + score.manAtt, color: "var(--success)" },
+                { label: t("провалено"), value: (results ?? []).filter((c) => c.status === "fail").length + manual.filter((c) => attest[c.id]?.status === "failed").length, color: "var(--danger)" },
+                { label: t("невідомо"), value: (results ?? []).filter((c) => c.status === "unknown").length, color: "var(--text-disabled)" },
+                { label: t("очікує атестації"), value: manual.filter((c) => !attest[c.id]).length, color: "var(--warning)" },
+              ]}
+              sub={t("контролів")}
+            />
+          </Panel>
+          <Panel className="xl:col-span-2">
+            <SectionHeader icon={FileCheck2} title={t("Покриття за стандартами")} sub={t("Частка пройдених контролів у кожному фреймворку")} />
+            <div className="space-y-4">
+              {frameworks(results ?? [], manual, attest).map((f) => (
+                <div key={f.name}>
+                  <div className="mb-1.5 flex items-center justify-between text-[14px]">
+                    <span className="font-medium">{f.name}</span>
+                    <span className="num text-muted-foreground">
+                      {f.pass}/{f.total} · <span style={{ color: toneColor(scoreTone(f.pct)) }}>{f.pct}%</span>
+                    </span>
+                  </div>
+                  <Track value={f.pct} tone={scoreTone(f.pct)} />
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      )}
 
       {/* Авто-контролі */}
       <Panel className="mb-6">
         <SectionHeader icon={ClipboardCheck} title={t("Автоматичні контролі")} sub={t("Перевіряються на обраному хості по SSH")} />
         {loading ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">{t("Перевіряю…")}</div>
+          <div className="py-8 text-center text-[14.5px] text-muted-foreground">{t("Перевіряю…")}</div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
             {(results ?? []).map((c) => (
               <div key={c.id} className="grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-2.5 last:border-0">
                 <div className="col-span-6 min-w-0">
-                  <div className="truncate text-sm">{c.title}</div>
-                  <div className="mono truncate text-[10px] text-muted-foreground">{c.evidence}</div>
+                  <div className="truncate text-[14.5px]">{c.title}</div>
+                  <div className="mono truncate text-[12px] text-muted-foreground">{c.evidence}</div>
                 </div>
                 <div className="col-span-3"><Tag>{c.framework}</Tag></div>
                 <div className="col-span-3 flex justify-end"><ControlBadge status={c.status} labelText={t(controlLabel(c.status))} /></div>
@@ -158,8 +182,8 @@ export default function CompliancePage() {
             return (
               <div key={c.id} className="grid grid-cols-12 items-center gap-3 border-b border-[var(--hairline)] px-4 py-2.5 last:border-0">
                 <div className="col-span-6 min-w-0">
-                  <div className="truncate text-sm">{c.title}</div>
-                  {a?.at ? <div className="mono truncate text-[10px] text-muted-foreground">{new Date(a.at).toLocaleDateString()}{a.note ? ` · ${a.note}` : ""}</div> : null}
+                  <div className="truncate text-[14.5px]">{c.title}</div>
+                  {a?.at ? <div className="mono truncate text-[12px] text-muted-foreground">{new Date(a.at).toLocaleDateString()}{a.note ? ` · ${a.note}` : ""}</div> : null}
                 </div>
                 <div className="col-span-2"><Tag>{c.framework}</Tag></div>
                 <div className="col-span-4 flex items-center justify-end gap-1">
@@ -196,4 +220,20 @@ function AttBtn({ children, active, tone, title, onClick }: { children: React.Re
       {children}
     </button>
   );
+}
+
+/** Групування контролів за родиною стандарту (CIS / NIST / ISO 27001 / GDPR). */
+function frameworks(results: ControlResult[], manual: ControlDef[], attest: Attestations) {
+  const fam = (f: string) => (f.startsWith("ISO") ? "ISO 27001" : f.split(" ")[0]);
+  const map = new Map<string, { pass: number; total: number }>();
+  const add = (f: string, ok: boolean | null) => {
+    if (ok === null) return;
+    const r = map.get(fam(f)) ?? { pass: 0, total: 0 };
+    r.total++;
+    if (ok) r.pass++;
+    map.set(fam(f), r);
+  };
+  for (const c of results) add(c.framework, c.status === "unknown" ? null : c.status === "pass");
+  for (const c of manual) add(c.framework, attest[c.id]?.status === "na" ? null : attest[c.id]?.status === "attested");
+  return [...map.entries()].map(([name, r]) => ({ name, ...r, pct: r.total ? Math.round((r.pass / r.total) * 100) : 0 })).sort((a, b) => b.total - a.total);
 }
