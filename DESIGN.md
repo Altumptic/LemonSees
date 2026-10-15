@@ -1,67 +1,77 @@
-# LemonSees — Design Spec
+# LemonSees by Altumptic — Design Spec
 
-Single source of truth for the UI. Reference feel: **BetterStack** (polished dark SaaS,
-data-dense, calm). Goal: professional and human — **no generic "AI" look** (no purple
-gradients, no dot-matrix novelty fonts, no lonely centered empty states, no glassmorphism).
+Single source of truth for the UI. Reference feel: **Anthropic / Claude** — warm ivory paper,
+editorial serif headings, calm clay accent, generous spacing. Breadth of modules like **Wazuh**,
+but quiet and readable for long SOC shifts. No neon, no purple gradients, no ALL-CAPS mono labels.
 
-Tokens live in `src/styles.css` (`:root` = dark, `[data-theme="light"]` = light). Two themes only.
+Tokens live in `src/styles.css` (`:root` = Ivory light, default; `[data-theme="dark"]` = Graphite).
 
 ## 1. Color
 
-Dark (default):
-- Backdrop `--ink #08080a`, page `--background #0a0a0b` — deep charcoal, **not** pure black.
-- Surfaces `--surface #141417`, raised `--surface-raised #1c1c20` — layered depth.
-- Text `--foreground #ededee`, secondary `--muted-foreground #9a9aa3`, display `#ffffff`.
-- Hairlines `--hairline #212124`, strong `--hairline-strong #323238`.
-- Accent (single signal): `--primary #e5484d` confident red — active nav, KPIs, CTAs.
-- Semantics: success `#30a46c`, warning `#e2a336`, danger `#e5484d`, interactive `#6e8bff`.
+Ivory (default):
+- Shell/sidebar `--ink #f0eee6`, page `--background #faf9f5`, cards `--surface #fffefb`, nested `--surface-raised #f5f4ee`.
+- Text `--foreground #1f1e1d`, secondary `--muted-foreground #6b6963`, display `#141413`.
+- Hairlines `--hairline #e8e5da`, strong `--hairline-strong #d6d2c4`.
+- Accent (single signal): clay `--primary #c15f3c` — active nav, primary buttons, eyebrows.
+- Semantics: success `#4f7a3a`, warning `#a8741a`, danger `#b4322a`, info `#56688c`.
 
-Light mirrors the same roles on warm off-white (`#fafafa` / `#ffffff`).
+Graphite mirrors the same roles on warm charcoal (`#1f1e1c` / `#262624`) with clay `#d97757`.
 
-Rule: color carries meaning. Neutral tone = muted; only status/risk uses green/amber/red.
+Rule: color carries meaning. Neutral is warm grey; only status/risk uses green/amber/red.
 
-## 2. Typography
+## 2. Typography (self-hosted via @fontsource — works offline in Electron)
 
-- Sans / display: **Space Grotesk** (distinctive, not Inter). Numbers use `.doto`
-  = Space Grotesk + `tabular-nums` (dot-matrix Doto font removed).
-- Mono: **Space Mono** — code, log lines, technical `eyebrow` labels only.
-- Scale: page title 23–26 / section 15 / body 13–14 / label 11. Tight tracking on headings.
+- UI sans: **DM Sans** (variable). Body 14.5–15.5px.
+- Display serif: **Source Serif 4** — page titles (32–38px), modal titles, KPI numbers (`.doto`), empty states.
+- Mono: **JetBrains Mono** — code, logs, IPs, terminal only. Never for labels.
+- Labels (`.eyebrow`) are sentence case, 12.5px, medium weight.
 
-## 3. Components (`src/components/ui.tsx`)
+## 3. Scale
 
-- `Panel` / `.glass`: surface + 1px hairline + soft `--shadow-card`, radius 12px.
-- `PageHeader`: red tick + eyebrow + title + short lede. One per page (no duplicate title bar).
-- `Kpi` / `StatCard`: tone bar on top, big tabular number, hover raises border.
-- `EmptyState`: solid card, tinted rounded icon badge, title, hint, **primary CTA** — never a bare icon.
-- `PrimaryButton`: light fill, radius 8px, subtle shadow. `Pill`/`Tag`: soft tinted status chips.
-- Charts: `AreaChart` (gradient fill), `StatusBars`, `Histogram`, `BarList`, `MapPlot`, `ScoreRing`.
+Default UI scale is **110 %** (“Comfortable”), presets 95 / 110 / 125 / 140 in Settings.
+Scale is CSS `zoom`; shell heights use `.h-app` / `.min-h-app` (`100dvh / --zoom`) so nothing overflows.
+Hit targets ≥ 36px (icon buttons 36, inputs/buttons ~40).
 
-## 4. Layout
+## 4. Components (`src/components/ui.tsx`)
 
-- App shell: left nav (sections + nested Cloudflare-style subsections) + thin top bar (status only).
-- Main content centered, `max-w-[1600px]`, `px-6 lg:px-10`. Card grids gap 16–24.
+- `Panel` / `.glass`: surface + 1px hairline + soft shadow, radius 16px, padding 24px.
+- `PageHeader`: clay eyebrow + serif title + lede. One per page.
+- `Kpi` / `StatCard`: tinted icon badge, tone dot, serif number.
+- `Pill` / badges: soft tinted rounded-full chips, sentence case.
+- `PrimaryButton`: clay fill; `GhostButton`: surface + strong hairline.
+- `Modal` / `Drawer`: warm scrim, Esc to close. `PageSkeleton` while a page chunk loads.
+- `CommandPalette` (Ctrl/⌘+K): jump to any module/tab or run an action.
 
-## 5. Motion
+## 5. Layout
 
-- 150–200ms ease. `fade-in` on route change; `live-dot` pulse for active status. No slides/bounce.
-- Respects `data-motion="reduced"`.
+- Sidebar 272px (collapsible to 76px rail, Ctrl/⌘+B, remembered). Below `lg` it becomes a slide-in drawer.
+- Top bar (`src/components/Topbar.tsx`): clickable breadcrumbs with menus, global host switcher, alerts inbox, quick create (+), live/demo status, search, theme, app menu.
+- Sub-tabs show in the sidebar when expanded, as a horizontal tab strip when collapsed or on narrow screens.
+- Content centered, `max-w-[1680px]`, gutters 16 / 24 / 40px.
 
-## 6. Depth
+## 6. Charts (`src/components/charts.tsx`)
 
-Depth from surface elevation + soft shadows + a faint top brand glow (`.app-bg::before`),
-not blur or heavy drop-shadows. Glow toggle in Settings.
+Dependency-free SVG: `LineChart` (multi-series, crosshair tooltip), `StackedBars`, `Donut` (hover legend),
+`Heatmap`, `Radar`, `MiniTrend` (inside `Kpi`). Severity colours come from `SEV_COLOR`, categorical
+series from `--c1…--c6` (theme-aware). Rendered at real pixel width for crisp labels.
 
-## 7. Do / Don't
+## 7. Brand
 
-- Do: tabular numerals, real data density, semantic color, subtle hover, one clear title per page.
-- Don't: pure-black voids, novelty fonts, everything-uppercase, purple AI gradients, empty hero cards.
+Mark: lemon-eye on clay (`public/logo.svg` — single source; `npm run assets` regenerates PNGs).
+Wordmark: “LemonSees” in serif + “by Altumptic”. Never recolour the mark outside the clay/ivory pair.
 
-## 8. Responsive
+## 8. Performance
 
-Sidebar `lg:` and up; below that content is full-width. Grids collapse 3→1 on small screens.
-Tables and charts scroll inside their own container; the page never scrolls horizontally.
+- Every page is a lazy chunk; nav hover prefetches, and all chunks warm up on idle after start.
+- Heavy libs split (`xterm`, `sql.js`, `icons`, `react`).
+- Live state via `useSyncExternalStore`; identical WebSocket frames are dropped (no re-render).
+- Stable translator function per language.
 
-## 9. Accessibility
+## 9. Motion
 
-Text/background contrast ≥ WCAG AA on both themes. Status never encoded by color alone
-(dot + label). Focus ring `--ring`. Hit targets ≥ 28px.
+160–220ms ease-out fades; `live-dot` pulse for live status. Respects `data-motion="reduced"`.
+
+## 10. Accessibility
+
+Text contrast ≥ WCAG AA on both themes. Status never by color alone (dot + label).
+Visible `:focus-visible` ring in clay. Dialogs have `role="dialog"` + Esc.

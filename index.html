@@ -3,14 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LemonSees — SOC Platform</title>
-    <link rel="icon" href="/favicon.png" type="image/png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
-    />
+    <meta name="color-scheme" content="light dark" />
+    <title>LemonSees — by Altumptic</title>
+    <meta name="description" content="LemonSees by Altumptic — agentless SOC platform: SIEM, EDR, FIM, NDR, MITRE ATT&CK, SOAR and GRC over SSH." />
+    <meta name="theme-color" content="#faf9f5" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // Тема й масштаб до першого кадру — без спалаху не того кольору
+      try {
+        var s = JSON.parse(localStorage.getItem("shok.settings") || "{}");
+        if ((s.v || 0) >= 3 && s.theme === "dark") document.documentElement.dataset.theme = "dark";
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

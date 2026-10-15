@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useIntent } from "@/lib/intent";
 import { Globe, Plus, Trash2, RefreshCw, Activity, Gauge, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -31,6 +32,10 @@ export default function UptimePage() {
   const [form, setForm] = useState<MonitorInput | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [view, setView] = useState<string | null>(null);
+  useIntent("new", () => {
+    setEditId(null);
+    setForm(EMPTY);
+  });
 
   const refresh = () => api.listMonitors().then(setMonitors).catch(() => {});
   useEffect(() => {
@@ -79,20 +84,20 @@ export default function UptimePage() {
                       <span className={`h-2.5 w-2.5 rounded-full ${has && s!.up ? "live-dot" : ""}`} style={{ background: upColor(s?.up, has) }} />
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold">{m.name}</div>
-                      <div className="mono truncate text-[11px] text-muted-foreground">{m.url}</div>
+                      <div className="truncate text-[14.5px] font-semibold">{m.name}</div>
+                      <div className="mono truncate text-[12.5px] text-muted-foreground">{m.url}</div>
                     </div>
                   </button>
 
                   <div className="hidden w-28 shrink-0 md:block">
-                    <div className="mono mb-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t("аптайм")}</div>
+                    <div className="mb-1 text-[12px] text-muted-foreground font-medium">{t("аптайм")}</div>
                     <div className="doto text-lg leading-none" style={{ color: has ? (s!.uptimePct! >= 99 ? "var(--success)" : s!.uptimePct! >= 95 ? "var(--warning)" : "var(--danger)") : "var(--muted-foreground)" }}>
                       {has ? `${s!.uptimePct}%` : "—"}
                     </div>
                   </div>
                   <div className="hidden w-24 shrink-0 md:block">
-                    <div className="mono mb-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{t("затримка")}</div>
-                    <div className="num text-sm">{has ? `${s!.last?.ms ?? s!.avgMs} ms` : "—"}</div>
+                    <div className="mb-1 text-[12px] text-muted-foreground font-medium">{t("затримка")}</div>
+                    <div className="num text-[14.5px]">{has ? `${s!.last?.ms ?? s!.avgMs} ms` : "—"}</div>
                   </div>
                   <div className="hidden w-40 shrink-0 lg:block">
                     <MiniTimeline id={m.id} />
@@ -146,19 +151,19 @@ function MonitorDrawer({ id, monitor, onClose }: { id: string; monitor?: Monitor
 
   return (
     <Drawer title={monitor?.name ?? t("Монітор")} onClose={onClose}>
-      <div className="mono mb-4 truncate text-[12px] text-muted-foreground">{monitor?.url}</div>
+      <div className="mono mb-4 truncate text-[13.5px] text-muted-foreground">{monitor?.url}</div>
 
       <div className="mb-4 grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-[var(--hairline)] p-3">
-          <div className="mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t("аптайм")}</div>
+          <div className="text-[11px] text-muted-foreground font-medium">{t("аптайм")}</div>
           <div className="doto mt-1 text-xl leading-none">{stats?.uptimePct ?? "—"}%</div>
         </div>
         <div className="rounded-lg border border-[var(--hairline)] p-3">
-          <div className="mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t("затримка")}</div>
+          <div className="text-[11px] text-muted-foreground font-medium">{t("затримка")}</div>
           <div className="doto mt-1 text-xl leading-none">{stats?.avgMs ?? 0}</div>
         </div>
         <div className="rounded-lg border border-[var(--hairline)] p-3">
-          <div className="mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{t("перевірок")}</div>
+          <div className="text-[11px] text-muted-foreground font-medium">{t("перевірок")}</div>
           <div className="doto mt-1 text-xl leading-none">{stats?.checks ?? 0}</div>
         </div>
       </div>
@@ -176,7 +181,7 @@ function MonitorDrawer({ id, monitor, onClose }: { id: string; monitor?: Monitor
       <div className="eyebrow mb-2">{t("Останні перевірки")}</div>
       <div className="space-y-1">
         {[...history].reverse().slice(0, 14).map((c, i) => (
-          <div key={i} className="mono flex items-center justify-between gap-2 text-[11px]">
+          <div key={i} className="mono flex items-center justify-between gap-2 text-[12.5px]">
             <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.ok ? "var(--success)" : "var(--danger)" }} />
               {c.ok ? `HTTP ${c.status}` : c.error || `HTTP ${c.status}`}
@@ -184,7 +189,7 @@ function MonitorDrawer({ id, monitor, onClose }: { id: string; monitor?: Monitor
             <span className="text-muted-foreground">{c.ms} ms · {fmtWhen(c.at)}</span>
           </div>
         ))}
-        {history.length === 0 && <div className="text-[12px] text-muted-foreground">{t("Ще немає перевірок…")}</div>}
+        {history.length === 0 && <div className="text-[13.5px] text-muted-foreground">{t("Ще немає перевірок…")}</div>}
       </div>
     </Drawer>
   );
@@ -217,7 +222,7 @@ function MonitorForm({ initial, editId, onClose }: { initial: MonitorInput; edit
         <div className="grid grid-cols-3 gap-4">
           <label className="block">
             <div className="eyebrow mb-1">{t("Метод")}</div>
-            <select value={f.method} onChange={(e) => set("method", e.target.value)} className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--hairline-strong)]">
+            <select value={f.method} onChange={(e) => set("method", e.target.value)} className="mono w-full rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[14.5px] outline-none focus:border-[var(--hairline-strong)]">
               {["GET", "HEAD", "POST"].map((m) => <option key={m} value={m} className="bg-[var(--surface)]">{m}</option>)}
             </select>
           </label>

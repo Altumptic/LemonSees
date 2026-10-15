@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Cpu, MemoryStick, HardDrive, ArrowDownToLine, ArrowUpFromLine, Cable } from "lucide-react";
-import { api, useAppState } from "@/lib/api";
+import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { fmtBps, type MetricSample } from "@/lib/types";
 import { PageHeader, Panel, GhostButton, Kpi, AreaChart, SectionHeader, EmptyState, StatusDot } from "@/components/ui";
@@ -8,7 +8,7 @@ import { PageHeader, Panel, GhostButton, Kpi, AreaChart, SectionHeader, EmptySta
 export default function MetricsPage() {
   const { hosts } = useAppState();
   const { t } = useI18n();
-  const [hostId, setHostId] = useState<string | null>(null);
+  const [hostId, setHostId] = useHostSelection();
   const [hist, setHist] = useState<MetricSample[]>([]);
 
   const active = hostId ?? hosts.find((h) => h.status === "online")?.id ?? hosts[0]?.id ?? null;
@@ -46,14 +46,14 @@ export default function MetricsPage() {
         title={t("Метрики")}
         lede={t("Часові ряди ресурсів хоста з /proc по SSH. Оновлюється щоцикл опитування.")}
         action={
-          <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-xs outline-none focus:border-[var(--hairline-strong)]">
+          <select value={active ?? ""} onChange={(e) => setHostId(e.target.value)} className="mono rounded-md border border-[var(--hairline)] bg-transparent px-3 py-2 text-[13px] outline-none focus:border-[var(--hairline-strong)]">
             {hosts.map((h) => <option key={h.id} value={h.id} className="bg-[var(--surface)]">{h.name}</option>)}
           </select>
         }
       />
 
       {host && host.status !== "online" && (
-        <div className="mono mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] text-[var(--warning)]">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--warning)]/40 px-4 py-2.5 text-[12.5px] text-[var(--warning)] font-medium">
           <StatusDot status={host.status} /> {t("Хост не онлайн — дані можуть бути недоступні")}
         </div>
       )}
@@ -68,7 +68,7 @@ export default function MetricsPage() {
       </div>
 
       {hist.length < 2 ? (
-        <Panel><div className="py-16 text-center text-sm text-muted-foreground">{t("Збираю історію… графіки зʼявляться за кілька циклів опитування.")}</div></Panel>
+        <Panel><div className="py-16 text-center text-[14.5px] text-muted-foreground">{t("Збираю історію… графіки зʼявляться за кілька циклів опитування.")}</div></Panel>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <ChartCard icon={Cpu} title="CPU %" data={cpu} color="var(--primary)" unit="%" />

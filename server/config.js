@@ -18,6 +18,7 @@ const ATTEST_FILE = path.join(CONFIG_DIR, "attestations.json");
 const AUDIT_FILE = path.join(CONFIG_DIR, "audit.jsonl");
 const SOC_FILE = path.join(CONFIG_DIR, "soc.json");
 const MONITORS_FILE = path.join(CONFIG_DIR, "monitors.json");
+const FIM_FILE = path.join(CONFIG_DIR, "fim-baseline.json");
 
 export function loadHosts() {
   try {
@@ -155,7 +156,7 @@ export function sanitizeIncident(input, existing = null) {
 
 /* ---------------- SOC-конфіг (пороги, автоінциденти) ---------------- */
 
-const SOC_DEFAULTS = { autoIncidents: true, bruteThreshold: 300 };
+const SOC_DEFAULTS = { autoIncidents: true, bruteThreshold: 300, notifyDowntime: true, retentionDays: 90, sweepMinutes: 5 };
 
 export function loadSoc() {
   try {
@@ -202,6 +203,9 @@ export function saveSoc(cfg) {
   const clean = {
     autoIncidents: !!cfg.autoIncidents,
     bruteThreshold: Math.max(10, Math.min(100000, parseInt(cfg.bruteThreshold, 10) || SOC_DEFAULTS.bruteThreshold)),
+    notifyDowntime: cfg.notifyDowntime !== false,
+    retentionDays: Math.max(7, Math.min(3650, parseInt(cfg.retentionDays, 10) || SOC_DEFAULTS.retentionDays)),
+    sweepMinutes: Math.max(1, Math.min(120, parseInt(cfg.sweepMinutes, 10) || SOC_DEFAULTS.sweepMinutes)),
   };
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
   fs.writeFileSync(SOC_FILE, JSON.stringify(clean, null, 2), "utf8");
@@ -232,6 +236,40 @@ export function appendAudit(entry) {
   } catch {
     /* ignore */
   }
+}
+
+/** Обрізає журнал аудиту до retentionDays. */
+export function pruneAudit(days) {
+  try {
+    const cutoff = Date.now() - days * 86400000;
+    const lines = fs.readFileSync(AUDIT_FILE, "utf8").split("\n").filter(Boolean);
+    const keep = lines.filter((l) => {
+      try {
+        return JSON.parse(l).at >= cutoff;
+      } catch {
+        return false;
+      }
+    });
+    if (keep.length !== lines.length) fs.writeFileSync(AUDIT_FILE, keep.join("\n") + (keep.length ? "\n" : ""), "utf8");
+    return lines.length - keep.length;
+  } catch {
+    return 0;
+  }
+}
+
+/* ---------------- FIM — базові лінії ---------------- */
+
+export function loadFimBaselines() {
+  try {
+    return JSON.parse(fs.readFileSync(FIM_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+export function saveFimBaselines(all) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.writeFileSync(FIM_FILE, JSON.stringify(all), "utf8");
 }
 
 export function loadAudit(limit = 500) {
