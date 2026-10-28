@@ -121,7 +121,7 @@
     "selfsigned": "^2.4.1",
     "sql.js": "^1.15.1",
     "ssh2": "^1.16.0",
-    "undici": "^6.29.1",
+    "undici": "^8.12.3",
     "ws": "^8.22.0"
   },
   "devDependencies": {
