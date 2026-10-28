@@ -18,10 +18,11 @@ export type AppSettings = {
   clock24: boolean; // 24-годинний формат часу
   refreshSec: number; // автооновлення сторінок зі сканами (0 — вручну)
   notify: boolean; // сповіщення в застосунку про нові інциденти
+  hiddenWidgets?: string[]; // приховані віджети огляду
   v?: number; // версія схеми налаштувань
 };
 
-const VERSION = 3;
+const VERSION = 4;
 
 const KEY = "shok.settings";
 
@@ -33,7 +34,7 @@ export const DEFAULTS: AppSettings = {
   sidebar: true,
   reduceMotion: false,
   confirmDestructive: true,
-  geoip: true,
+  geoip: false, // opt-in (PSB P2): зовнішній запит лише за згодою
   demo: false,
   hostId: null,
   clock24: true,
@@ -53,10 +54,12 @@ class SettingsStore {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "{}") as Partial<AppSettings>;
       // Міграція на v3: кремова тема + комфортний масштаб за замовчуванням
-      if ((saved.v ?? 0) < VERSION) {
+      if ((saved.v ?? 0) < 3) {
         delete saved.theme;
         delete saved.scale;
       }
+      // v4: гео-IP стає opt-in — вимикаємо, користувач увімкне свідомо
+      if ((saved.v ?? 0) < 4) saved.geoip = false;
       v = { ...DEFAULTS, ...saved, v: VERSION };
     } catch {
       /* ignore */

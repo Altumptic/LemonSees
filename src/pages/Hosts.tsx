@@ -132,10 +132,15 @@ export default function Hosts() {
                   passphrase: "",
                   password: "",
                   interval: editing.interval,
+                  jumpHostId: editing.jumpHostId ?? "",
+                  proxy: editing.proxy ? { type: editing.proxy.type, host: editing.proxy.host, port: editing.proxy.port, user: editing.proxy.user, pass: "" } : { type: "none", host: "", port: 0, user: "" },
+                  tags: editing.tags ?? [],
                 }
               : EMPTY
           }
           editingId={editing?.id ?? null}
+          hostKey={editing?.hostKey}
+          otherHosts={hosts.filter((h) => h.id !== editing?.id).map((h) => ({ id: h.id, name: h.name }))}
           onClose={() => {
             setAdding(false);
             setEditing(null);
@@ -164,13 +169,20 @@ function HostForm({
   initial,
   editingId,
   onClose,
+  hostKey,
+  otherHosts,
 }: {
   initial: HostInput;
   editingId: string | null;
   onClose: () => void;
+  hostKey?: string;
+  otherHosts: { id: string; name: string }[];
 }) {
   const { t } = useI18n();
   const [form, setForm] = useState<HostInput>(initial);
+  const [advanced, setAdvanced] = useState(!!(initial.jumpHostId || (initial.proxy && initial.proxy.type !== "none")));
+  const proxy = form.proxy ?? { type: "none" as const, host: "", port: 0, user: "" };
+  const setProxy = (p: Partial<NonNullable<HostInput["proxy"]>>) => setForm((f) => ({ ...f, proxy: { ...proxy, ...p } }));
   const [busy, setBusy] = useState(false);
   const [testResult, setTestResult] = useState<string>("");
 
@@ -254,6 +266,57 @@ function HostForm({
             value={form.password}
             onChange={(v) => set("password", v)}
           />
+        )}
+
+        <TextInput label={t("Теги (через кому)")} value={(form.tags ?? []).join(", ")} onChange={(v) => set("tags", v.split(",").map((x) => x.trim()).filter(Boolean))} placeholder="prod, web, eu-west" />
+
+        <button type="button" onClick={() => setAdvanced((v) => !v)} className="flex items-center gap-2 text-left text-[14px] font-medium text-[var(--primary)]">
+          {advanced ? "−" : "+"} {t("Маршрут і приватність (бастіон, проксі, Tor)")}
+        </button>
+        {advanced && (
+          <div className="grid gap-4 rounded-2xl bg-[var(--surface-raised)] p-4">
+            <label className="block">
+              <div className="mb-1.5 text-[13.5px] font-medium text-foreground/85">{t("Бастіон (jump host)")}</div>
+              <select value={form.jumpHostId ?? ""} onChange={(e) => set("jumpHostId", e.target.value)} className="h-10 w-full rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-3 text-[14.5px] outline-none">
+                <option value="">{t("Без бастіону")}</option>
+                {otherHosts.map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </label>
+            {!form.jumpHostId && (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {(["none", "socks5", "http"] as const).map((ty) => (
+                    <GhostButton key={ty} active={proxy.type === ty} onClick={() => setProxy({ type: ty, port: ty === "socks5" ? proxy.port || 9050 : ty === "http" ? proxy.port || 8080 : 0, host: ty === "none" ? "" : proxy.host || "127.0.0.1" })}>
+                      {ty === "none" ? t("Глобальний маршрут") : ty === "socks5" ? "SOCKS5 / Tor" : "HTTP CONNECT"}
+                    </GhostButton>
+                  ))}
+                </div>
+                {proxy.type !== "none" && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <TextInput label={t("Адреса проксі")} value={proxy.host} onChange={(v) => setProxy({ host: v })} />
+                    <TextInput label={t("Порт")} value={String(proxy.port || "")} onChange={(v) => setProxy({ port: parseInt(v, 10) || 0 })} />
+                    <TextInput label={t("Користувач")} value={proxy.user} onChange={(v) => setProxy({ user: v })} />
+                    <div className="col-span-3">
+                      <TextInput label={t("Пароль проксі (порожньо — лишити)")} type="password" value={proxy.pass ?? ""} onChange={(v) => setProxy({ pass: v })} />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            {hostKey && (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
+                <span className="text-muted-foreground">
+                  {t("Закріплений ключ")}: <span className="mono text-foreground">{hostKey}</span>
+                </span>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={!!form.resetHostKey} onChange={(e) => set("resetHostKey", e.target.checked)} className="h-4 w-4 accent-[var(--primary)]" />
+                  {t("Скинути (сервер перевстановлено)")}
+                </label>
+              </div>
+            )}
+          </div>
         )}
 
         {testResult && (

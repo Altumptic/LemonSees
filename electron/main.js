@@ -1,7 +1,8 @@
 // LemonSees by Altumptic — десктопна SOC-оболонка для Windows і Linux.
 // Двигун (Express + SSH) живе в цьому ж процесі: закрив вікно — все зупинилось.
 // Портативний режим: дані лежать поруч із LemonSees-*-portable.exe / AppImage у теці LemonSees-data.
-import { app, BrowserWindow, Menu, shell, Notification } from "electron";
+import { app, BrowserWindow, Menu, shell, Notification, safeStorage } from "electron";
+import crypto from "node:crypto";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -47,6 +48,29 @@ if (!gotLock) {
     return path.join(app.getPath("userData"), "config");
   }
   const configDir = resolveConfigDir();
+  const portable = !configDir.startsWith(app.getPath("userData"));
+
+  // Ключ сховища секретів, захищений ОС (DPAPI / Keychain / libsecret).
+  // Портативний режим лишає файл-ключ поруч із даними, щоб теку можна було перенести на інший ПК.
+  function useOsVault() {
+    try {
+      if (portable || process.env.LEMONSEES_MASTER_KEY || !safeStorage.isEncryptionAvailable()) return;
+      const sealed = path.join(configDir, "vault.key.os");
+      const legacy = path.join(configDir, ".vault.key");
+      let hex;
+      if (fs.existsSync(sealed)) {
+        hex = safeStorage.decryptString(fs.readFileSync(sealed));
+      } else {
+        hex = fs.existsSync(legacy) ? fs.readFileSync(legacy).toString("hex") : crypto.randomBytes(32).toString("hex");
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.writeFileSync(sealed, safeStorage.encryptString(hex));
+        if (fs.existsSync(legacy)) fs.rmSync(legacy);
+      }
+      process.env.LEMONSEES_VAULT_KEY = hex;
+    } catch {
+      /* лишаємо файл-ключ */
+    }
+  }
   process.env.SHOK_CONFIG_DIR = configDir;
 
   // Міграція конфігу зі старого імені (ШОК → LemonSees), щоб не втратити хости
@@ -88,6 +112,7 @@ if (!gotLock) {
 
   async function createWindow() {
     // Стартуємо двигун у цьому ж процесі
+    useOsVault();
     await import("../server/index.js");
     await waitForServer(`http://127.0.0.1:${PORT}/api/state`);
 
@@ -108,15 +133,24 @@ if (!gotLock) {
       // Ховаємо системний заголовок — нейтральні кнопки вікна читаються на обох темах
       titleBarStyle: "hidden",
       titleBarOverlay: { color: "#00000000", symbolColor: "#8a877d", height: 60 },
-      webPreferences: { contextIsolation: true, nodeIntegration: false },
+      webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false },
     });
     // Одразу на весь екран
     win.maximize();
     win.show();
 
-    // Зовнішні посилання — у системний браузер
+    // PSB §5.2: мінімум дозволів ОС — лише сповіщення та запис у буфер обміну
+    const ALLOWED_PERMISSIONS = new Set(["notifications", "clipboard-sanitized-write"]);
+    win.webContents.session.setPermissionRequestHandler((_wc, permission, cb) => cb(ALLOWED_PERMISSIONS.has(permission)));
+    win.webContents.session.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
+
+    // Навігація лише в межах локального двигуна; зовнішні https-посилання — у системний браузер
+    const ORIGIN = `http://127.0.0.1:${PORT}`;
+    win.webContents.on("will-navigate", (e, url) => {
+      if (!url.startsWith(ORIGIN)) e.preventDefault();
+    });
     win.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
+      if (/^https:\/\//i.test(url)) shell.openExternal(url);
       return { action: "deny" };
     });
 

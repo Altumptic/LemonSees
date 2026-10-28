@@ -1,10 +1,26 @@
-// Гео-IP збагачення атакуючих адрес. Кеш у памʼяті, пакетний запит до ip-api.com.
-// Запит виходить назовні ЛИШЕ для публічних IP атакуючих і лише коли увімкнено гео-IP.
+// Гео-IP збагачення адрес атакуючих — OPT-IN (PSB P2 «least data»).
+// Вмикається лише явно в налаштуваннях; запит іде тільки по HTTPS (ipwho.is), лише для публічних IP
+// атакуючих (не для твоїх хостів), через проксі/Tor, якщо налаштовано. Кеш у памʼяті 12 год.
+import { netFetch } from "./netproxy.js";
+
+export const GEO_PROVIDER = "https://ipwho.is";
 const cache = new Map(); // ip -> { geo, at }
 const TTL = 12 * 3600 * 1000;
+const MAX_PER_CALL = 60;
 
 function isPrivate(ip) {
-  return /^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|fc|fd)/.test(ip);
+  return /^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|::1$|fc|fd|fe80)/i.test(ip);
+}
+
+async function one(ip) {
+  const r = await netFetch(`${GEO_PROVIDER}/${encodeURIComponent(ip)}?fields=success,country,country_code,city,latitude,longitude,connection`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10000),
+  });
+  const g = await r.json();
+  return g.success
+    ? { country: g.country || "", countryCode: g.country_code || "", city: g.city || "", isp: g.connection?.isp || g.connection?.org || "", lat: g.latitude ?? 0, lon: g.longitude ?? 0 }
+    : { country: "?", countryCode: "", city: "", isp: "", lat: 0, lon: 0 };
 }
 
 export async function geoLookup(ips) {
@@ -16,36 +32,22 @@ export async function geoLookup(ips) {
       continue;
     }
     const c = cache.get(ip);
-    if (c && Date.now() - c.at < TTL) {
-      out[ip] = c.geo;
-      continue;
-    }
-    need.push(ip);
+    if (c && Date.now() - c.at < TTL) out[ip] = c.geo;
+    else if (need.length < MAX_PER_CALL) need.push(ip);
   }
-
-  for (let i = 0; i < need.length; i += 90) {
-    const chunk = need.slice(i, i + 90).map((q) => ({ query: q, fields: "status,country,countryCode,city,isp,lat,lon,query" }));
-    try {
-      const r = await fetch("http://ip-api.com/batch", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(chunk),
-        signal: AbortSignal.timeout(12000),
-      });
-      const arr = await r.json();
-      for (const g of arr) {
-        const geo =
-          g.status === "success"
-            ? { country: g.country || "", countryCode: g.countryCode || "", city: g.city || "", isp: g.isp || "", lat: g.lat ?? 0, lon: g.lon ?? 0 }
-            : { country: "?", countryCode: "", city: "", isp: "", lat: 0, lon: 0 };
-        if (g.query) {
-          out[g.query] = geo;
-          cache.set(g.query, { geo, at: Date.now() });
+  // Невелика паралельність — чемно до безкоштовного сервісу
+  for (let i = 0; i < need.length; i += 4) {
+    await Promise.all(
+      need.slice(i, i + 4).map(async (ip) => {
+        try {
+          const geo = await one(ip);
+          out[ip] = geo;
+          cache.set(ip, { geo, at: Date.now() });
+        } catch {
+          /* офлайн / ліміт / kill switch — лишаємо без гео */
         }
-      }
-    } catch {
-      // офлайн або ліміт — лишаємо без гео
-    }
+      }),
+    );
   }
   return out;
 }

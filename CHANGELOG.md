@@ -1,5 +1,28 @@
 # Changelog
 
+## v3.1.0 — Privacy, integrations, agents
+
+### Privacy & encryption
+- Route SSH and all outbound requests through **Tor / SOCKS5 / HTTP CONNECT** proxies (global or per host), **bastion / jump hosts**.
+- **Kill switch** (no direct fallback), **remote DNS** through the proxy, **egress IP check**.
+- **Host-key pinning** (trust on first use, blocks changed keys), modern-only SSH algorithms.
+- **Secrets encrypted at rest** (AES-256-GCM): SSH/DB/proxy passwords, passphrases, integration tokens; automatic migration of
+  plaintext config. Key from OS keychain (Electron safeStorage), `LEMONSEES_MASTER_KEY`, or a 0600 key file.
+- **HTTPS** for web mode (`LEMONSEES_TLS=self` or own certificate), HSTS.
+
+### Integrations (optional)
+- Outbound: Datadog (Events + Logs), Slack, Microsoft Teams, Telegram, HMAC-signed webhooks, Splunk HEC, Elastic/OpenSearch,
+  Syslog CEF (UDP/TCP/TLS), PagerDuty — per-integration severity and event filters, test button, delivery status.
+- Inbound: **Wazuh** manager API agents and indexer alerts; level 12+ alerts become incidents. New **Console → Wazuh** page.
+
+### Detection & agents
+- **Custom detection rules** (regex, threshold, window, MITRE technique, host scope) with templates and live test.
+- **Optional LemonSees agent**: read-only POSIX sh, no root, pull or push mode with per-agent token; deploy/sync/remove UI.
+
+### Analytics & UX
+- Sankey incident flow, response SLA gauge, handling funnel, activity calendar, treemaps (threat countries, Wazuh rules).
+- Customisable overview widgets; host tags; demo data for every new module; English translations.
+
 ## v3.0.0 — LemonSees by Altumptic
 
 ### Brand & design

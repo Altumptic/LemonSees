@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import { ENGINES } from "./engines.js";
+import { initVault, seal, open } from "./vault.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const APP_ROOT = path.resolve(__dirname, "..");
@@ -19,20 +20,39 @@ const AUDIT_FILE = path.join(CONFIG_DIR, "audit.jsonl");
 const SOC_FILE = path.join(CONFIG_DIR, "soc.json");
 const MONITORS_FILE = path.join(CONFIG_DIR, "monitors.json");
 const FIM_FILE = path.join(CONFIG_DIR, "fim-baseline.json");
+const NETWORK_FILE = path.join(CONFIG_DIR, "network.json");
+const INTEGRATIONS_FILE = path.join(CONFIG_DIR, "integrations.json");
+const RULES_FILE = path.join(CONFIG_DIR, "rules.json");
+const AGENTS_FILE = path.join(CONFIG_DIR, "agents.json");
+
+export { CONFIG_DIR };
+initVault(CONFIG_DIR);
+
+function readJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+function writeJson(file, data) {
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), { encoding: "utf8", mode: 0o600 });
+}
+const openProxy = (p) => (p ? { ...p, pass: open(p.pass) } : p);
+const sealProxy = (p) => (p ? { ...p, pass: seal(p.pass) } : p);
 
 export function loadHosts() {
-  try {
-    const raw = fs.readFileSync(CONFIG_FILE, "utf8");
-    const data = JSON.parse(raw);
-    return Array.isArray(data.hosts) ? data.hosts : [];
-  } catch {
-    return [];
-  }
+  const data = readJson(CONFIG_FILE, {});
+  const list = Array.isArray(data.hosts) ? data.hosts : [];
+  const hosts = list.map((h) => ({ ...h, password: open(h.password), passphrase: open(h.passphrase), proxy: openProxy(h.proxy) }));
+  // Міграція: старі відкриті паролі одразу перезаписуємо зашифрованими
+  if (list.some((h) => (h.password && !String(h.password).startsWith("enc:")) || (h.passphrase && !String(h.passphrase).startsWith("enc:")))) saveHosts(hosts);
+  return hosts;
 }
 
 export function saveHosts(hosts) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify({ hosts }, null, 2), "utf8");
+  writeJson(CONFIG_FILE, { hosts: hosts.map((h) => ({ ...h, password: seal(h.password), passphrase: seal(h.passphrase), proxy: sealProxy(h.proxy) })) });
 }
 
 export function newHostId() {
@@ -52,6 +72,10 @@ export function sanitizeHost(input, existing = null) {
     passphrase: input.passphrase ? String(input.passphrase) : "",
     password: input.password ? String(input.password) : "",
     interval: Math.max(2, Math.min(120, parseInt(input.interval, 10) || 5)),
+    jumpHostId: String(input.jumpHostId ?? "").trim(),
+    proxy: sanitizeProxy(input.proxy, existing?.proxy),
+    hostKey: input.resetHostKey ? "" : existing?.hostKey ?? "",
+    tags: Array.isArray(input.tags) ? input.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 12) : existing?.tags ?? [],
   };
   if (!h.host) throw new Error("Не вказано адресу хоста");
   if (h.authType === "key" && !h.keyPath) throw new Error("Не вказано шлях до SSH-ключа");
@@ -62,24 +86,91 @@ export function sanitizeHost(input, existing = null) {
 
 // Версія хоста без секретів — для віддачі у UI
 export function publicHost(h) {
-  const { password, passphrase, ...rest } = h;
-  return { ...rest, hasPassword: !!password, hasPassphrase: !!passphrase };
+  const { password, passphrase, proxy, ...rest } = h;
+  return { ...rest, proxy: publicProxy(proxy), hasPassword: !!password, hasPassphrase: !!passphrase };
 }
+
+export function sanitizeProxy(input, existing) {
+  const type = ["socks5", "http"].includes(input?.type) ? input.type : "none";
+  if (type === "none") return { type: "none", host: "", port: 0, user: "", pass: "" };
+  const p = {
+    type,
+    host: String(input.host ?? "").trim(),
+    port: Math.max(1, Math.min(65535, parseInt(input.port, 10) || (type === "socks5" ? 1080 : 8080))),
+    user: String(input.user ?? "").trim(),
+    pass: input.pass ? String(input.pass) : existing?.pass ?? "",
+  };
+  if (!p.host) throw new Error("Не вказано адресу проксі");
+  return p;
+}
+export const publicProxy = (p) => (p ? { type: p.type, host: p.host, port: p.port, user: p.user, hasPass: !!p.pass } : { type: "none", host: "", port: 0, user: "", hasPass: false });
+
+/* ---------------- Мережа / приватність ---------------- */
+
+const NET_DEFAULTS = {
+  proxy: { type: "none", host: "", port: 0, user: "", pass: "" },
+  applySsh: true,
+  applyOutbound: true,
+  killSwitch: true,
+  remoteDns: true,
+  hardenedCrypto: true,
+  strictHostKeys: true,
+};
+export function loadNetwork() {
+  const d = readJson(NETWORK_FILE, {});
+  return { ...NET_DEFAULTS, ...d, proxy: openProxy({ ...NET_DEFAULTS.proxy, ...(d.proxy || {}) }) };
+}
+export function saveNetwork(input, existing) {
+  const n = {
+    proxy: sanitizeProxy(input.proxy, existing?.proxy),
+    applySsh: input.applySsh !== false,
+    applyOutbound: input.applyOutbound !== false,
+    killSwitch: input.killSwitch !== false,
+    remoteDns: input.remoteDns !== false,
+    hardenedCrypto: input.hardenedCrypto !== false,
+    strictHostKeys: input.strictHostKeys !== false,
+  };
+  writeJson(NETWORK_FILE, { ...n, proxy: sealProxy(n.proxy) });
+  return n;
+}
+export const publicNetwork = (n) => ({ ...n, proxy: publicProxy(n.proxy) });
+
+/* ---------------- Інтеграції / правила / агенти ---------------- */
+
+const SECRET_KEYS = ["apiKey", "token", "password", "secret", "webhookUrl", "routingKey", "appKey"];
+export function loadIntegrations() {
+  const list = readJson(INTEGRATIONS_FILE, { integrations: [] }).integrations || [];
+  return list.map((i) => ({ ...i, config: Object.fromEntries(Object.entries(i.config || {}).map(([k, v]) => [k, SECRET_KEYS.includes(k) ? open(v) : v])) }));
+}
+export function saveIntegrations(list) {
+  writeJson(INTEGRATIONS_FILE, {
+    integrations: list.map((i) => ({ ...i, config: Object.fromEntries(Object.entries(i.config || {}).map(([k, v]) => [k, SECRET_KEYS.includes(k) ? seal(v) : v])) })),
+  });
+}
+export const publicIntegration = (i) => ({
+  ...i,
+  config: Object.fromEntries(Object.entries(i.config || {}).map(([k, v]) => [k, SECRET_KEYS.includes(k) ? (v ? "••••••" : "") : v])),
+});
+export const isSecretKey = (k) => SECRET_KEYS.includes(k);
+
+export const loadRules = () => readJson(RULES_FILE, { rules: [] }).rules || [];
+export const saveRules = (rules) => writeJson(RULES_FILE, { rules });
+
+export const loadAgents = () => readJson(AGENTS_FILE, { agents: {} }).agents || {};
+export const saveAgents = (agents) => writeJson(AGENTS_FILE, { agents });
 
 /* ---------------- Бази даних ---------------- */
 
 export function loadDbs() {
-  try {
-    const data = JSON.parse(fs.readFileSync(DBS_FILE, "utf8"));
-    return Array.isArray(data.dbs) ? data.dbs : [];
-  } catch {
-    return [];
-  }
+  const data = readJson(DBS_FILE, {});
+  const list = Array.isArray(data.dbs) ? data.dbs : [];
+  const dbs = list.map((d) => ({ ...d, password: open(d.password) }));
+  if (list.some((d) => d.password && !String(d.password).startsWith("enc:"))) saveDbs(dbs);
+  return dbs;
 }
 
 export function saveDbs(dbs) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(DBS_FILE, JSON.stringify({ dbs }, null, 2), "utf8");
+  writeJson(DBS_FILE, { dbs: dbs.map((d) => ({ ...d, password: seal(d.password) })) });
 }
 
 export function newDbId() {
@@ -129,8 +220,8 @@ export function loadIncidents() {
 }
 
 export function saveIncidents(incidents) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(INCIDENTS_FILE, JSON.stringify({ incidents }, null, 2), "utf8");
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(INCIDENTS_FILE, JSON.stringify({ incidents }, null, 2), { encoding: "utf8", mode: 0o600 });
 }
 
 export function sanitizeIncident(input, existing = null) {
@@ -178,8 +269,8 @@ export function loadMonitors() {
 }
 
 export function saveMonitors(monitors) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(MONITORS_FILE, JSON.stringify({ monitors }, null, 2), "utf8");
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(MONITORS_FILE, JSON.stringify({ monitors }, null, 2), { encoding: "utf8", mode: 0o600 });
 }
 
 export function sanitizeMonitor(input, existing = null) {
@@ -207,8 +298,8 @@ export function saveSoc(cfg) {
     retentionDays: Math.max(7, Math.min(3650, parseInt(cfg.retentionDays, 10) || SOC_DEFAULTS.retentionDays)),
     sweepMinutes: Math.max(1, Math.min(120, parseInt(cfg.sweepMinutes, 10) || SOC_DEFAULTS.sweepMinutes)),
   };
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(SOC_FILE, JSON.stringify(clean, null, 2), "utf8");
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(SOC_FILE, JSON.stringify(clean, null, 2), { encoding: "utf8", mode: 0o600 });
   return clean;
 }
 
@@ -223,16 +314,16 @@ export function loadAttest() {
 }
 
 export function saveAttest(map) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(ATTEST_FILE, JSON.stringify(map, null, 2), "utf8");
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(ATTEST_FILE, JSON.stringify(map, null, 2), { encoding: "utf8", mode: 0o600 });
 }
 
 /* ---------------- Аудит-журнал (JSONL) ---------------- */
 
 export function appendAudit(entry) {
   try {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true });
-    fs.appendFileSync(AUDIT_FILE, JSON.stringify({ at: Date.now(), ...entry }) + "\n", "utf8");
+    fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+    fs.appendFileSync(AUDIT_FILE, JSON.stringify({ at: Date.now(), ...entry }) + "\n", { encoding: "utf8", mode: 0o600 });
   } catch {
     /* ignore */
   }
@@ -250,7 +341,7 @@ export function pruneAudit(days) {
         return false;
       }
     });
-    if (keep.length !== lines.length) fs.writeFileSync(AUDIT_FILE, keep.join("\n") + (keep.length ? "\n" : ""), "utf8");
+    if (keep.length !== lines.length) fs.writeFileSync(AUDIT_FILE, keep.join("\n") + (keep.length ? "\n" : ""), { encoding: "utf8", mode: 0o600 });
     return lines.length - keep.length;
   } catch {
     return 0;
@@ -268,8 +359,8 @@ export function loadFimBaselines() {
 }
 
 export function saveFimBaselines(all) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(FIM_FILE, JSON.stringify(all), "utf8");
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(FIM_FILE, JSON.stringify(all), { encoding: "utf8", mode: 0o600 });
 }
 
 export function loadAudit(limit = 500) {

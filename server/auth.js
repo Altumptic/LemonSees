@@ -61,7 +61,8 @@ export function mountAuth(app, { secure }) {
   });
   // Усе інше під /api — лише з сесією
   app.use("/api", (req, res, next) => {
-    if (req.path === "/info" || req.path.startsWith("/auth/")) return next();
+    // /agent/ingest автентифікується власним токеном агента
+    if (req.path === "/info" || req.path.startsWith("/auth/") || req.path === "/agent/ingest") return next();
     if (!isAuthed(req)) return res.status(401).json({ error: "Unauthorized" });
     next();
   });

@@ -30,14 +30,15 @@ function script() {
   const files = FIM_PATHS.map(q).join(" ");
   const dirs = FIM_DIRS.map(q).join(" ");
   // sudo -n — якщо дозволено без пароля, читаємо й закриті файли (shadow); інакше — як є
+  // Нічого не пишемо на хост (жодних тимчасових файлів) — лише читання
   return `S=""; sudo -n true 2>/dev/null && S="sudo -n";
-for d in ${dirs}; do [ -d "$d" ] && find "$d" -maxdepth 1 -type f 2>/dev/null; done > /tmp/.lsfim.$$;
-for f in ${files} $(cat /tmp/.lsfim.$$); do
+EXTRA=$(for d in ${dirs}; do [ -d "$d" ] && find "$d" -maxdepth 1 -type f 2>/dev/null; done);
+for f in ${files} $EXTRA; do
   if [ -e "$f" ]; then
     h=$($S sha256sum "$f" 2>/dev/null | cut -d' ' -f1);
     echo "F|$f|\${h:-?}|$(stat -c '%s|%a|%U|%Y' "$f" 2>/dev/null)";
   else echo "M|$f"; fi;
-done; rm -f /tmp/.lsfim.$$`;
+done`;
 }
 
 export async function scanFim(conn) {

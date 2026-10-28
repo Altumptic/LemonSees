@@ -24,6 +24,7 @@ import type {
 } from "./types";
 
 import { settingsStore } from "./settings";
+import { demoExtRequest } from "./demoExt";
 
 /** Демо-тексти: українською для uk, англійською для решти мов. */
 const L = (uk: string, en: string) => (settingsStore.value.lang === "uk" ? uk : en);
@@ -116,6 +117,10 @@ export function demoHosts(): HostState[] {
       keyPath: "~/.ssh/id_ed25519",
       interval: 5,
       hasPassword: false,
+      hostKey: `SHA256:${btoa(h.id + h.host).replace(/=+$/, "").padEnd(43, "Q").slice(0, 43)}`,
+      tags: i < 2 ? ["prod", "web"] : i === 2 ? ["prod", "db"] : i === 3 ? ["edge"] : i === 4 ? ["k8s"] : ["mail"],
+      jumpHostId: i === 2 ? "h_edge" : "",
+      proxy: { type: "none", host: "", port: 0, user: "", hasPass: false },
       status: offline ? "connecting" : "online",
       error: "",
       metrics: {
@@ -467,6 +472,11 @@ export async function demoRequest(method: string, url: string, body?: unknown): 
   const m = (re: RegExp) => p.match(re);
   let r: RegExpMatchArray | null;
 
+  if (/^\/api\/(info|network|security|integrations|wazuh|rules|agents)/.test(p) || /\/hostkey\/reset$/.test(p)) {
+    const r = demoExtRequest(method, p, body);
+    if (r !== undefined) return r;
+    if (/hostkey/.test(p)) return { ok: true };
+  }
   const incidents = getIncidents();
   if (p === "/api/incidents" && method === "GET") return incidents;
   if (p === "/api/incidents" && method === "POST") {
@@ -552,5 +562,7 @@ export async function demoRequest(method: string, url: string, body?: unknown): 
   if ((r = m(/^\/api\/containers\/([^/]+)\/logs$/))) return { logs: "2026-10-15T09:00:01Z ready to accept connections\n2026-10-15T09:00:02Z listening on :8080\n" };
   if (m(/^\/api\/containers\//)) return { ok: true };
   if (m(/^\/api\/hosts(\/|$)/)) return { ok: true };
+  const ext = demoExtRequest(method, p, body);
+  if (ext !== undefined) return ext;
   throw new Error("Недоступно в демо-режимі");
 }

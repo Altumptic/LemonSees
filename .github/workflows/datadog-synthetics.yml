@@ -13,11 +13,9 @@
 
 name: Run Datadog Synthetic tests
 
+# Ручний запуск: потребує секретів DD_API_KEY / DD_APP_KEY у налаштуваннях репозиторію.
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:

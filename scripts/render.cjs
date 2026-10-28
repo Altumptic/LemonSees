@@ -82,6 +82,12 @@ const SHOTS = [
   ["fim", "#/edr/fim", "light", 0],
   ["overview-dark", "#/siem/overview", "dark", 0],
   ["endpoints-dark", "#/edr/endpoints", "dark", 0],
+  ["analytics-flow", "#/siem/analytics", "light", 700],
+  ["privacy", "#/system/privacy", "light", 0],
+  ["integrations", "#/system/integrations", "light", 0],
+  ["wazuh", "#/siem/wazuh", "light", 0],
+  ["agents", "#/edr/agents", "light", 360],
+  ["rules", "#/soar/rules", "light", 0],
 ];
 
 async function shots() {
@@ -95,7 +101,7 @@ async function shots() {
   let n = 0;
   for (const [name, hash, theme, scrollY] of SHOTS) {
     await w.webContents.executeJavaScript(
-      `localStorage.setItem("shok.settings", JSON.stringify({ v: 3, demo: true, theme: ${JSON.stringify(theme)}, scale: 100, lang: "en", sidebar: true, effects: true, geoip: true, refreshSec: 0, notify: false, clock24: true, hostId: "h_web01" })); true`,
+      `localStorage.setItem("shok.settings", JSON.stringify({ v: 4, demo: true, theme: ${JSON.stringify(theme)}, scale: 100, lang: "en", sidebar: true, effects: true, geoip: true, refreshSec: 0, notify: false, clock24: true, hostId: "h_web01" })); true`,
     );
     await w.loadURL(`${base}?r=${n++}${hash}`);
     w.webContents.setZoomFactor(Z);
@@ -117,6 +123,9 @@ const GALLERY = [
   { file: "03-mitre", shot: "mitre", kicker: "MITRE ATT&CK", title: "Every incident, mapped.", sub: "Detections land on the ATT&CK matrix automatically, so you see which attack stages are hot." },
   { file: "04-threats", shot: "threats", kicker: "Threat intelligence", title: "Who is knocking, and from where.", sub: "Brute-force sources with geo-IP, targeted usernames and successful logins you should double-check." },
   { file: "05-compliance", shot: "compliance", kicker: "GRC", title: "Compliance you can show an auditor.", sub: "CIS, NIST, ISO 27001 and GDPR controls — automated over SSH, attested by humans, exported as reports." },
+  { file: "07-privacy", shot: "privacy", kicker: "Privacy by design", title: "Your IP stays yours.", sub: "Route SSH and every outbound call through Tor, a VPN gateway or a proxy — with a kill switch, no DNS leaks and AES-256 secrets at rest." },
+  { file: "08-integrations", shot: "integrations", kicker: "Works alone. Plays well with others.", title: "Datadog, Slack, Wazuh and more.", sub: "Forward alerts to Datadog, Splunk, Elastic, Syslog CEF, PagerDuty or chat — or pull agents and alerts from the Wazuh you already run." },
+  { file: "09-flow", shot: "analytics-flow", kicker: "Deeper analytics", title: "Follow every alert to its end.", sub: "Sankey flows, response SLA gauges, handling funnels and a half-year activity calendar — built in, no plugins." },
   { file: "06-dark", shot: "overview-dark", kicker: "Web · Windows · Linux", title: "Runs where you work.", sub: "Self-host the web app, or grab the portable desktop build. Ivory and Graphite themes, scales to any screen." },
 ];
 

@@ -7,6 +7,8 @@ import { SEVERITIES, STATUSES, auditActionGroup, countBy, eventsByDay, incidents
 import { EmptyState, GhostButton, Kpi, PageHeader, Panel, SectionHeader } from "@/components/ui";
 import { Donut, Heatmap, LineChart, SERIES, SEV_COLOR, StackedBars } from "@/components/charts";
 import { BarList } from "@/components/ui";
+import { CalendarHeatmap, Funnel, Gauge, Sankey } from "@/components/charts2";
+import { GitBranch, Filter, Gauge as GaugeIcon, CalendarDays } from "lucide-react";
 
 const SEV_LABEL: Record<string, string> = { critical: "критичний", high: "високий", medium: "середній", low: "низький", info: "інфо" };
 const STATUS_LABEL: Record<string, string> = { open: "відкрито", investigating: "розслідування", mitigated: "стримано", closed: "закрито" };
@@ -37,6 +39,41 @@ export default function AnalyticsPage() {
   const byCat = countBy(inRange, (i) => i.category).slice(0, 8);
   const byAction = countBy(auditRange, auditActionGroup).slice(0, 8);
   const byAnalyst = countBy(inRange, (i) => i.assignee).slice(0, 6);
+  // Потік: категорія → серйозність → статус
+  const flow = useMemo(() => {
+    const cats = countBy(inRange, (i) => i.category).slice(0, 6).map((c) => c.key);
+    const catOf = (c: string) => (cats.includes(c || "—") ? c || "—" : t("інше"));
+    const sevs = SEVERITIES.filter((s) => inRange.some((i) => i.severity === s)).map((s) => t(SEV_LABEL[s]));
+    const sts = STATUSES.filter((s) => inRange.some((i) => i.status === s)).map((s) => t(STATUS_LABEL[s]));
+    const links = new Map<string, number>();
+    const add = (a: string, b: string) => links.set(`${a}\u0000${b}`, (links.get(`${a}\u0000${b}`) ?? 0) + 1);
+    for (const i of inRange) {
+      add(catOf(i.category), t(SEV_LABEL[i.severity]));
+      add(t(SEV_LABEL[i.severity]), t(STATUS_LABEL[i.status]));
+    }
+    const col0 = [...new Set(inRange.map((i) => catOf(i.category)))];
+    return {
+      columns: [col0, sevs, sts],
+      links: [...links.entries()].map(([k, value]) => {
+        const [from, to] = k.split("\u0000");
+        return { from, to, value };
+      }),
+    };
+  }, [inRange, t]);
+  const acked = inRange.filter((i) => i.timeline.length > 1);
+  const slaOk = acked.filter((i) => i.timeline[1].at - i.createdAt <= 60 * 60000).length;
+  const sla = inRange.length ? (slaOk / inRange.length) * 100 : 0;
+  const perDay = useMemo(() => {
+    const m = new Map<string, number>();
+    const key = (ts: number) => {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    for (const i of incidents) m.set(key(i.createdAt), (m.get(key(i.createdAt)) ?? 0) + 1);
+    for (const e of audit) m.set(key(e.at), (m.get(key(e.at)) ?? 0) + 1);
+    return m;
+  }, [incidents, audit]);
+
   const critShare = inRange.length ? Math.round((inRange.filter((i) => i.severity === "critical" || i.severity === "high").length / inRange.length) * 100) : 0;
 
   if (incidents.length === 0 && audit.length === 0)
@@ -71,6 +108,28 @@ export default function AnalyticsPage() {
           </Panel>
 
           <Panel className="xl:col-span-2">
+            <SectionHeader icon={GitBranch} title={t("Потік інцидентів")} sub={t("Категорія → серйозність → статус. Наведи на вузол, щоб підсвітити шлях.")} />
+            {inRange.length ? <Sankey columns={flow.columns} links={flow.links} height={300} colorOf={(n, c) => (c === 1 ? SEV_COLOR[SEVERITIES.find((s) => t(SEV_LABEL[s]) === n) ?? "info"] : c === 2 ? STATUS_COLOR[STATUSES.find((s) => t(STATUS_LABEL[s]) === n) ?? "open"] : SERIES[flow.columns[0].indexOf(n) % SERIES.length])} /> : <Quiet t={t} />}
+          </Panel>
+          <Panel>
+            <SectionHeader icon={GaugeIcon} title={t("SLA реакції")} sub={t("Взято в роботу ≤ 60 хв")} />
+            <div className="py-3">
+              <Gauge value={sla} color={sla >= 90 ? "var(--success)" : sla >= 70 ? "var(--warning)" : "var(--danger)"} label={`${slaOk} / ${inRange.length}`} sub={t("інцидентів у межах SLA")} />
+            </div>
+            <div className="mt-4 border-t border-[var(--hairline)] pt-4">
+              <SectionHeader icon={Filter} title={t("Воронка обробки")} />
+              <Funnel
+                steps={[
+                  { label: t("Тривоги"), value: inRange.length },
+                  { label: t("Взято в роботу"), value: acked.length },
+                  { label: t("Стримано"), value: inRange.filter((i) => i.status === "mitigated" || i.status === "closed").length },
+                  { label: t("Закрито"), value: inRange.filter((i) => i.status === "closed").length },
+                ]}
+              />
+            </div>
+          </Panel>
+
+          <Panel className="xl:col-span-2">
             <SectionHeader icon={CalendarRange} title={t("Теплова карта активності")} sub={t("День тижня × година — тривоги та дії аналітиків")} />
             <Heatmap rows={DAYS.map(t)} cols={Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"))} values={heat} colEvery={3} />
           </Panel>
@@ -96,6 +155,11 @@ export default function AnalyticsPage() {
             <SectionHeader icon={Users} title={t("Навантаження аналітиків")} />
             {byAnalyst.length ? <BarList items={byAnalyst.map((a) => ({ label: a.key, value: a.count, color: "var(--c2)" }))} /> : <Quiet t={t} />}
           </Panel>
+          <Panel className="xl:col-span-3">
+            <SectionHeader icon={CalendarDays} title={t("Календар активності")} sub={t("Інциденти та дії за 20 тижнів")} />
+            <CalendarHeatmap counts={perDay} weeks={26} lang={lang} />
+          </Panel>
+
           <Panel>
             <SectionHeader icon={Flame} title={t("Серйозність")} />
             <Donut size={150} thickness={20} items={SEVERITIES.map((s) => ({ label: t(SEV_LABEL[s]), value: inRange.filter((i) => i.severity === s).length, color: SEV_COLOR[s] }))} sub={t("інцидентів")} />
