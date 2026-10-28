@@ -16,7 +16,7 @@ export const SEV_COLOR: Record<string, string> = {
 
 /* ---------------- Утиліти ---------------- */
 
-function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+export function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
   const ref = useRef<T | null>(null);
   const [w, setW] = useState(0);
   useLayoutEffect(() => {

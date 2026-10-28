@@ -29,6 +29,11 @@ import {
   ChartColumnBig,
   Grid3x3,
   FileLock2,
+  Radar,
+  Bot,
+  ListChecks,
+  EyeOff,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +51,7 @@ export const SECTIONS: Section[] = [
       { id: "overview", label: "Огляд", icon: LayoutDashboard, load: () => import("@/pages/Dashboard") },
       { id: "analytics", label: "SOC-аналітика", icon: ChartColumnBig, load: () => import("@/pages/Analytics") },
       { id: "events", label: "Події", icon: ScrollText, load: () => import("@/pages/Events") },
+      { id: "wazuh", label: "Wazuh", icon: Radar, load: () => import("@/pages/Wazuh") },
     ],
   },
   {
@@ -55,6 +61,7 @@ export const SECTIONS: Section[] = [
       { id: "processes", label: "Процеси", icon: Cpu, load: () => import("@/pages/Processes") },
       { id: "persistence", label: "Персистентність", icon: Cog, load: () => import("@/pages/Persistence") },
       { id: "fim", label: "Цілісність файлів", icon: FileLock2, load: () => import("@/pages/Fim") },
+      { id: "agents", label: "Агенти", icon: Bot, load: () => import("@/pages/Agents") },
       { id: "posture", label: "Постура", icon: Shield, load: () => import("@/pages/Security") },
       { id: "vulns", label: "Вразливості", icon: Bug, load: () => import("@/pages/Vulnerabilities") },
     ],
@@ -78,6 +85,7 @@ export const SECTIONS: Section[] = [
     id: "soar", label: "Реагування · SOAR", group: "Аналітика", icon: Siren,
     tabs: [
       { id: "incidents", label: "Інциденти", icon: Siren, load: () => import("@/pages/Incidents") },
+      { id: "rules", label: "Правила виявлення", icon: ListChecks, load: () => import("@/pages/Rules") },
       { id: "playbooks", label: "Плейбуки", icon: Workflow, load: () => import("@/pages/Playbooks") },
     ],
   },
@@ -116,7 +124,11 @@ export const SECTIONS: Section[] = [
   },
   {
     id: "system", label: "Система", group: "Ресурси", icon: SettingsIcon,
-    tabs: [{ id: "settings", label: "Налаштування", icon: SettingsIcon, load: () => import("@/pages/Settings") }],
+    tabs: [
+      { id: "settings", label: "Налаштування", icon: SettingsIcon, load: () => import("@/pages/Settings") },
+      { id: "privacy", label: "Безпека та мережа", icon: EyeOff, load: () => import("@/pages/Privacy") },
+      { id: "integrations", label: "Інтеграції", icon: Plug, load: () => import("@/pages/Integrations") },
+    ],
   },
 ];
 

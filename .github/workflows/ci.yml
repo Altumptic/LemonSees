@@ -20,7 +20,11 @@ jobs:
       - run: npm ci
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Dependency audit (critical CVEs block)
+        run: npm audit --audit-level=critical
       - run: npm run typecheck
+      - name: Security tests (fail-closed, crypto, authZ, input parsing)
+        run: npm test
       - run: npm run build
       - name: Server syntax check
         run: for f in server/*.js electron/*.js; do node --check "$f"; done

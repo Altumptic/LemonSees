@@ -31,7 +31,8 @@ Every LemonSees instance also serves this contact information at `/.well-known/s
 
 | Version | Supported |
 |---|---|
-| 3.x | ✅ |
+| 3.1.x | ✅ |
+| 3.0.x | ⚠️ security fixes only |
 | < 3.0 | ❌ — please upgrade |
 
 ## Hardening notes for operators
@@ -39,4 +40,8 @@ Every LemonSees instance also serves this contact information at `/.well-known/s
 - The engine binds to `127.0.0.1` by default. To expose the web UI on a network, set **both**
   `LEMONSEES_HOST` and a long random `LEMONSEES_TOKEN`; without a token LemonSees refuses to bind publicly.
 - Put the web UI behind TLS (reverse proxy) and set `LEMONSEES_SECURE_COOKIE=1`.
-- Prefer SSH keys over passwords; credentials are stored only on the machine running LemonSees.
+- Prefer SSH keys over passwords; credentials are stored only on the machine running LemonSees and are encrypted at rest
+  (AES-256-GCM). On servers set `LEMONSEES_MASTER_KEY`; the desktop app keeps the key in the OS keychain.
+- Serve HTTPS with `LEMONSEES_TLS=self` or `LEMONSEES_TLS_CERT` / `LEMONSEES_TLS_KEY`.
+- To hide the analyst's IP, route through Tor/SOCKS5/HTTP proxy with the kill switch enabled (*System → Security & network*).
+- Host keys are pinned on first connection; a changed key blocks the connection until an operator resets it.

@@ -3,9 +3,19 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import crypto from "node:crypto";
 import ssh2 from "ssh2";
+import { getNetConfig, sshAlgorithms, sshSocket } from "./netproxy.js";
 
 const { Client } = ssh2;
+
+// Хуки від двигуна: бастіон (jump host) за id та збереження відбитка ключа хоста (TOFU)
+const hooks = { jump: () => null, onHostKey: () => {} };
+export function setSshHooks(h) {
+  Object.assign(hooks, h);
+}
+
+export const fingerprint = (key) => "SHA256:" + crypto.createHash("sha256").update(key).digest("base64").replace(/=+$/, "");
 
 function expandHome(p) {
   if (!p) return p;
@@ -30,16 +40,43 @@ export class HostConnection {
     this.cfg = hostCfg;
   }
 
-  buildConnectOptions() {
+  async buildConnectOptions() {
     const c = this.cfg;
     const opts = {
       host: c.host,
       port: c.port || 22,
       username: c.user || "root",
-      readyTimeout: 12000,
+      readyTimeout: 15000,
       keepaliveInterval: 15000,
       keepaliveCountMax: 3,
     };
+    const algorithms = sshAlgorithms();
+    if (algorithms) opts.algorithms = algorithms;
+
+    // Закріплення ключа хоста: перший раз запамʼятовуємо, далі — лише збіг (захист від MITM)
+    this.hostKeyMismatch = "";
+    opts.hostVerifier = (key) => {
+      const fp = fingerprint(key);
+      this.seenHostKey = fp;
+      if (!c.hostKey) {
+        hooks.onHostKey(c.id, fp);
+        return true;
+      }
+      if (c.hostKey === fp) return true;
+      if (!getNetConfig().strictHostKeys) return true;
+      this.hostKeyMismatch = `Ключ хоста змінився (очікувався ${c.hostKey}, отримано ${fp}). Можлива MITM-атака — зʼєднання заблоковано.`;
+      return false;
+    };
+
+    // Маршрут: бастіон → проксі/Tor → напряму
+    if (c.jumpHostId && c.jumpHostId !== c.id) {
+      const jump = hooks.jump(c.jumpHostId);
+      if (!jump) throw new Error("Бастіон (jump host) не знайдено");
+      opts.sock = await jump.forwardOut(c.host, c.port || 22);
+    } else {
+      const sock = await sshSocket(c);
+      if (sock) opts.sock = sock;
+    }
     if (c.authType === "password") {
       opts.password = c.password || "";
     } else {
@@ -61,13 +98,13 @@ export class HostConnection {
     if (this.connecting) return this.connecting;
 
     this.setStatus("connecting");
-    this.connecting = new Promise((resolve, reject) => {
+    this.connecting = new Promise(async (resolve, reject) => {
       let opts;
       try {
-        opts = this.buildConnectOptions();
+        opts = await this.buildConnectOptions();
       } catch (e) {
         this.connecting = null;
-        this.setStatus("error", `Ключ не прочитано: ${e.message}`);
+        this.setStatus("error", e.code === "ENOENT" ? `Ключ не прочитано: ${e.message}` : e.message);
         this.scheduleReconnect();
         return reject(e);
       }
@@ -78,7 +115,7 @@ export class HostConnection {
         this.ready = false;
         this.client = null;
         try { client.end(); } catch { /* ignore */ }
-        this.setStatus("error", err?.message || String(err));
+        this.setStatus("error", this.hostKeyMismatch || err?.message || String(err));
         this.scheduleReconnect();
         reject(err);
       };

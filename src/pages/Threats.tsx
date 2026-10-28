@@ -16,6 +16,7 @@ import {
   EmptyState,
   StatusDot,
 } from "@/components/ui";
+import { Treemap } from "@/components/charts2";
 
 const REFRESH_MS = 20000;
 
@@ -163,6 +164,14 @@ export default function ThreatsPage() {
                 </div>
               )}
             </Panel>
+
+            {/* Карта-дерево країн */}
+            {data.countries.length > 1 && (
+              <Panel className="xl:col-span-3">
+                <SectionHeader icon={Globe} title={t("Частка країн у спробах")} sub={t("Площа — кількість невдалих входів")} />
+                <Treemap items={data.countries.slice(0, 14).map((c) => ({ label: `${flag(c.cc)} ${c.country || c.cc}`, value: c.count }))} height={240} />
+              </Panel>
+            )}
 
             {/* Країни */}
             <Panel>

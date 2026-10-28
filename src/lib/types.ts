@@ -57,6 +57,10 @@ export type HostState = {
   volumes: Volume[];
   dockerVersion: string;
   updatedAt: number;
+  jumpHostId?: string;
+  proxy?: ProxyPublic;
+  hostKey?: string;
+  tags?: string[];
 };
 
 export type HostInput = {
@@ -69,6 +73,10 @@ export type HostInput = {
   passphrase: string;
   password: string;
   interval: number;
+  jumpHostId?: string;
+  proxy?: ProxyInput;
+  resetHostKey?: boolean;
+  tags?: string[];
 };
 
 /* ---------------- Бази даних ---------------- */
@@ -351,3 +359,68 @@ export function fmtUptime(sec: number): string {
 export function fmtGb(kb: number): string {
   return (kb / 1024 / 1024).toFixed(1) + " GB";
 }
+
+/* ---------------- 3.1: приватність, інтеграції, агенти, правила ---------------- */
+
+export type ProxyType = "none" | "socks5" | "http";
+export type ProxyPublic = { type: ProxyType; host: string; port: number; user: string; hasPass: boolean };
+export type ProxyInput = { type: ProxyType; host: string; port: number; user: string; pass?: string };
+
+export type NetworkConfig = {
+  proxy: ProxyPublic;
+  applySsh: boolean;
+  applyOutbound: boolean;
+  killSwitch: boolean;
+  remoteDns: boolean;
+  hardenedCrypto: boolean;
+  strictHostKeys: boolean;
+};
+
+export type SecurityStatus = {
+  vault: { algorithm: string; keySource: "file" | "passphrase" | "os-keychain" };
+  tls: boolean;
+  auth: boolean;
+  proxy: { type: string; host: string; port: number } | null;
+  killSwitch: boolean;
+  hardenedCrypto: boolean;
+  strictHostKeys: boolean;
+  pinnedHosts: number;
+  totalHosts: number;
+  bastionHosts: number;
+};
+
+export type IntegrationType = "datadog" | "slack" | "teams" | "telegram" | "webhook" | "splunk" | "elastic" | "syslog" | "pagerduty" | "wazuh";
+export type IntegrationCatalog = Record<IntegrationType, { label: string; dir: "in" | "out"; fields: string[] }>;
+export type Integration = {
+  id: string;
+  type: IntegrationType;
+  name: string;
+  enabled: boolean;
+  minSeverity: "critical" | "high" | "medium" | "low" | "info";
+  events: ("incident" | "downtime" | "fim")[];
+  config: Record<string, string | boolean>;
+  lastStatus: { ok: boolean; error?: string; info?: string; ms?: number; at: number } | null;
+};
+
+export type WazuhAgent = { id: string; name: string; ip: string; status: string; os: string; version: string; lastKeepAlive: string; group: string; source: string };
+export type WazuhAlert = { id: string; at: number; level: number; severity: Incident["severity"]; rule: string; ruleId: string; mitre: string[]; tactic: string[]; agent: string; srcip: string; log: string; source: string };
+export type WazuhData = { connected: boolean; agents: WazuhAgent[]; alerts: WazuhAlert[] };
+
+export type DetectionRule = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  source: "journal" | "file";
+  path: string;
+  pattern: string;
+  threshold: number;
+  windowMin: number;
+  severity: Incident["severity"];
+  technique: string;
+  category: string;
+  hosts: string[];
+  lastHit: number | null;
+};
+
+export type AgentSample = { at: number; cpu: number; mem: number; disk: number; load: number; fails: number; listen: number; procs: number; fim: string };
+export type AgentView = { hostId: string; host: string; mode: "pull" | "push"; interval: number; installedAt: number; version: string; lastSeen: number | null; samples: AgentSample[] };

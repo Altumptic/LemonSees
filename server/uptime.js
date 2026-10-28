@@ -1,3 +1,4 @@
+import { netFetch } from "./netproxy.js";
 // Uptime-моніторинг сайтів/ендпоінтів. HTTP-перевірки з двигуна (fetch),
 // історія в памʼяті, статистика доступності й затримки.
 export class Uptime {
@@ -32,7 +33,7 @@ export class Uptime {
     let status = 0;
     let error = "";
     try {
-      const res = await fetch(m.url, {
+      const res = await netFetch(m.url, {
         method: m.method || "GET",
         redirect: "follow",
         signal: AbortSignal.timeout(m.timeoutMs || 10000),

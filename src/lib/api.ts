@@ -31,6 +31,13 @@ import type {
   ToolResult,
   IpIntel,
   FimReport,
+  NetworkConfig,
+  SecurityStatus,
+  Integration,
+  IntegrationCatalog,
+  WazuhData,
+  DetectionRule,
+  AgentView,
 } from "./types";
 import { settingsStore } from "./settings";
 // Демо-двигун вантажиться окремим чанком лише коли увімкнено демо-режим
@@ -133,6 +140,34 @@ export const api = {
   history: (hostId: string) => req<{ history: MetricSample[] }>(`/api/hosts/${hostId}/history`),
   fim: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim`, { method: "POST" }),
   fimBaseline: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim-baseline`, { method: "POST" }),
+
+  // Приватність і мережа
+  network: () => req<NetworkConfig>("/api/network"),
+  setNetwork: (n: Omit<Partial<NetworkConfig>, "proxy"> & { proxy?: unknown }) => req<NetworkConfig>("/api/network", { method: "PUT", body: JSON.stringify(n) }),
+  egress: () => req<{ ip: string; viaProxy: boolean; ms: number }>("/api/network/test", { method: "POST" }),
+  securityStatus: () => req<SecurityStatus>("/api/security/status"),
+  resetHostKey: (id: string) => req<{ ok: boolean }>(`/api/hosts/${id}/hostkey/reset`, { method: "POST" }),
+
+  // Інтеграції
+  integrations: () => req<{ catalog: IntegrationCatalog; integrations: Integration[] }>("/api/integrations"),
+  addIntegration: (i: Partial<Integration>) => req<Integration>("/api/integrations", { method: "POST", body: JSON.stringify(i) }),
+  updateIntegration: (id: string, i: Partial<Integration>) => req<Integration>(`/api/integrations/${id}`, { method: "PUT", body: JSON.stringify(i) }),
+  deleteIntegration: (id: string) => req<{ ok: boolean }>(`/api/integrations/${id}`, { method: "DELETE" }),
+  testIntegration: (id: string) => req<{ ok: boolean; ms?: number; agents?: number; alerts?: number }>(`/api/integrations/${id}/test`, { method: "POST" }),
+  wazuh: () => req<WazuhData>("/api/wazuh"),
+  wazuhRefresh: () => req<{ ok: boolean }>("/api/wazuh/refresh", { method: "POST" }),
+
+  // Правила виявлення
+  rules: () => req<{ rules: DetectionRule[]; presets: Partial<DetectionRule>[] }>("/api/rules"),
+  saveRules: (rules: Partial<DetectionRule>[]) => req<{ rules: DetectionRule[] }>("/api/rules", { method: "PUT", body: JSON.stringify({ rules }) }),
+  testRule: (rule: Partial<DetectionRule>, hostId: string) => req<{ count: number; triggered: boolean }>("/api/rules/test", { method: "POST", body: JSON.stringify({ rule, hostId }) }),
+
+  // Агенти
+  agents: () => req<{ version: string; agents: AgentView[] }>("/api/agents"),
+  deployAgent: (id: string, o: { mode: "pull" | "push"; interval: number; pushUrl?: string; insecure?: boolean }) => req<AgentView>(`/api/agents/${id}/deploy`, { method: "POST", body: JSON.stringify(o) }),
+  removeAgent: (id: string) => req<{ ok: boolean }>(`/api/agents/${id}/remove`, { method: "POST" }),
+  syncAgent: (id: string) => req<AgentView | null>(`/api/agents/${id}/sync`, { method: "POST" }),
+  agentCommand: (id: string, o: { interval: number; pushUrl?: string; insecure?: boolean }) => req<{ command: string; uninstall: string }>(`/api/agents/${id}/command`, { method: "POST", body: JSON.stringify(o) }),
 
   // Доступ (веб-режим із токеном)
   login: (token: string) => req<{ ok: boolean }>("/api/auth/login", { method: "POST", body: JSON.stringify({ token }) }),

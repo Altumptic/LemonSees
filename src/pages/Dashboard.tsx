@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Server, Siren, ShieldCheck, ShieldAlert, Activity, ArrowUpRight, Cpu, Plus, FlaskConical, Grid3x3, Gauge, Timer } from "lucide-react";
+import { Server, Siren, ShieldCheck, ShieldAlert, Activity, ArrowUpRight, Cpu, Plus, FlaskConical, Grid3x3, Gauge, Timer, SlidersHorizontal } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { fmtWhen, type Incident, type AuditEvent, type HostState } from "@/lib/types";
 import { SEVERITIES, incidentsByDay, mitreCoverage, responseTimes, countBy } from "@/lib/analytics";
-import { PageHeader, Panel, Kpi, PrimaryButton, GhostButton, ScoreRing, SeverityBadge, IncidentStatusBadge, Track, StatusDot, SectionHeader, EmptyState, riskTone, toneColor, scoreTone } from "@/components/ui";
+import { Modal, PageHeader, Panel, Kpi, PrimaryButton, GhostButton, ScoreRing, SeverityBadge, IncidentStatusBadge, Track, StatusDot, SectionHeader, EmptyState, riskTone, toneColor, scoreTone } from "@/components/ui";
 import { Donut, LineChart, StackedBars, SEV_COLOR, SERIES } from "@/components/charts";
 import type { Nav } from "@/nav";
 
@@ -14,7 +14,10 @@ const SEV_LABEL: Record<string, string> = { critical: "критичний", high
 export default function Dashboard({ go }: { go: Nav }) {
   const { hosts } = useAppState();
   const { t, lang } = useI18n();
-  const { set } = useSettings();
+  const { settings, set } = useSettings();
+  const [customize, setCustomize] = useState(false);
+  const hidden = settings.hiddenWidgets ?? [];
+  const vis = (id: string, cls = "") => `${cls} ${hidden.includes(id) ? "hidden" : ""}`;
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [audit, setAudit] = useState<AuditEvent[]>([]);
   const fleet = useFleetHistory(hosts);
@@ -68,6 +71,9 @@ export default function Dashboard({ go }: { go: Nav }) {
         action={
           hosts.length > 0 && (
             <>
+              <GhostButton onClick={() => setCustomize(true)}>
+                <SlidersHorizontal className="h-4 w-4" /> {t("Віджети")}
+              </GhostButton>
               <GhostButton onClick={() => go("siem/analytics")}>
                 <Activity className="h-4 w-4" /> {t("SOC-аналітика")}
               </GhostButton>
@@ -121,7 +127,7 @@ export default function Dashboard({ go }: { go: Nav }) {
       ) : (
         <div className="space-y-6">
           {/* KPI з трендами */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-6">
+          <div className={vis("kpis", "grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-6")}>
             <Kpi label={t("Хости онлайн")} value={`${totals.online}/${hosts.length}`} icon={Server} tone={totals.online === hosts.length ? "ok" : "warning"} onClick={() => go("edr/endpoints")} />
             <Kpi label={t("Середній CPU")} value={`${totals.avgCpu}%`} icon={Cpu} tone={totals.avgCpu >= 85 ? "warning" : "neutral"} trend={fleet.cpu.slice(-40)} onClick={() => go("infra/metrics")} />
             <Kpi label={t("Тривоги, 14 днів")} value={daily.reduce((a, b) => a + b, 0)} icon={Activity} tone="info" trend={daily} onClick={() => go("siem/analytics")} />
@@ -132,13 +138,13 @@ export default function Dashboard({ go }: { go: Nav }) {
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Тривоги в часі */}
-            <Panel className="xl:col-span-2">
+            <Panel className={vis("alerts", "xl:col-span-2")}>
               <SectionHeader icon={Activity} title={t("Тривоги за серйозністю")} sub={t("Нові інциденти по днях, останні 14 днів")} right={<LinkBtn onClick={() => go("siem/analytics")}>{t("аналітика")}</LinkBtn>} />
               <StackedBars data={byDay} keys={SEVERITIES.map((s) => ({ name: t(SEV_LABEL[s]), color: SEV_COLOR[s] }))} height={240} />
             </Panel>
 
             {/* Постура */}
-            <Panel>
+            <Panel className={vis("posture")}>
               <SectionHeader icon={ShieldCheck} title={t("Постура флоту")} right={<LinkBtn onClick={() => go("grc/compliance")}>{t("комплаєнс")}</LinkBtn>} />
               <div className="flex flex-col items-center gap-4 py-2">
                 <ScoreRing value={posture} size={150} color={toneColor(scoreTone(posture))} label={t("захищеність")} />
@@ -161,7 +167,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* Ресурси флоту */}
-            <Panel className="xl:col-span-2">
+            <Panel className={vis("fleet", "xl:col-span-2")}>
               <SectionHeader icon={Gauge} title={t("Навантаження флоту")} sub={t("Середнє по всіх онлайн-хостах")} right={<LinkBtn onClick={() => go("infra/metrics")}>{t("метрики")}</LinkBtn>} />
               <LineChart
                 series={[
@@ -177,7 +183,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* Розподіл відкритих */}
-            <Panel>
+            <Panel className={vis("openDonut")}>
               <SectionHeader icon={Siren} title={t("Відкриті за серйозністю")} />
               <Donut
                 items={SEVERITIES.map((s) => ({ label: t(SEV_LABEL[s]), value: open.filter((i) => i.severity === s).length, color: SEV_COLOR[s] }))}
@@ -186,7 +192,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* Ризик по хостах */}
-            <Panel className="xl:col-span-2">
+            <Panel className={vis("hostRisk", "xl:col-span-2")}>
               <SectionHeader icon={ShieldAlert} title={t("Ризик по хостах")} sub={t("Оцінка з живих метрик і статусу")} right={<LinkBtn onClick={() => go("edr/endpoints")}>{t("кінцеві точки")}</LinkBtn>} />
               <ul className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
                 {[...hosts].sort((a, b) => hostRisk(b) - hostRisk(a)).map((h) => {
@@ -210,7 +216,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* MITRE */}
-            <Panel>
+            <Panel className={vis("mitre")}>
               <SectionHeader icon={Grid3x3} title="MITRE ATT&CK" sub={t("Найактивніші тактики")} right={<LinkBtn onClick={() => go("cti/mitre")}>{t("матриця")}</LinkBtn>} />
               {topTactics.length === 0 ? (
                 <div className="py-8 text-center text-[14px] text-muted-foreground">{t("Ще немає зіставлених технік.")}</div>
@@ -232,7 +238,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* Інциденти */}
-            <Panel className="xl:col-span-2">
+            <Panel className={vis("recent", "xl:col-span-2")}>
               <SectionHeader icon={Siren} title={t("Останні інциденти")} right={<LinkBtn onClick={() => go("soar/incidents")}>{t("всі")}</LinkBtn>} />
               {incidents.length === 0 ? (
                 <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Інцидентів немає.")}</div>
@@ -257,7 +263,7 @@ export default function Dashboard({ go }: { go: Nav }) {
             </Panel>
 
             {/* Категорії + активність */}
-            <Panel>
+            <Panel className={vis("categories")}>
               <SectionHeader icon={Activity} title={t("Категорії загроз")} sub={t("Відкриті інциденти")} />
               {cats.length === 0 ? (
                 <div className="py-6 text-center text-[14.5px] text-muted-foreground">{t("Поки тихо.")}</div>
@@ -279,9 +285,45 @@ export default function Dashboard({ go }: { go: Nav }) {
           </div>
         </div>
       )}
+
+      {customize && (
+        <Modal title={t("Віджети огляду")} onClose={() => setCustomize(false)}>
+          <p className="mb-4 text-[14.5px] text-muted-foreground">{t("Обери, що показувати на огляді. Налаштування зберігається на цьому пристрої.")}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {WIDGETS.map(([id, label]) => {
+              const on = !hidden.includes(id);
+              return (
+                <button
+                  key={id}
+                  onClick={() => set({ hiddenWidgets: on ? [...hidden, id] : hidden.filter((x) => x !== id) })}
+                  className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-[14.5px] transition-colors ${on ? "border-[var(--primary)] bg-[var(--accent-subtle)]" : "border-[var(--hairline)]"}`}
+                >
+                  {t(label)}
+                  <span className={`h-5 w-5 rounded-md border text-center text-[12px] leading-[18px] ${on ? "border-[var(--primary)] bg-[var(--primary)] text-white" : "border-[var(--hairline-strong)]"}`}>{on ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-5 flex justify-end">
+            <GhostButton onClick={() => set({ hiddenWidgets: [] })}>{t("Показати все")}</GhostButton>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
+
+const WIDGETS: [string, string][] = [
+  ["kpis", "Ключові показники"],
+  ["alerts", "Тривоги за серйозністю"],
+  ["posture", "Постура флоту"],
+  ["fleet", "Навантаження флоту"],
+  ["openDonut", "Відкриті за серйозністю"],
+  ["hostRisk", "Ризик по хостах"],
+  ["mitre", "MITRE ATT&CK"],
+  ["recent", "Останні інциденти"],
+  ["categories", "Категорії загроз"],
+];
 
 function LinkBtn({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (

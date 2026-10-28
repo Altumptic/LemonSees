@@ -6,6 +6,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { exec as cpExec } from "node:child_process";
 import express from "express";
+import { createRequire } from "node:module";
 import { WebSocketServer } from "ws";
 
 import {
@@ -36,8 +37,14 @@ import {
 } from "./config.js";
 import { scanFim, diffFim } from "./fim.js";
 import { mountAuth, isAuthed, authEnabled } from "./auth.js";
+import https from "node:https";
+import { mountExtensions } from "./extensions.js";
+import { createGuard, buildCsp, securityHeaders } from "./guard.js";
+import { setSshHooks } from "./ssh.js";
+import { CONFIG_DIR } from "./config.js";
 import { Uptime } from "./uptime.js";
 import { HostConnection } from "./ssh.js";
+let ext = null; // розширення 3.1 (інтеграції, правила, агенти) — підключаються після створення app
 import { Poller } from "./collector.js";
 import * as dbmod from "./db.js";
 import { engineFamily } from "./engines.js";
@@ -121,12 +128,15 @@ function evaluateBruteforce(h, failed, threshold) {
   incidents.unshift(inc);
   saveIncidents(incidents);
   audit("incident.auto", inc.id, { rule, failed, host: h.name });
+  ext?.notifyIncident(inc);
 }
 
 // Перша перевірка через 45с після старту, далі — з інтервалом із налаштувань SOC.
 function scheduleSweep(delay) {
   setTimeout(async () => {
     await threatSweep().catch(() => {});
+    await ext?.runRules().catch(() => {});
+    await fimSweep().catch(() => {});
     scheduleSweep((loadSoc().sweepMinutes || 5) * 60 * 1000);
   }, delay);
 }
@@ -208,24 +218,104 @@ function stopHost(id) {
   hostStates.delete(id);
 }
 
+// Бастіон (jump host) і закріплення ключів хостів (TOFU) — до першого підключення
+setSshHooks({
+  jump: (id) => conns.get(id) || null,
+  onHostKey: (id, fp) => {
+    const h = hosts.find((x) => x.id === id);
+    if (h && !h.hostKey) {
+      h.hostKey = fp;
+      saveHosts(hosts);
+      audit("hostkey.pin", h.name, { fingerprint: fp });
+    }
+  },
+});
+
 for (const h of hosts) startHost(h);
+
+/** Створити інцидент із дедуплікацією за правилом (поки попередній не закрито). */
+function addIncident(input) {
+  if (input.rule && incidents.some((i) => i.rule === input.rule && i.status !== "closed")) return null;
+  const inc = sanitizeIncident({ status: "open", auto: true, ...input });
+  inc.timeline = [{ at: Date.now(), text: `Автостворено: ${input.rule || "правило"}` }];
+  incidents.unshift(inc);
+  saveIncidents(incidents);
+  audit("incident.auto", inc.id, { rule: input.rule || "" });
+  ext?.notifyIncident(inc);
+  broadcast();
+  return inc;
+}
 
 /* ---------------- HTTP API ---------------- */
 
 const app = express();
 app.disable("x-powered-by");
-app.use(express.json({ limit: "1mb" }));
+const guard = createGuard({ bindHost: HOST });
+const csp = buildCsp(path.join(APP_ROOT, "dist"));
 app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Referrer-Policy", "no-referrer");
+  securityHeaders(res);
+  res.setHeader("Content-Security-Policy", csp(req));
+  if (TLS) res.setHeader("Strict-Transport-Security", "max-age=31536000");
   next();
 });
+// DNS rebinding + cross-origin захист — до будь-якого API
+app.use(guard.middleware);
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/info", (req, res) =>
   res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic" }),
 );
-mountAuth(app, { secure: process.env.LEMONSEES_SECURE_COOKIE === "1" });
+const TLS = loadTls();
+mountAuth(app, { secure: !!TLS || process.env.LEMONSEES_SECURE_COOKIE === "1" });
+ext = mountExtensions(app, {
+  hosts: () => hosts,
+  conns,
+  addIncident,
+  audit,
+  saveHosts: () => saveHosts(hosts),
+  restartHost: (id) => {
+    const h = hosts.find((x) => x.id === id);
+    if (h) {
+      stopHost(id);
+      startHost(h);
+    }
+  },
+  reconnectAll: () => {
+    for (const h of hosts) {
+      stopHost(h.id);
+      startHost(h);
+    }
+    broadcast();
+  },
+  tls: !!TLS,
+  backupData: () => ({ incidents, monitors, soc: loadSoc() }),
+  monitorCount: () => monitors.length,
+});
+
+/** HTTPS: власний сертифікат (LEMONSEES_TLS_CERT/KEY) або самопідписаний (LEMONSEES_TLS=self). */
+function loadTls() {
+  try {
+    if (process.env.LEMONSEES_TLS_CERT && process.env.LEMONSEES_TLS_KEY) {
+      return { cert: fs.readFileSync(process.env.LEMONSEES_TLS_CERT), key: fs.readFileSync(process.env.LEMONSEES_TLS_KEY) };
+    }
+    if (process.env.LEMONSEES_TLS === "self") {
+      const dir = path.join(CONFIG_DIR, "tls");
+      const cf = path.join(dir, "cert.pem");
+      const kf = path.join(dir, "key.pem");
+      if (!fs.existsSync(cf)) {
+        const selfsigned = createRequire(import.meta.url)("selfsigned");
+        const pems = selfsigned.generate([{ name: "commonName", value: "lemonsees.local" }], { days: 825, keySize: 2048, algorithm: "sha256", extensions: [{ name: "subjectAltName", altNames: [{ type: 2, value: "localhost" }, { type: 7, ip: "127.0.0.1" }] }] });
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(cf, pems.cert);
+        fs.writeFileSync(kf, pems.private, { mode: 0o600 });
+      }
+      return { cert: fs.readFileSync(cf), key: fs.readFileSync(kf) };
+    }
+  } catch (e) {
+    console.error("  ✖ TLS:", e.message);
+  }
+  return null;
+}
 
 app.get("/api/state", (req, res) => res.json(snapshot()));
 
@@ -239,6 +329,7 @@ let monitors = loadMonitors();
 const uptime = new Uptime();
 uptime.onEvent = (evt) => {
   audit(evt.ok ? "monitor.up" : "monitor.down", evt.name, { url: evt.url, status: evt.status });
+  ext?.notifyDowntime(evt);
   if (loadSoc().notifyDowntime === false) return;
   try {
     globalThis.__lemonNotify?.(
@@ -719,6 +810,7 @@ app.post("/api/incidents", (req, res) => {
     incidents.unshift(inc);
     saveIncidents(incidents);
     audit("incident.create", inc.id, { title: inc.title, severity: inc.severity });
+    ext?.notifyIncident(inc);
     res.json(inc);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -756,6 +848,19 @@ app.delete("/api/incidents/:id", (req, res) => {
 /* ---------------- FIM — цілісність файлів ---------------- */
 
 let fimBaselines = loadFimBaselines();
+
+/** Планова перевірка FIM для хостів із базовою лінією (разом зі скануванням загроз). */
+async function fimSweep() {
+  for (const h of hosts) {
+    const conn = conns.get(h.id);
+    if (!conn || !conn.ready || !fimBaselines[h.id]) continue;
+    try {
+      fimIncident(h, diffFim(await scanFim(conn), fimBaselines[h.id]));
+    } catch {
+      /* хост недоступний */
+    }
+  }
+}
 
 function fimIncident(h, report) {
   const soc = loadSoc();
@@ -840,11 +945,17 @@ if (fs.existsSync(DIST)) {
 
 /* ---------------- WebSocket ---------------- */
 
-const server = http.createServer(app);
+const server = TLS ? https.createServer({ ...TLS, minVersion: "TLSv1.2" }, app) : http.createServer(app);
 const wssState = new WebSocketServer({ noServer: true });
 const wssTerm = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (req, socket, head) => {
+  // WebSocket не підпадає під CORS: без перевірки Origin будь-який сайт міг би відкрити термінал
+  if (!guard.upgradeOk(req)) {
+    socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+    socket.destroy();
+    return;
+  }
   if (!isAuthed(req)) {
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
     socket.destroy();
@@ -910,7 +1021,7 @@ wssTerm.on("connection", async (ws, req) => {
 /* ---------------- старт ---------------- */
 
 server.listen(PORT, HOST, () => {
-  const url = `http://${HOST}:${PORT}`;
+  const url = `${TLS ? "https" : "http"}://${HOST}:${PORT}`;
   console.log(`\n  LemonSees ${VERSION} by Altumptic → ${url}\n  Хостів у конфігу: ${hosts.length}. Доступ: ${authEnabled() ? "токен (LEMONSEES_TOKEN)" : "лише локально"}. Ctrl+C — зупинити.\n`);
   if (!NO_OPEN && process.platform === "win32" && fs.existsSync(DIST) && LOOPBACK.includes(HOST)) {
     cpExec(`start "" "${url}"`, { shell: "cmd.exe" });
