@@ -122,7 +122,7 @@
     "sql.js": "^1.14.1",
     "ssh2": "^1.16.0",
     "undici": "^6.29.1",
-    "ws": "^8.18.0"
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.1",
