@@ -147,6 +147,25 @@ export function demoExtRequest(method: string, p: string, body: unknown): unknow
   }
   if (p === "/api/network/test") return { ip: network.proxy.type !== "none" ? "198.51.100.200" : "192.0.2.77", viaProxy: network.proxy.type !== "none", ms: network.proxy.type !== "none" ? 612 : 48 };
   if (p === "/api/security/status") return status();
+  if (p === "/api/security/outbound")
+    return {
+      route: network.proxy.type !== "none" ? `${network.proxy.type}://${network.proxy.host}:${network.proxy.port}` : "direct",
+      killSwitch: network.killSwitch,
+      telemetry: "none",
+      items: [
+        { id: "ssh", target: "your servers (SSH)", purpose: "telemetry, scans, terminal", when: "always, for configured hosts", enabled: true },
+        { id: "geoip", target: "https://ipwho.is", purpose: "country/ISP of attacker IPs", when: "opt-in (Settings → SOC)", enabled: null },
+        { id: "egress", target: "https://api.ipify.org", purpose: "show which IP servers see", when: "only when you press the button", enabled: false },
+        { id: "uptime", target: "your monitored URLs", purpose: "uptime checks", when: "for configured monitors", enabled: true },
+        ...integrations.filter((i) => i.enabled).map((i) => ({ id: i.id, target: i.name, purpose: i.type === "wazuh" ? "import agents/alerts" : "forward alerts", when: "configured integration", enabled: true })),
+      ],
+    };
+  if (p === "/api/backup/export") {
+    const b = body as { passphrase?: string };
+    if (!b.passphrase || b.passphrase.length < 10) throw new Error("Пароль бекапу — щонайменше 10 символів");
+    return { format: "lemonsees-backup", version: 1, kdf: { name: "scrypt", N: 32768, r: 8, p: 1, salt: "ZGVtby1zYWx0" }, cipher: "aes-256-gcm", iv: "ZGVtby1pdg==", tag: "ZGVtby10YWc=", data: "ZGVtbyBiYWNrdXAgKGVuY3J5cHRlZCBieSB0aGUgcmVhbCBlbmdpbmUp", demo: true };
+  }
+  if (p === "/api/backup/import") throw new Error("Імпорт бекапу недоступний у демо-режимі");
   if (p === "/api/integrations" && method === "GET") return { catalog: CATALOG, integrations };
   if (p === "/api/integrations" && method === "POST") {
     const i = { ...(body as Integration), id: `int_${Date.now()}`, lastStatus: null };

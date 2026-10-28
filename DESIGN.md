@@ -52,7 +52,7 @@ Hit targets ≥ 36px (icon buttons 36, inputs/buttons ~40).
 ## 6. Charts (`src/components/charts.tsx`)
 
 Dependency-free SVG: `LineChart` (multi-series, crosshair tooltip), `StackedBars`, `Donut` (hover legend),
-`Heatmap`, `Radar`, `MiniTrend` (inside `Kpi`). Severity colours come from `SEV_COLOR`, categorical
+`Heatmap`, `Radar`, `MiniTrend` (inside `Kpi`); `charts2.tsx`: `Sankey`, `Treemap`, `Funnel`, `CalendarHeatmap`, `Gauge`. Severity colours come from `SEV_COLOR`, categorical
 series from `--c1…--c6` (theme-aware). Rendered at real pixel width for crisp labels.
 
 ## 7. Brand

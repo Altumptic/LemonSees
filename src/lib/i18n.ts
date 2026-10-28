@@ -1142,6 +1142,22 @@ const EN: Record<string, string> = {
   "ще не отримано": "not received yet",
   "інцидентів у межах SLA": "incidents within SLA",
   "інше": "other",
+  "Вихідні зʼєднання": "Outbound connections",
+  "Гео-IP збагачення (opt-in)": "Geo-IP enrichment (opt-in)",
+  "Зашифровану резервну копію збережено. Без пароля її не відкрити.": "Encrypted backup saved. It cannot be opened without the passphrase.",
+  "Коли": "When",
+  "Країна та провайдер атакуючих. Надсилає лише публічні IP атакуючих у ipwho.is по HTTPS (через проксі, якщо налаштовано). За замовчуванням вимкнено.": "Attacker country and ISP. Sends only public attacker IPs to ipwho.is over HTTPS (through the proxy if configured). Off by default.",
+  "Куди": "Destination",
+  "Навіщо": "Purpose",
+  "Налаштування, параметри SOC, інциденти, монітори й правила — у файлі, зашифрованому твоїм паролем (scrypt + AES-256-GCM). Секрети (паролі, ключі, токени) не експортуються.": "Settings, SOC parameters, incidents, monitors and rules in a file encrypted with your passphrase (scrypt + AES-256-GCM). Secrets (passwords, keys, tokens) are never exported.",
+  "Пароль бекапу (мін. 10 символів)": "Backup passphrase (min. 10 characters)",
+  "Пароль бекапу — щонайменше 10 символів": "Backup passphrase must be at least 10 characters",
+  "Усе, куди LemonSees може звертатися з цього ПК. Телеметрії й аналітики немає — нічого не надсилається в Altumptic.": "Everything LemonSees may contact from this machine. There is no telemetry or analytics — nothing is sent to Altumptic.",
+  "активне": "active",
+  "неактивне": "inactive",
+  "ніколи": "never",
+  "телеметрія, аналітика": "telemetry, analytics",
+  "Імпорт бекапу недоступний у демо-режимі": "Backup import is not available in demo mode",
 };
 
 const RU: Record<string, string> = {

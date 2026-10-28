@@ -1,6 +1,21 @@
 # Changelog
 
-## v3.1.0 — Privacy, integrations, agents
+## v3.1.0 — Privacy, integrations, agents · Altumptic PSB-B
+
+### Security fixes (please upgrade)
+- **Cross-site WebSocket / DNS rebinding (high):** a malicious web page open in the analyst's browser could connect to the
+  local engine's WebSocket endpoints (incl. the SSH terminal). The engine now validates `Host` (loopback-only in local
+  mode) and `Origin` on every API call and WebSocket upgrade. Affects ≤ 3.0.0.
+- Dependency updates: `undici` 6.29.1, transitive `proxy-addr`, `body-parser`, `qs` — `npm audit` reports 0 vulnerabilities.
+
+### Altumptic Product Security Baseline (PSB-B)
+- Strict CSP (scripts by hash, no `unsafe-inline`/`eval`), COOP/CORP, Permissions-Policy; fonts served as files.
+- Electron: sandboxed renderer, OS permissions limited to notifications + clipboard write, navigation lock.
+- Geo-IP is now **opt-in** and HTTPS-only (`ipwho.is`), previously on by default over HTTP.
+- Encrypted backups (scrypt + AES-256-GCM); data files 0600 / directory 0700; scheduled FIM; FIM no longer writes temp files.
+- Outbound-connections inventory in the UI (no telemetry).
+- Release artifacts: `SHA256SUMS`, Sigstore keyless signature, GitHub build provenance, CycloneDX SBOM.
+- Security tests (`npm test`), CI audit gate, Dependabot. Docs: security notes, threat model, verify guide.
 
 ### Privacy & encryption
 - Route SSH and all outbound requests through **Tor / SOCKS5 / HTTP CONNECT** proxies (global or per host), **bastion / jump hosts**.

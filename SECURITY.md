@@ -27,6 +27,14 @@ and to agree a disclosure timeline with you. Preferred languages: English, Ukrai
 
 Every LemonSees instance also serves this contact information at `/.well-known/security.txt`.
 
+## Evidence
+
+- [Security design notes](docs/security/SECURITY-NOTES.md) — trust boundaries, cryptography, data inventory, known limits & exceptions
+- [Threat model and non-goals](docs/security/THREAT-MODEL.md)
+- [Verify a release](docs/security/VERIFY.md) — SHA256SUMS, Sigstore signature, GitHub attestation, SBOM
+
+Product class under the Altumptic Product Security Baseline: **PSB-B**. Independent audit: **none yet** (`AUDIT:NONE`).
+
 ## Supported versions
 
 | Version | Supported |

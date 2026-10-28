@@ -148,6 +148,10 @@ export const api = {
   securityStatus: () => req<SecurityStatus>("/api/security/status"),
   resetHostKey: (id: string) => req<{ ok: boolean }>(`/api/hosts/${id}/hostkey/reset`, { method: "POST" }),
 
+  outbound: () => req<{ route: string; killSwitch: boolean; telemetry: string; items: { id: string; target: string; purpose: string; when: string; enabled: boolean | null }[] }>("/api/security/outbound"),
+  backupExport: (settings: unknown, passphrase: string) => req<Record<string, unknown>>("/api/backup/export", { method: "POST", body: JSON.stringify({ settings, passphrase }) }),
+  backupImport: (blob: unknown, passphrase: string) => req<{ settings: Record<string, unknown>; soc: SocConfig | null; exportedAt: string }>("/api/backup/import", { method: "POST", body: JSON.stringify({ blob, passphrase }) }),
+
   // Інтеграції
   integrations: () => req<{ catalog: IntegrationCatalog; integrations: Integration[] }>("/api/integrations"),
   addIntegration: (i: Partial<Integration>) => req<Integration>("/api/integrations", { method: "POST", body: JSON.stringify(i) }),

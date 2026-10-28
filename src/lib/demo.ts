@@ -472,7 +472,7 @@ export async function demoRequest(method: string, url: string, body?: unknown): 
   const m = (re: RegExp) => p.match(re);
   let r: RegExpMatchArray | null;
 
-  if (/^\/api\/(info|network|security|integrations|wazuh|rules|agents)/.test(p) || /\/hostkey\/reset$/.test(p)) {
+  if (/^\/api\/(info|network|security|backup|integrations|wazuh|rules|agents)/.test(p) || /\/hostkey\/reset$/.test(p)) {
     const r = demoExtRequest(method, p, body);
     if (r !== undefined) return r;
     if (/hostkey/.test(p)) return { ok: true };

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { EyeOff, Globe2, KeyRound, Lock, Network, RefreshCw, ShieldCheck, Fingerprint, ServerCog, CheckCircle2, AlertTriangle } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useSettings } from "@/lib/settings";
 import type { NetworkConfig, ProxyType, SecurityStatus } from "@/lib/types";
 import { GhostButton, Kpi, PageHeader, Panel, Pill, PrimaryButton, SectionHeader, StatusDot } from "@/components/ui";
 
@@ -14,12 +15,14 @@ const PRESETS: { label: string; hint: string; type: ProxyType; host: string; por
 
 export default function PrivacyPage() {
   const { hosts } = useAppState();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [net, setNet] = useState<NetworkConfig | null>(null);
   const [form, setForm] = useState({ type: "none" as ProxyType, host: "", port: 1080, user: "", pass: "" });
   const [sec, setSec] = useState<SecurityStatus | null>(null);
   const [egress, setEgress] = useState<{ ip: string; viaProxy: boolean; ms: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const { settings } = useSettings();
+  const [outbound, setOutbound] = useState<Awaited<ReturnType<typeof api.outbound>> | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const load = () => {
@@ -28,6 +31,7 @@ export default function PrivacyPage() {
       setForm({ type: n.proxy.type, host: n.proxy.host, port: n.proxy.port || 1080, user: n.proxy.user, pass: "" });
     }).catch(() => {});
     api.securityStatus().then(setSec).catch(() => {});
+    api.outbound().then(setOutbound).catch(() => {});
   };
   useEffect(load, [hosts.length]);
 
@@ -204,6 +208,46 @@ export default function PrivacyPage() {
           )}
         </Panel>
 
+        <Panel title={<Title icon={Globe2}>{t("Вихідні зʼєднання")}</Title>} className="xl:col-span-2">
+          <p className="mb-4 text-[14px] text-muted-foreground">
+            {t("Усе, куди LemonSees може звертатися з цього ПК. Телеметрії й аналітики немає — нічого не надсилається в Altumptic.")}{" "}
+            <span className="font-medium text-foreground">{t("Маршрут")}: {outbound?.route === "direct" ? t("напряму") : outbound?.route}</span>
+          </p>
+          <div className="overflow-x-auto">
+            <table className="data-table w-full text-left text-[14px]">
+              <thead>
+                <tr className="border-b border-[var(--hairline)] text-[12.5px] text-muted-foreground">
+                  <th className="px-3 py-2.5 font-medium">{t("Куди")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("Навіщо")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("Коли")}</th>
+                  <th className="px-3 py-2.5 font-medium">{t("Стан")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[var(--hairline)]">
+                  <td className="px-3 py-2.5 font-medium">Altumptic</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{t("телеметрія, аналітика")}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{t("ніколи")}</td>
+                  <td className="px-3 py-2.5"><Pill color="var(--success)" dot>NO-TELEMETRY</Pill></td>
+                </tr>
+                {(outbound?.items ?? []).map((it) => {
+                  const on = it.id === "geoip" ? settings.geoip : it.enabled;
+                  return (
+                    <tr key={it.id} className="border-b border-[var(--hairline)] last:border-0">
+                      <td className="mono px-3 py-2.5 text-[13px]">{lang === "uk" ? UK_OUT[it.target] ?? it.target : it.target}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">{lang === "uk" ? UK_OUT[it.purpose] ?? it.purpose : it.purpose}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">{lang === "uk" ? UK_OUT[it.when] ?? it.when : it.when}</td>
+                      <td className="px-3 py-2.5">
+                        <Pill color={on ? "var(--warning)" : "var(--text-disabled)"} dot>{on ? t("активне") : t("неактивне")}</Pill>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+
         <Panel title={<Title icon={Lock}>{t("Шифрування даних")}</Title>} className="xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-3">
             <Info icon={Lock} title={t("Секрети на диску")} text={t("Паролі SSH, passphrase, паролі БД, проксі та токени інтеграцій шифруються AES-256-GCM. Ключ")} strong={sec ? keySourceLabel(sec.vault.keySource, t) : "…"} />
@@ -215,6 +259,23 @@ export default function PrivacyPage() {
     </>
   );
 }
+
+// Серверний інвентар описаний англійською; для української — локальні підписи
+const UK_OUT: Record<string, string> = {
+  "your servers (SSH)": "твої сервери (SSH)",
+  "telemetry, scans, terminal": "телеметрія, скани, термінал",
+  "always, for configured hosts": "завжди, для доданих хостів",
+  "country/ISP of attacker IPs": "країна/провайдер IP атакуючих",
+  "opt-in (Settings → SOC)": "за згодою (Налаштування → SOC)",
+  "show which IP servers see": "показати, який IP бачать сервери",
+  "only when you press the button": "лише коли натискаєш кнопку",
+  "your monitored URLs": "твої URL моніторів",
+  "uptime checks": "перевірки аптайму",
+  "for configured monitors": "для доданих моніторів",
+  "import agents/alerts": "імпорт агентів і тривог",
+  "forward alerts": "пересилання тривог",
+  "configured integration": "налаштована інтеграція",
+};
 
 const inputCls = "h-10 w-full rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-3 text-[14.5px] outline-none focus:border-[var(--primary)]";
 

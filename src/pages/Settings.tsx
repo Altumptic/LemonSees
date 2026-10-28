@@ -59,6 +59,7 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState("");
   const aboutRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [backupPass, setBackupPass] = useState("");
 
   useEffect(() => {
     api.getSoc().then((s) => setSoc((p) => ({ ...p, ...s }))).catch(() => {});
@@ -78,31 +79,37 @@ export default function SettingsPage() {
     setTimeout(() => setMsg(""), 3500);
   };
 
+  // Бекап шифрується на двигуні: scrypt → AES-256-GCM (PSB §2.2). Секрети в нього не потрапляють.
   const exportBackup = async () => {
-    const [incidents, monitors, socCfg] = await Promise.all([api.listIncidents().catch(() => []), api.listMonitors().catch(() => []), api.getSoc().catch(() => soc)]);
-    const payload = { app: "LemonSees", vendor: "Altumptic", version: info?.version ?? "", exportedAt: new Date().toISOString(), settings, soc: socCfg, incidents, monitors };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `lemonsees-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    flash(t("Резервну копію збережено. Паролі та ключі в неї не потрапляють."));
+    if (backupPass.length < 10) return flash(t("Пароль бекапу — щонайменше 10 символів"));
+    try {
+      const blob = await api.backupExport(settings, backupPass);
+      const file = new Blob([JSON.stringify(blob, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file);
+      a.download = `lemonsees-backup-${new Date().toISOString().slice(0, 10)}.lsbackup.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      flash(t("Зашифровану резервну копію збережено. Без пароля її не відкрити."));
+    } catch (e) {
+      flash((e as Error).message);
+    }
   };
 
   const importSettings = async (file: File) => {
     try {
-      const data = JSON.parse(await file.text());
+      const blob = JSON.parse(await file.text());
+      const data = await api.backupImport(blob, backupPass);
       if (data.settings) {
         const allowed = Object.keys(DEFAULTS) as (keyof AppSettings)[];
         const patch: Partial<AppSettings> = {};
-        for (const k of allowed) if (k in data.settings && k !== "hostId") (patch as Record<string, unknown>)[k] = data.settings[k];
+        for (const k of allowed) if (k in data.settings && k !== "hostId") (patch as Record<string, unknown>)[k] = (data.settings as Record<string, unknown>)[k];
         set(patch);
       }
       if (data.soc) updateSoc(data.soc);
       flash(t("Налаштування імпортовано."));
-    } catch {
-      flash(t("Не вдалося прочитати файл резервної копії."));
+    } catch (e) {
+      flash((e as Error).message || t("Не вдалося прочитати файл резервної копії."));
     }
   };
 
@@ -228,7 +235,7 @@ export default function SettingsPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Toggle label={t("Автоінциденти")} desc={t("Брутфорс SSH і зміни критичних файлів (FIM) стають інцидентами автоматично.")} on={soc.autoIncidents} onChange={(v) => updateSoc({ autoIncidents: v })} />
             <Toggle label={t("Сповіщення про даунтайм")} desc={t("Десктоп-сповіщення, коли монітор сайту падає чи відновлюється.")} on={soc.notifyDowntime !== false} onChange={(v) => updateSoc({ notifyDowntime: v })} />
-            <Toggle label={t("Гео-IP збагачення")} desc={t("Країна та провайдер атакуючих. Надсилає публічні IP у зовнішній сервіс геолокації.")} on={settings.geoip} onChange={(v) => set({ geoip: v })} />
+            <Toggle label={t("Гео-IP збагачення (opt-in)")} desc={t("Країна та провайдер атакуючих. Надсилає лише публічні IP атакуючих у ipwho.is по HTTPS (через проксі, якщо налаштовано). За замовчуванням вимкнено.")} on={settings.geoip} onChange={(v) => set({ geoip: v })} />
             <Slider label={t("Поріг брутфорсу (за 24 год)")} desc={t("Скільки невдалих логінів запускає інцидент.")} min={50} max={5000} step={50} value={soc.bruteThreshold} onChange={(v) => updateSoc({ bruteThreshold: v })} />
             <Slider label={t("Перевірка загроз")} desc={t("Як часто двигун сканує журнали хостів.")} min={1} max={60} step={1} value={soc.sweepMinutes ?? 5} unit={t("хв")} onChange={(v) => updateSoc({ sweepMinutes: v })} />
             <Slider label={t("Зберігати аудит")} desc={t("Старіші записи журналу дій видаляються.")} min={7} max={730} step={7} value={soc.retentionDays ?? 90} unit={t("днів")} onChange={(v) => updateSoc({ retentionDays: v })} />
@@ -245,7 +252,11 @@ export default function SettingsPage() {
 
         {/* Дані */}
         <Panel title={<Title icon={DatabaseBackup}>{t("Резервна копія")}</Title>}>
-          <p className="mb-4 text-[14.5px] text-muted-foreground">{t("Експорт налаштувань, параметрів SOC, інцидентів і моніторів у JSON. Секрети (паролі, ключі) не експортуються.")}</p>
+          <p className="mb-4 text-[14.5px] text-muted-foreground">{t("Налаштування, параметри SOC, інциденти, монітори й правила — у файлі, зашифрованому твоїм паролем (scrypt + AES-256-GCM). Секрети (паролі, ключі, токени) не експортуються.")}</p>
+          <label className="mb-4 block">
+            <div className="mb-1.5 text-[13.5px] font-medium">{t("Пароль бекапу (мін. 10 символів)")}</div>
+            <input type="password" value={backupPass} onChange={(e) => setBackupPass(e.target.value)} autoComplete="new-password" className="h-10 w-full rounded-xl border border-[var(--hairline-strong)] bg-[var(--surface)] px-3 text-[14.5px] outline-none focus:border-[var(--primary)]" />
+          </label>
           <div className="flex flex-wrap gap-2">
             <PrimaryButton onClick={exportBackup}>
               <Download className="h-4 w-4" /> {t("Експортувати")}
@@ -253,7 +264,7 @@ export default function SettingsPage() {
             <GhostButton onClick={() => fileRef.current?.click()}>
               <Upload className="h-4 w-4" /> {t("Імпортувати налаштування")}
             </GhostButton>
-            <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files?.[0] && importSettings(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => e.target.files?.[0] && importSettings(e.target.files[0])} />
           </div>
         </Panel>
 
