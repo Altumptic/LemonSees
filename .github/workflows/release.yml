@@ -14,7 +14,7 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,7 +39,7 @@ jobs:
             script: dist:linux
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -62,7 +62,7 @@ jobs:
     needs: gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -97,7 +97,7 @@ jobs:
       id-token: write # OIDC: короткоживучий токен для Sigstore й attestations (без довгих секретів)
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: artifacts
