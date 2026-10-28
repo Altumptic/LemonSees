@@ -19,6 +19,8 @@ export default defineConfig({
     outDir: "dist",
     target: "es2022",
     cssCodeSplit: true,
+    // Ресурси (шрифти) — окремими файлами: сувора CSP без data: у font-src
+    assetsInlineLimit: 0,
     rollupOptions: {
       output: {
         // Важкі бібліотеки — окремими чанками, щоб кешувались і не гальмували старт
