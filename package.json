@@ -74,7 +74,10 @@
       "server/**",
       "dist/**",
       "package.json",
-      "!**/*.map"
+      "!**/*.map",
+      "!node_modules/cpu-features/**",
+      "!node_modules/ssh2/lib/protocol/crypto/build/**",
+      "!node_modules/nan/**"
     ],
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "win": {
@@ -102,7 +105,8 @@
     },
     "appImage": {
       "artifactName": "${productName}-${version}-${arch}.AppImage"
-    }
+    },
+    "npmRebuild": false
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

@@ -3,6 +3,7 @@
 // Kill switch: якщо проксі задано й він недоступний — зʼєднання НЕ йде напряму (IP аналітика не світиться).
 import net from "node:net";
 import tls from "node:tls";
+import { createRequire } from "node:module";
 import { Agent, ProxyAgent, fetch as ufetch } from "undici";
 
 let CFG = {
@@ -184,8 +185,26 @@ export async function egressCheck() {
 
 /* ---------------- SSH-криптографія ---------------- */
 
+// Що реально підтримує ssh2 у цьому середовищі: без нативного модуля (Electron/BoringSSL)
+// немає chacha20-poly1305 — тоді лишаються AES-GCM/CTR, а не падіння всього зʼєднання.
+const SSH2_SUPPORTED = (() => {
+  try {
+    const c = createRequire(import.meta.url)("ssh2/lib/protocol/constants.js");
+    return { kex: c.SUPPORTED_KEX, cipher: c.SUPPORTED_CIPHER, hmac: c.SUPPORTED_MAC, serverHostKey: c.SUPPORTED_SERVER_HOST_KEY };
+  } catch {
+    return null;
+  }
+})();
+
 export function sshAlgorithms() {
   if (!CFG.hardenedCrypto) return undefined;
+  const wanted = hardenedList();
+  if (!SSH2_SUPPORTED) return wanted;
+  // Перетин зі збереженням нашого порядку пріоритетів; слабші алгоритми ніколи не додаються
+  return Object.fromEntries(Object.entries(wanted).map(([k, list]) => [k, list.filter((a) => SSH2_SUPPORTED[k].includes(a))]));
+}
+
+function hardenedList() {
   return {
     kex: ["curve25519-sha256", "curve25519-sha256@libssh.org", "ecdh-sha2-nistp521", "ecdh-sha2-nistp384", "ecdh-sha2-nistp256", "diffie-hellman-group16-sha512", "diffie-hellman-group14-sha256"],
     cipher: ["chacha20-poly1305@openssh.com", "aes256-gcm@openssh.com", "aes128-gcm@openssh.com", "aes256-ctr", "aes192-ctr", "aes128-ctr"],
