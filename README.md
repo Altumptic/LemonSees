@@ -98,7 +98,7 @@ FIM drift, Wazuh data and agents — all generated locally; demo IPs come from d
 |---|---|---|
 | **Windows** | `LemonSees-<v>-portable.exe` (or `.zip`) | No installer, no admin rights. Data in `LemonSees-data/` next to the exe. Not Authenticode-signed — [verify](docs/security/VERIFY.md). |
 | **Linux** | `LemonSees-<v>-x86_64.AppImage` (or `.tar.gz`) | `chmod +x` and run. Create `LemonSees-data/` next to it for fully portable mode. |
-| **Web** | `LemonSees-<v>-web.tar.gz` or `git clone` | Node.js 22+: `npm ci && npm run build && npm start` → <http://127.0.0.1:5199> |
+| **Web** | `LemonSees-<v>-web.tar.gz` or `git clone` | Node.js 22.12+: `npm ci && npm run build && npm start` → <http://127.0.0.1:5199> |
 | **Docker** | `docker build -t lemonsees .` | See below. |
 
 Every release ships `SHA256SUMS`, a Sigstore signature, GitHub build provenance and an SBOM — see

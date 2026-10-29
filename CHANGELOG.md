@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.1.1 — Dependency refresh
+
+### Security-relevant
+- Self-signed HTTPS certificate generation moved to `server/tls.js` for `selfsigned` 5 (async API). The signature
+  algorithm is now pinned to **SHA-256** explicitly (the library defaults to SHA-1) and covered by new tests.
+- `undici` stays on the patched 6.x line: 8.x requires Node ≥ 22.19; Dependabot now ignores undici majors until the
+  minimum Node version is raised. `engines.node` is declared as `>=22.12`.
+
+### Dependencies
+- Updated: React / React DOM, `@xterm/xterm` 6, `@xterm/addon-fit`, `lucide-react` 1.x, `ioredis` 6, `mongodb`, `pg`,
+  `mysql2`, `ws`, `sql.js`, `selfsigned` 5, dev tooling; GitHub Actions (`checkout`, `download-artifact`,
+  `attest-build-provenance`, `cosign-installer`). `npm audit`: 0 vulnerabilities.
+- Datadog Synthetics workflow (manual) moved to action v4.1.1 with the renamed inputs and a clear error when secrets are missing.
+
+
 ## v3.1.0 — Privacy, integrations, agents · Altumptic PSB-B
 
 ### Security fixes (please upgrade)
