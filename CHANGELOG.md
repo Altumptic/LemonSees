@@ -8,8 +8,13 @@
 - `undici` stays on the patched 6.x line: 8.x requires Node ≥ 22.19; Dependabot now ignores undici majors until the
   minimum Node version is raised. `engines.node` is declared as `>=22.12`.
 
+- **Desktop SSH fix:** with Electron 45 the optional native crypto module of `ssh2` is no longer rebuilt; the hardened
+  algorithm list is now intersected with what `ssh2` supports at runtime (AES-GCM is used when ChaCha20-Poly1305 is not
+  available) instead of failing every connection. New test guards this.
+- Desktop builds no longer compile optional native modules (`npmRebuild: false`, `cpu-features` / `sshcrypto` excluded).
+
 ### Dependencies
-- Updated: React / React DOM, `@xterm/xterm` 6, `@xterm/addon-fit`, `lucide-react` 1.x, `ioredis` 6, `mongodb`, `pg`,
+- Electron 45. Updated: React / React DOM, `@xterm/xterm` 6, `@xterm/addon-fit`, `lucide-react` 1.x, `ioredis` 6, `mongodb`, `pg`,
   `mysql2`, `ws`, `sql.js`, `selfsigned` 5, dev tooling; GitHub Actions (`checkout`, `download-artifact`,
   `attest-build-provenance`, `cosign-installer`). `npm audit`: 0 vulnerabilities.
 - Datadog Synthetics workflow (manual) moved to action v4.1.1 with the renamed inputs and a clear error when secrets are missing.

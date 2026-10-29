@@ -47,7 +47,7 @@ Plain language, no marketing. If something here is wrong, please report it — s
 | Integrity monitoring (FIM) | **SHA-256** of file content + mode/owner | `server/fim.js` |
 | Host-key pinning | **SHA-256** fingerprint, trust on first use | `server/ssh.js` |
 | Webhook signatures | **HMAC-SHA256** (`X-LemonSees-Signature`) | `server/integrations.js` |
-| SSH transport (default “modern” mode) | kex: curve25519 / ECDH / DH-group14+ (SHA-2) · ciphers: chacha20-poly1305, AES-GCM, AES-CTR · MAC: HMAC-SHA2 (ETM) · host keys: Ed25519, ECDSA, RSA-SHA2 | `server/netproxy.js` |
+| SSH transport (default “modern” mode) | kex: curve25519 / ECDH / DH-group14+ (SHA-2) · ciphers: chacha20-poly1305 (when the runtime supports it), AES-GCM, AES-CTR · MAC: HMAC-SHA2 (ETM) · host keys: Ed25519, ECDSA, RSA-SHA2. The list is intersected with what the SSH library supports at runtime, so a missing optional cipher never breaks the connection and weaker algorithms are never added. | `server/netproxy.js` |
 | Web TLS | TLS ≥ 1.2 (Node defaults, modern suites); certificate supplied by you or auto self-signed RSA-2048/SHA-256 | `server/index.js` |
 | Tokens / sessions | 256-bit random session IDs, constant-time token comparison | `server/auth.js` |
 

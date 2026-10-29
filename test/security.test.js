@@ -78,6 +78,19 @@ test("hardened SSH algorithms exclude SHA-1 and legacy ciphers", () => {
   assert.ok(!/sha1|cbc|3des|arcfour|ssh-rsa\b|ssh-dss/.test(all), all);
 });
 
+test("hardened SSH algorithms are all supported by ssh2 in this runtime (no 'Unsupported algorithm')", async () => {
+  netp.setNetConfig({ hardenedCrypto: true });
+  const { createRequire } = await import("node:module");
+  const c = createRequire(import.meta.url)("ssh2/lib/protocol/constants.js");
+  const a = netp.sshAlgorithms();
+  const sup = { kex: c.SUPPORTED_KEX, cipher: c.SUPPORTED_CIPHER, hmac: c.SUPPORTED_MAC, serverHostKey: c.SUPPORTED_SERVER_HOST_KEY };
+  for (const k of Object.keys(sup)) {
+    assert.ok(a[k].length > 0, `${k} must not be empty`);
+    for (const alg of a[k]) assert.ok(sup[k].includes(alg), `${alg} not supported by ssh2`);
+  }
+  assert.ok(a.cipher.some((x) => /gcm/.test(x)), "an AEAD cipher must remain");
+});
+
 /* ---------------- Host / Origin guard ---------------- */
 
 const { createGuard } = await import("../server/guard.js");
