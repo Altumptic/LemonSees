@@ -8,6 +8,11 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # undici 7+/8 вимагає Node ≥ 22.19, а веб-режим підтримує Node 22.x від 22.12.
+      # Лишаємось на гілці 6.x (отримує виправлення безпеки); переглянути при підвищенні мінімального Node.
+      - dependency-name: "undici"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

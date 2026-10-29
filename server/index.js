@@ -6,7 +6,6 @@ import path from "node:path";
 import fs from "node:fs";
 import { exec as cpExec } from "node:child_process";
 import express from "express";
-import { createRequire } from "node:module";
 import { WebSocketServer } from "ws";
 
 import {
@@ -40,6 +39,7 @@ import { mountAuth, isAuthed, authEnabled } from "./auth.js";
 import https from "node:https";
 import { mountExtensions } from "./extensions.js";
 import { createGuard, buildCsp, securityHeaders } from "./guard.js";
+import { loadTls } from "./tls.js";
 import { setSshHooks } from "./ssh.js";
 import { CONFIG_DIR } from "./config.js";
 import { Uptime } from "./uptime.js";
@@ -265,7 +265,7 @@ app.use(express.json({ limit: "1mb" }));
 app.get("/api/info", (req, res) =>
   res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic" }),
 );
-const TLS = loadTls();
+const TLS = await loadTls(CONFIG_DIR);
 mountAuth(app, { secure: !!TLS || process.env.LEMONSEES_SECURE_COOKIE === "1" });
 ext = mountExtensions(app, {
   hosts: () => hosts,
@@ -292,30 +292,6 @@ ext = mountExtensions(app, {
   monitorCount: () => monitors.length,
 });
 
-/** HTTPS: власний сертифікат (LEMONSEES_TLS_CERT/KEY) або самопідписаний (LEMONSEES_TLS=self). */
-function loadTls() {
-  try {
-    if (process.env.LEMONSEES_TLS_CERT && process.env.LEMONSEES_TLS_KEY) {
-      return { cert: fs.readFileSync(process.env.LEMONSEES_TLS_CERT), key: fs.readFileSync(process.env.LEMONSEES_TLS_KEY) };
-    }
-    if (process.env.LEMONSEES_TLS === "self") {
-      const dir = path.join(CONFIG_DIR, "tls");
-      const cf = path.join(dir, "cert.pem");
-      const kf = path.join(dir, "key.pem");
-      if (!fs.existsSync(cf)) {
-        const selfsigned = createRequire(import.meta.url)("selfsigned");
-        const pems = selfsigned.generate([{ name: "commonName", value: "lemonsees.local" }], { days: 825, keySize: 2048, algorithm: "sha256", extensions: [{ name: "subjectAltName", altNames: [{ type: 2, value: "localhost" }, { type: 7, ip: "127.0.0.1" }] }] });
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(cf, pems.cert);
-        fs.writeFileSync(kf, pems.private, { mode: 0o600 });
-      }
-      return { cert: fs.readFileSync(cf), key: fs.readFileSync(kf) };
-    }
-  } catch (e) {
-    console.error("  ✖ TLS:", e.message);
-  }
-  return null;
-}
 
 app.get("/api/state", (req, res) => res.json(snapshot()));
 
