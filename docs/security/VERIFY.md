@@ -26,6 +26,8 @@ Select-String "portable.exe" .\SHA256SUMS
 
 ## 2. Signature of the checksums (Sigstore / cosign)
 
+Requires **cosign 2.4 or newer** (from v3.1.1 the signature is a standard Sigstore bundle, `application/vnd.dev.sigstore.bundle.v0.3+json`).
+
 ```bash
 cosign verify-blob SHA256SUMS \
   --bundle SHA256SUMS.sigstore.json \
