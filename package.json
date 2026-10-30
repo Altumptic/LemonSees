@@ -58,7 +58,8 @@
     "shots": "electron scripts/render.cjs shots",
     "world-dots": "node scripts/world-dots.mjs",
     "test": "node --test \"test/**/*.test.js\"",
-    "audit:prod": "npm audit --omit=dev --audit-level=critical"
+    "audit:prod": "npm audit --omit=dev --audit-level=critical",
+    "promo": "electron scripts/promo.cjs promo-out"
   },
   "build": {
     "appId": "com.altumptic.lemonsees",
