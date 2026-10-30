@@ -191,6 +191,7 @@ npm test            # security tests: fail-closed, crypto, authZ, input parsing
 npm run typecheck
 npm run dist:win    # portable .exe + zip
 npm run dist:linux  # AppImage + tar.gz
+npm run promo       # record the promo video from the live demo (needs npm start + ffmpeg; FFMPEG=path to override)
 ```
 
 Design system: [DESIGN.md](DESIGN.md) · Changes: [CHANGELOG.md](CHANGELOG.md) · Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md)
