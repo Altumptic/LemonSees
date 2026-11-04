@@ -7,7 +7,7 @@
 **A calm, agentless SOC console for Linux fleets — by [Altumptic](https://altumptic.com)**
 
 SIEM · EDR · file integrity · NDR · threat intel with MITRE ATT&CK · SOAR · GRC — over plain SSH.<br/>
-Self-hosted web app, portable Windows `.exe`, or Linux AppImage.
+Self-hosted web app, Windows installer/portable `.exe`, Linux AppImage/`.deb`, or macOS `.dmg`.
 
 `PSB-B` · `SIGNED (Sigstore)` · `ATTESTED` · `SBOM` · `NO-TELEMETRY` · `LOCAL-FIRST` · `FAIL-CLOSED` · `TOR-CAPABLE` · `AUDIT:NONE` · `DISCLOSURE:OK`
 
@@ -96,8 +96,9 @@ FIM drift, Wazuh data and agents — all generated locally; demo IPs come from d
 
 | Platform | Get it | Notes |
 |---|---|---|
-| **Windows** | `LemonSees-<v>-portable.exe` (or `.zip`) | No installer, no admin rights. Data in `LemonSees-data/` next to the exe. Not Authenticode-signed — [verify](docs/security/VERIFY.md). |
-| **Linux** | `LemonSees-<v>-x86_64.AppImage` (or `.tar.gz`) | `chmod +x` and run. Create `LemonSees-data/` next to it for fully portable mode. |
+| **Windows** | `LemonSees-<v>-setup.exe` (installer), `-portable.exe` or `.zip` | The portable build needs no installer and no admin rights. Data in `LemonSees-data/` next to the exe. Not Authenticode-signed — [verify](docs/security/VERIFY.md). |
+| **macOS** | `LemonSees-<v>-arm64.dmg` / `-x64.dmg` (or `.zip`) | Unsigned and not notarized: right-click → Open, after verifying checksums/Sigstore. |
+| **Linux** | `LemonSees-<v>-x86_64.AppImage`, `.deb` or `.tar.gz` | `chmod +x` and run. Create `LemonSees-data/` next to it for fully portable mode. |
 | **Web** | `LemonSees-<v>-web.tar.gz` or `git clone` | Node.js 22.12+: `npm ci && npm run build && npm start` → <http://127.0.0.1:5199> |
 | **Docker** | `docker build -t lemonsees .` | See below. |
 
@@ -189,8 +190,9 @@ npm run server      # engine on :5199
 npm run dev         # UI on :5198 (proxies /api and /ws)
 npm test            # security tests: fail-closed, crypto, authZ, input parsing
 npm run typecheck
-npm run dist:win    # portable .exe + zip
-npm run dist:linux  # AppImage + tar.gz
+npm run dist:win    # installer + portable .exe + zip
+npm run dist:linux  # AppImage + deb + tar.gz
+npm run dist:mac    # dmg + zip (x64 + arm64; run on macOS)
 npm run promo       # record the promo video from the live demo (needs npm start + ffmpeg; FFMPEG=path to override)
 ```
 
