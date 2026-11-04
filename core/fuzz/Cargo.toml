@@ -1,0 +1,39 @@
+[package]
+name = "lemonsees-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+lemonsees-core = { path = "../lemonsees-core" }
+serde_json = "1"
+
+[workspace]
+
+[[bin]]
+name = "auth"
+path = "fuzz_targets/auth.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "rules"
+path = "fuzz_targets/rules.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "time"
+path = "fuzz_targets/time.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fim"
+path = "fuzz_targets/fim.rs"
+test = false
+doc = false

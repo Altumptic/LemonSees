@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased — Rust core, hardening, AI-first docs
+## v3.2.0 — Rust core, hardening, AI-first docs
 
 ### Added
+- **Installers:** Windows NSIS installer (`-setup.exe`) next to the portable `.exe` and zip; Linux `.deb` next to AppImage and tar.gz. Release artifacts are checksummed, signed with Sigstore (keyless, Altumptic GitHub identity) and carry build-provenance attestations. They are **not** Authenticode/GPG-signed (no code-signing certificate yet), so Windows SmartScreen may warn — verify with `docs/security/VERIFY.md`.
+- UI: suspicious logins and 48 h activity chart on Threats; `group_by` in rules.
+- Fuzz targets (`core/fuzz`, cargo-fuzz) run in CI.
 - **Rust → WebAssembly core** (`core/`) for the hot paths: SSH auth-log analysis (IPv4/IPv6, ISO/BSD/CLF timestamps, "success after brute force" suspects, hourly histogram), custom rules in a linear-time regex engine (no ReDoS; `group_by` ip/user; trailing windows by the server clock) and FIM diff with critical paths. Optional: without the `.wasm` the engine falls back to the previous paths. `LEMONSEES_CORE=off` disables it; `GET /api/info` reports backend, version and wasm sha256.
 - Tamper-evident audit log (hash chain) and `GET /api/audit/verify`.
 - `AGENTS.md`, `docs/ARCHITECTURE.md`, generated `docs/ai/REPO_MAP.md`, `docs/ROADMAP.md`, `docs/PERFORMANCE.md`; `npm run build:core | bench | docs:map`.
@@ -10,6 +13,7 @@
 
 ### Security
 - Argument injection: docker container names can no longer start with `-` (and `--` is used), tool targets cannot start with `-`, rule patterns use `grep -e`.
+- `docker logs` container names and remote SQLite file paths can no longer be parsed as command options; oversized remote SQLite files are refused instead of being silently truncated. `GET /api/audit/verify` requires authentication.
 - WebSocket `maxPayload` limits, concurrent terminal limit, explicit HTTP timeouts, SSH output size cap, `Cache-Control: no-store` for the API.
 - FIM: an unreadable hash (`?`) is no longer reported as a modification.
 - Independent audit status is unchanged: `AUDIT:NONE`.

@@ -37,6 +37,26 @@ jobs:
           path: core/target/wasm32-unknown-unknown/release/lemonsees_wasm.wasm
           if-no-files-found: error
 
+  fuzz:
+    name: Fuzz parsers (cargo-fuzz, 60 s each)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Nightly toolchain (cargo-fuzz needs sanitizers)
+        run: rustup toolchain install nightly --profile minimal
+      - run: cargo install cargo-fuzz --locked
+      - name: Run targets
+        working-directory: core
+        run: |
+          for t in auth rules time fim; do
+            cargo +nightly fuzz run "$t" -- -max_total_time=60 -rss_limit_mb=2048 -max_len=200000
+          done
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: fuzz-crashes
+          path: core/fuzz/artifacts
+
   build:
     needs: core
     runs-on: ubuntu-latest
