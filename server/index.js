@@ -462,7 +462,7 @@ app.get("/api/containers/:hostId/logs", async (req, res) => {
   const name = String(req.query.name || "").replace(/[^a-zA-Z0-9_.-]/g, "");
   const tail = Math.max(10, Math.min(2000, parseInt(req.query.tail, 10) || 300));
   if (!conn) return res.status(404).json({ error: "Хост не знайдено" });
-  if (!name) return res.status(400).json({ error: "Не вказано контейнер" });
+  if (!name || !/^[a-zA-Z0-9]/.test(name)) return res.status(400).json({ error: "Не вказано контейнер" });
   try {
     const r = await conn.exec(`docker logs --tail ${tail} ${name} 2>&1`, { timeout: 30000 });
     res.json({ logs: r.stdout });

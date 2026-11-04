@@ -260,9 +260,10 @@ const sqliteCache = new Map(); // dbId -> { db, at }
 
 async function fetchSqliteBytes(conn, file) {
   const r = await conn.exec(
-    `base64 -w0 ${shq(file)} 2>/dev/null || base64 ${shq(file)} 2>/dev/null | tr -d '\\n'`,
+    `base64 -w0 -- ${shq(file)} 2>/dev/null || base64 -- ${shq(file)} 2>/dev/null | tr -d '\\n'`,
     { timeout: 60000 },
   );
+  if (r.truncated) throw new Error("Файл SQLite завеликий для віддаленого перегляду (ліміт ~36 МБ)");
   const b64 = r.stdout.trim();
   if (!b64) throw new Error("Не вдалося прочитати файл (перевір шлях і права доступу)");
   return Buffer.from(b64, "base64");

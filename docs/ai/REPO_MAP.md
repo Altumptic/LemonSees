@@ -16,6 +16,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `README.md` | LemonSees |
 | `SECURITY.md` | Security Policy |
 | `bench/core.bench.mjs` | Бенчмарк гарячих шляхів. Запуск: npm run bench  (потрібен зібраний .wasm: npm run build:core) |
+| `core/fuzz/Cargo.toml` |  |
 | `core/lemonsees-core/Cargo.toml` |  |
 | `core/lemonsees-core/src/auth.rs` | Аналіз журналів SSH-автентифікації (journald / auth.log / secure). |
 | `core/lemonsees-core/src/fim.rs` | Контроль цілісності файлів: порівняння знімка з базовою лінією. |

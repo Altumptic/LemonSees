@@ -57,6 +57,7 @@ jobs:
             release/*.exe
             release/*.zip
             release/*.AppImage
+            release/*.deb
             release/*.tar.gz
           if-no-files-found: error
 
@@ -118,6 +119,7 @@ jobs:
             artifacts/*.exe
             artifacts/*.zip
             artifacts/*.AppImage
+            artifacts/*.deb
             artifacts/*.tar.gz
       - name: Create GitHub release
         env:
