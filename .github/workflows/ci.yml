@@ -30,7 +30,7 @@ jobs:
       - run: cargo test --workspace --locked
       - run: cargo build --release --locked --target wasm32-unknown-unknown -p lemonsees-wasm
       - name: Dependency advisories (RustSec)
-        run: cargo install cargo-audit --locked --version 0.21.2 && cargo audit
+        run: cargo install cargo-audit --locked && cargo audit
       - uses: actions/upload-artifact@v7
         with:
           name: lemonsees-core-wasm
