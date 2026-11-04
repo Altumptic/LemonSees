@@ -281,6 +281,9 @@ function threats(): ThreatReport {
     total: attackers.reduce((s, a) => s + a.count, 0),
     uniqueIps: attackers.length,
     at: NOW(),
+    suspects: [{ ip: attackers[3].ip, user: "deploy", method: "password", accepted_ms: NOW() - 3 * 3600_000, failures_before: 37 }],
+    hourly: Array.from({ length: 48 }, (_, h) => Math.round(40 + 30 * Math.sin(h / 4) + ri(0, 25) + (h > 40 ? 60 : 0))),
+    engine: "rust-wasm",
   };
 }
 
