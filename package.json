@@ -1,6 +1,6 @@
 {
   "name": "lemonsees",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "LemonSees by Altumptic — agentless SOC platform over SSH: SIEM, EDR, FIM, NDR, MITRE ATT&CK, SOAR, GRC, Wazuh/Datadog integrations, optional agents, proxy/Tor routing with kill switch and encrypted secrets. Web app or portable desktop app for Windows and Linux.",
   "author": {
     "name": "Altumptic",
@@ -55,7 +55,7 @@
     "start": "node server/index.js",
     "start:web": "node server/index.js --no-open",
     "app": "electron .",
-    "dist:win": "npm run build && electron-builder --win portable zip --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis portable zip --publish never",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb tar.gz --publish never",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:dir": "npm run build && electron-builder --dir",
