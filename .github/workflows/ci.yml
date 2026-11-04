@@ -9,10 +9,45 @@ permissions:
   contents: read
 
 jobs:
+  core:
+    name: Rust core (fmt, clippy, test, wasm)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain (pinned in core/rust-toolchain.toml)
+        run: rustup show active-toolchain || rustup toolchain install
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            core/target
+          key: cargo-${{ hashFiles('core/Cargo.lock') }}
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+      - run: cargo build --release --locked --target wasm32-unknown-unknown -p lemonsees-wasm
+      - name: Dependency advisories (RustSec)
+        run: cargo install cargo-audit --locked --version 0.21.2 && cargo audit
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lemonsees-core-wasm
+          path: core/target/wasm32-unknown-unknown/release/lemonsees_wasm.wasm
+          if-no-files-found: error
+
   build:
+    needs: core
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v7
+        with:
+          name: lemonsees-core-wasm
+          path: server/core-dl
+      - name: Place wasm for tests (core tests run against the real binary)
+        run: mv server/core-dl/lemonsees_wasm.wasm server/core/lemonsees_core.wasm
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -23,6 +58,8 @@ jobs:
       - name: Dependency audit (critical CVEs block)
         run: npm audit --audit-level=critical
       - run: npm run typecheck
+      - name: AI repo map is up to date
+        run: npm run docs:check
       - name: Security tests (fail-closed, crypto, authZ, input parsing)
         run: npm test
       - run: npm run build

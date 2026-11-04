@@ -1,0 +1,3 @@
+# Пам'ять WASM-модуля обмежена 1 GiB: збій розподілу → trap (його ловить Node-обгортка), а не OOM двигуна.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--max-memory=1073741824"]

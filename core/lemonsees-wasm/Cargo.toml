@@ -1,0 +1,17 @@
+[package]
+name = "lemonsees-wasm"
+description = "WebAssembly FFI shell for lemonsees-core (the only crate in the workspace that contains unsafe code)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+lemonsees-core = { path = "../lemonsees-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

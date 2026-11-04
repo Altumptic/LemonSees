@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — Rust core, hardening, AI-first docs
+
+### Added
+- **Rust → WebAssembly core** (`core/`) for the hot paths: SSH auth-log analysis (IPv4/IPv6, ISO/BSD/CLF timestamps, "success after brute force" suspects, hourly histogram), custom rules in a linear-time regex engine (no ReDoS; `group_by` ip/user; trailing windows by the server clock) and FIM diff with critical paths. Optional: without the `.wasm` the engine falls back to the previous paths. `LEMONSEES_CORE=off` disables it; `GET /api/info` reports backend, version and wasm sha256.
+- Tamper-evident audit log (hash chain) and `GET /api/audit/verify`.
+- `AGENTS.md`, `docs/ARCHITECTURE.md`, generated `docs/ai/REPO_MAP.md`, `docs/ROADMAP.md`, `docs/PERFORMANCE.md`; `npm run build:core | bench | docs:map`.
+- CI: Rust job (fmt, clippy, tests, wasm, `cargo audit`), CodeQL.
+
+### Security
+- Argument injection: docker container names can no longer start with `-` (and `--` is used), tool targets cannot start with `-`, rule patterns use `grep -e`.
+- WebSocket `maxPayload` limits, concurrent terminal limit, explicit HTTP timeouts, SSH output size cap, `Cache-Control: no-store` for the API.
+- FIM: an unreadable hash (`?`) is no longer reported as a modification.
+- Independent audit status is unchanged: `AUDIT:NONE`.
+
+### Honest note
+Measured speed-up of auth parsing over a naive JS parser is modest (see `docs/PERFORMANCE.md`); the main gains are linear-time rules, caps and consistent semantics.
+
 ## v3.1.1 — Dependency refresh
 
 ### Security-relevant

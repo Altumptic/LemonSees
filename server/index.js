@@ -24,6 +24,7 @@ import {
   loadAttest,
   saveAttest,
   appendAudit,
+  verifyAudit,
   loadAudit,
   loadSoc,
   saveSoc,
@@ -51,6 +52,7 @@ import { engineFamily } from "./engines.js";
 import { collectSecurity } from "./security.js";
 import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
 import { collectThreats, countRecentFailed } from "./threats.js";
+import { core } from "./core/index.js";
 import { scanVulns } from "./vulns.js";
 import { geoLookup } from "./geoip.js";
 import { collectProcesses, collectPersistence } from "./edr.js";
@@ -256,14 +258,17 @@ app.use((req, res, next) => {
   securityHeaders(res);
   res.setHeader("Content-Security-Policy", csp(req));
   if (TLS) res.setHeader("Strict-Transport-Security", "max-age=31536000");
+  // Відповіді API містять дані інфраструктури — не кешуємо ні браузером, ні проксі
+  if (req.url.startsWith("/api/")) res.setHeader("Cache-Control", "no-store");
   next();
 });
 // DNS rebinding + cross-origin захист — до будь-якого API
 app.use(guard.middleware);
 app.use(express.json({ limit: "1mb" }));
 
+app.get("/api/audit/verify", (req, res) => res.json(verifyAudit()));
 app.get("/api/info", (req, res) =>
-  res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic" }),
+  res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic", core: core.info() }),
 );
 const TLS = await loadTls(CONFIG_DIR);
 mountAuth(app, { secure: !!TLS || process.env.LEMONSEES_SECURE_COOKIE === "1" });
@@ -436,11 +441,12 @@ app.post("/api/containers/:hostId/:action", async (req, res) => {
   const conn = conns.get(req.params.hostId);
   const verb = ACTIONS[req.params.action];
   const name = String(req.body?.name || "").replace(/[^a-zA-Z0-9_.-]/g, "");
+  // Імʼя контейнера не може починатися з «-» (інакше стане опцією docker)
   if (!conn) return res.status(404).json({ error: "Хост не знайдено" });
   if (!verb) return res.status(400).json({ error: "Невідома дія" });
-  if (!name) return res.status(400).json({ error: "Не вказано контейнер" });
+  if (!name || !/^[a-zA-Z0-9]/.test(name)) return res.status(400).json({ error: "Не вказано контейнер" });
   try {
-    const r = await conn.exec(`docker ${verb} ${name}`, { timeout: 30000 });
+    const r = await conn.exec(`docker ${verb} -- ${name}`, { timeout: 30000 });
     if (r.code !== 0) return res.status(500).json({ error: r.stderr.trim() || "Помилка docker" });
     audit(`container.${req.params.action}`, name, { host: hostName(req.params.hostId) });
     pollers.get(req.params.hostId)?.tick();
@@ -922,8 +928,13 @@ if (fs.existsSync(DIST)) {
 /* ---------------- WebSocket ---------------- */
 
 const server = TLS ? https.createServer({ ...TLS, minVersion: "TLSv1.2" }, app) : http.createServer(app);
-const wssState = new WebSocketServer({ noServer: true });
-const wssTerm = new WebSocketServer({ noServer: true });
+const wssState = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
+const wssTerm = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
+const MAX_TERMINALS = 8;
+// Явні HTTP-таймаути проти slowloris
+server.headersTimeout = 20000;
+server.requestTimeout = 60000;
+server.keepAliveTimeout = 5000;
 
 server.on("upgrade", (req, socket, head) => {
   // WebSocket не підпадає під CORS: без перевірки Origin будь-який сайт міг би відкрити термінал
@@ -956,6 +967,10 @@ wssState.on("connection", (ws) => {
 
 // Термінал: \x01 + data — ввід; \x02 + JSON — керування (resize)
 wssTerm.on("connection", async (ws, req) => {
+  if (wssTerm.clients.size > MAX_TERMINALS) {
+    ws.close(1013, "too many terminals");
+    return;
+  }
   const url = new URL(req.url, `http://${req.headers.host}`);
   const hostId = url.searchParams.get("host");
   const conn = conns.get(hostId);

@@ -40,7 +40,7 @@ function shq(s) {
 export async function runTool(conn, tool, target, port) {
   if (!TOOLS[tool] && tool !== "port") throw new Error("Невідомий інструмент");
   const t = String(target || "").trim();
-  if (!TARGET_RE.test(t)) throw new Error("Некоректна ціль (дозволено літери, цифри, .-_:)");
+  if (!TARGET_RE.test(t) || t.startsWith("-")) throw new Error("Некоректна ціль (дозволено літери, цифри, .-_:)");
 
   let cmd;
   if (tool === "port") {

@@ -1,6 +1,7 @@
 // Threat intelligence: аналіз auth.log / journald на предмет SSH-атак.
 // Один прохід awk агрегує топ IP атакуючих, цільові логіни та успішні входи.
 import { geoLookup } from "./geoip.js";
+import { core } from "./core/index.js";
 
 const SCAN = String.raw`LANG=C
 ( timeout 15 journalctl _COMM=sshd --since "48 hours ago" --no-pager 2>/dev/null; cat /var/log/auth.log /var/log/secure 2>/dev/null ) | awk '
@@ -42,14 +43,45 @@ function pairs(lines = [], limit = 100) {
     .slice(0, limit);
 }
 
-export async function collectThreats(conn, { geo = true } = {}) {
-  const { stdout } = await conn.exec(SCAN, { timeout: 40000 });
-  const s = sections(stdout);
+// Сирі рядки sshd за 48 год (відфільтровані на хості, ≤ 400k рядків) + годинник і пояс СЕРВЕРА — аналіз виконує Rust-ядро.
+const RAW = String.raw`LANG=C
+echo "@@NOW@@ $(date +%s) $(date +%z)"
+( timeout 20 journalctl _COMM=sshd --since "48 hours ago" --no-pager -o short-iso 2>/dev/null; cat /var/log/auth.log /var/log/secure 2>/dev/null ) | grep -aE 'sshd.*(Failed |Invalid user |Accepted |authentication failure)' | tail -n 400000`;
 
-  const attackers = pairs(s.FAILED, 50).map((p) => ({ ip: p.value, count: p.count, geo: null }));
-  const users = pairs(s.USERS, 15).map((p) => ({ user: p.value, count: p.count }));
-  const accepted = pairs(s.ACCEPTED, 10).map((p) => ({ ip: p.value, count: p.count }));
-  const total = parseInt((s.TOTAL || ["0"])[0], 10) || 0;
+/** "+0200" → хвилини. */
+function tzMinutes(z) {
+  const m = /^([+-])(\d\d)(\d\d)$/.exec(z || "");
+  return m ? (m[1] === "-" ? -1 : 1) * (+m[2] * 60 + +m[3]) : 0;
+}
+
+async function collectViaCore(conn) {
+  const { stdout, truncated } = await conn.exec(RAW, { timeout: 60000, maxBytes: 64 * 1024 * 1024 });
+  const nl = stdout.indexOf("\n");
+  const head = /^@@NOW@@ (\d+) ([+-]\d{4})/.exec(stdout.slice(0, nl < 0 ? 0 : nl));
+  const nowMs = head ? +head[1] * 1000 : Date.now();
+  const rep = core.auth(nl < 0 ? "" : stdout.slice(nl + 1), { now_ms: nowMs, tz_offset_min: tzMinutes(head?.[2]), window_hours: 48 });
+  return rep ? { rep, truncated: !!truncated } : null;
+}
+
+export async function collectThreats(conn, { geo = true } = {}) {
+  let attackers, users, accepted, total, extra = {};
+  const viaCore = core.available() ? await collectViaCore(conn).catch(() => null) : null;
+  if (viaCore) {
+    const { rep } = viaCore;
+    attackers = rep.attackers.map((a) => ({ ip: a.ip, count: a.count, geo: null, firstMs: a.first_ms, lastMs: a.last_ms, users: a.users, private: a.private }));
+    users = rep.users.map((u) => ({ user: u.user, count: u.count }));
+    accepted = rep.accepted.map((a) => ({ ip: a.ip, count: a.count, user: a.user, method: a.method, private: a.private }));
+    total = rep.total;
+    extra = { suspects: rep.suspects, hourly: rep.hourly, engine: "rust-wasm", truncated: rep.truncated || viaCore.truncated };
+  } else {
+    const { stdout } = await conn.exec(SCAN, { timeout: 40000 });
+    const s = sections(stdout);
+    attackers = pairs(s.FAILED, 50).map((p) => ({ ip: p.value, count: p.count, geo: null }));
+    users = pairs(s.USERS, 15).map((p) => ({ user: p.value, count: p.count }));
+    accepted = pairs(s.ACCEPTED, 10).map((p) => ({ ip: p.value, count: p.count }));
+    total = parseInt((s.TOTAL || ["0"])[0], 10) || 0;
+    extra = { suspects: [], hourly: [], engine: "awk" };
+  }
 
   if (geo && attackers.length) {
     try {
@@ -71,7 +103,7 @@ export async function collectThreats(conn, { geo = true } = {}) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  return { attackers, users, accepted, countries, total, uniqueIps: attackers.length, at: Date.now() };
+  return { attackers, users, accepted, countries, total, uniqueIps: attackers.length, at: Date.now(), ...extra };
 }
 
 // Легка перевірка кількості невдалих логінів за 24 год (для монітора автоінцидентів).

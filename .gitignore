@@ -9,3 +9,6 @@ Thumbs.db
 *.local
 SHOK-v*.zip
 promo-out/
+core/target/
+server/core/*.wasm
+server/core/*.wasm.sha256
