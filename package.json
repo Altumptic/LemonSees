@@ -133,7 +133,7 @@
     "@xterm/xterm": "^6.0.0",
     "express": "^4.21.2",
     "ioredis": "^6.0.0",
-    "lucide-react": "^1.61.0",
+    "lucide-react": "^1.66.0",
     "mongodb": "^7.7.0",
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
