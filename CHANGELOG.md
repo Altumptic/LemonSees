@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.2.1 — Windows installer fix
+
+- The Windows NSIS installer (`LemonSees-<v>-setup.exe`) was missing from v3.2.0 because the build script listed only portable/zip targets; it is now built and published. No other changes in the product; v3.2.0 artifacts remain valid.
+- Global per-IP API rate limit; GitHub secret scanning/push protection and Dependabot alerts enabled for the repository.
+
 ## v3.2.0 — Rust core, hardening, AI-first docs
 
 ### Added
