@@ -4,6 +4,7 @@
 
 ### Added
 - **Installers:** Windows NSIS installer (`-setup.exe`) next to the portable `.exe` and zip; Linux `.deb` next to AppImage and tar.gz. Release artifacts are checksummed, signed with Sigstore (keyless, Altumptic GitHub identity) and carry build-provenance attestations. They are **not** Authenticode/GPG-signed (no code-signing certificate yet), so Windows SmartScreen may warn — verify with `docs/security/VERIFY.md`.
+- **macOS:** `.dmg` and `.zip` for Apple Silicon and Intel (unsigned and not notarized — open via right-click → Open, or verify checksums/Sigstore first).
 - UI: suspicious logins and 48 h activity chart on Threats; `group_by` in rules.
 - Fuzz targets (`core/fuzz`, cargo-fuzz) run in CI.
 - **Rust → WebAssembly core** (`core/`) for the hot paths: SSH auth-log analysis (IPv4/IPv6, ISO/BSD/CLF timestamps, "success after brute force" suspects, hourly histogram), custom rules in a linear-time regex engine (no ReDoS; `group_by` ip/user; trailing windows by the server clock) and FIM diff with critical paths. Optional: without the `.wasm` the engine falls back to the previous paths. `LEMONSEES_CORE=off` disables it; `GET /api/info` reports backend, version and wasm sha256.

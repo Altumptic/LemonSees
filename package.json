@@ -56,7 +56,8 @@
     "start:web": "node server/index.js --no-open",
     "app": "electron .",
     "dist:win": "npm run build && electron-builder --win portable zip --publish never",
-    "dist:linux": "npm run build && electron-builder --linux AppImage tar.gz --publish never",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb tar.gz --publish never",
+    "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:dir": "npm run build && electron-builder --dir",
     "assets": "electron scripts/render.cjs icons",
     "shots": "electron scripts/render.cjs shots",
@@ -106,6 +107,18 @@
     },
     "deb": {
       "artifactName": "${productName}-${version}-${arch}.deb"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "buildResources/icon.png",
+      "category": "public.app-category.developer-tools",
+      "identity": null
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.dmg"
     },
     "linux": {
       "target": [
