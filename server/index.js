@@ -264,6 +264,18 @@ app.use((req, res, next) => {
 });
 // DNS rebinding + cross-origin захист — до будь-якого API
 app.use(guard.middleware);
+// Загальний ліміт запитів на IP (фіксоване вікно 60 с): захист від флуду й перебору; UI з опитуванням вкладається з великим запасом
+const rate = new Map();
+setInterval(() => rate.clear(), 60000).unref();
+app.use("/api", (req, res, next) => {
+  const ip = req.socket.remoteAddress || "?";
+  const limit = req.path === "/agent/ingest" ? 240 : 3000;
+  const key = ip + (req.path === "/agent/ingest" ? "|ingest" : "");
+  const n = (rate.get(key) || 0) + 1;
+  rate.set(key, n);
+  if (n > limit) return res.status(429).set("Retry-After", "60").json({ error: "Too many requests" });
+  next();
+});
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/info", (req, res) =>
