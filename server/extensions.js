@@ -47,6 +47,7 @@ function sanitizeRule(r, existing) {
     pattern: String(r.pattern || "").slice(0, 500),
     threshold: Math.max(1, Math.min(1e6, parseInt(r.threshold, 10) || 1)),
     windowMin: Math.max(1, Math.min(1440, parseInt(r.windowMin, 10) || 15)),
+    groupBy: ["none", "ip", "user"].includes(r.groupBy) ? r.groupBy : "none",
     severity: sev.includes(r.severity) ? r.severity : "medium",
     technique: String(r.technique || "").trim().slice(0, 16),
     category: String(r.category || "").trim().slice(0, 60),
@@ -90,8 +91,9 @@ async function ruleCount(conn, rule) {
     const nl = stdout.indexOf("\n");
     const m = /^@@NOW@@ (\d+) ([+-])(\d\d)(\d\d)/.exec(stdout.slice(0, nl < 0 ? 0 : nl));
     const tz = m ? (m[2] === "-" ? -1 : 1) * (+m[3] * 60 + +m[4]) : 0;
-    const r = core.rules(nl < 0 ? "" : stdout.slice(nl + 1), [{ id: "r", pattern: rule.pattern, threshold: rule.threshold, window_min: rule.windowMin }], { now_ms: m ? +m[1] * 1000 : Date.now(), tz_offset_min: tz });
-    if (r?.results?.[0]) return r.results[0].in_window;
+    const r = core.rules(nl < 0 ? "" : stdout.slice(nl + 1), [{ id: "r", pattern: rule.pattern, threshold: rule.threshold, window_min: rule.windowMin, group_by: rule.groupBy || "none" }], { now_ms: m ? +m[1] * 1000 : Date.now(), tz_offset_min: tz });
+    // З group_by рахуємо найактивнішу групу (одна IP/один користувач), а не суму по всіх
+    if (r?.results?.[0]) return rule.groupBy && rule.groupBy !== "none" ? r.results[0].top_group : r.results[0].in_window;
   }
   const { stdout } = await conn.exec(ruleCommand(rule), { timeout: 30000 });
   return parseInt(stdout.trim(), 10) || 0;

@@ -266,12 +266,12 @@ app.use((req, res, next) => {
 app.use(guard.middleware);
 app.use(express.json({ limit: "1mb" }));
 
-app.get("/api/audit/verify", (req, res) => res.json(verifyAudit()));
 app.get("/api/info", (req, res) =>
   res.json({ version: VERSION, auth: authEnabled(), authed: isAuthed(req), platform: process.platform, web: !process.versions.electron, vendor: "Altumptic", core: core.info() }),
 );
 const TLS = await loadTls(CONFIG_DIR);
 mountAuth(app, { secure: !!TLS || process.env.LEMONSEES_SECURE_COOKIE === "1" });
+app.get("/api/audit/verify", (req, res) => res.json(verifyAudit()));
 ext = mountExtensions(app, {
   hosts: () => hosts,
   conns,

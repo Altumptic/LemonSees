@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Crosshair, RefreshCw, Globe, UserX, ShieldCheck, Radio, MapPin } from "lucide-react";
+import { Crosshair, RefreshCw, Globe, UserX, ShieldCheck, Radio, MapPin, AlertTriangle } from "lucide-react";
 import { api, useAppState , useHostSelection } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
@@ -17,6 +17,7 @@ import {
   StatusDot,
 } from "@/components/ui";
 import { Treemap } from "@/components/charts2";
+import { MiniTrend } from "@/components/charts";
 
 const REFRESH_MS = 20000;
 
@@ -196,6 +197,29 @@ export default function ThreatsPage() {
               )}
             </Panel>
 
+            {/* Підозрілі входи: успіх після серії невдалих */}
+            {data.suspects && data.suspects.length > 0 && (
+              <Panel className="xl:col-span-2">
+                <SectionHeader icon={AlertTriangle} title={t("Підозрілі входи")} sub={t("Успішний вхід після серії невдалих спроб з тієї ж адреси — перевір негайно")} />
+                <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
+                  {data.suspects.map((s) => (
+                    <div key={`${s.ip}|${s.user}`} className="mono flex flex-wrap items-center justify-between gap-3 border-b border-[var(--hairline)] px-4 py-2 text-[13.5px] last:border-0">
+                      <span className="truncate">{s.user}@{s.ip} · {s.method}</span>
+                      <span className="text-muted-foreground">{s.failures_before} {t("невдалих до входу")}{s.accepted_ms ? ` · ${fmtWhen(s.accepted_ms)}` : ""}</span>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+            )}
+
+            {/* Динаміка за 48 год */}
+            {data.hourly && data.hourly.length > 1 && (
+              <Panel className="xl:col-span-2">
+                <SectionHeader icon={Radio} title={t("Активність за 48 год")} sub={t("Спроб на годину")} right={<span className="text-[12px] text-muted-foreground font-medium">max {Math.max(...data.hourly)}</span>} />
+                <MiniTrend data={data.hourly} color="var(--warning)" height={64} />
+              </Panel>
+            )}
+
             {/* Цільові логіни */}
             <Panel>
               <SectionHeader icon={UserX} title={t("Цільові логіни")} sub={t("Які імена підбирають")} />
@@ -219,7 +243,7 @@ export default function ThreatsPage() {
                 <div className="overflow-hidden rounded-lg border border-[var(--hairline)]">
                   {data.accepted.map((a) => (
                     <div key={a.ip} className="mono flex items-center justify-between gap-3 border-b border-[var(--hairline)] px-4 py-2 text-[13.5px] last:border-0">
-                      <span className="truncate">{a.ip}</span>
+                      <span className="truncate">{a.user ? `${a.user}@` : ""}{a.ip}{a.method ? ` · ${a.method}` : ""}</span>
                       <span className="text-muted-foreground">{a.count} {t("входів")}</span>
                     </div>
                   ))}

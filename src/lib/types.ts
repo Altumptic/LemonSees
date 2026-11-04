@@ -193,15 +193,22 @@ export type IncidentInput = {
 export type AuditEvent = { at: number; actor: string; action: string; target: string; meta: Record<string, unknown> };
 
 export type Geo = { country: string; countryCode: string; city: string; isp: string; lat?: number; lon?: number };
-export type Attacker = { ip: string; count: number; geo: Geo | null };
+export type Attacker = { ip: string; count: number; geo: Geo | null; firstMs?: number | null; lastMs?: number | null; users?: number; private?: boolean };
+export type Suspect = { ip: string; user: string; method: string; accepted_ms: number | null; failures_before: number };
 export type ThreatReport = {
   attackers: Attacker[];
   users: { user: string; count: number }[];
-  accepted: { ip: string; count: number }[];
+  accepted: { ip: string; count: number; user?: string; method?: string; private?: boolean }[];
   countries: { cc: string; country: string; count: number }[];
   total: number;
   uniqueIps: number;
   at: number;
+  /** Успішний вхід після серії невдалих з тієї ж адреси (лише коли працює Rust-ядро). */
+  suspects?: Suspect[];
+  /** Спроб на годину за 48 год, від найстарішої до найновішої. */
+  hourly?: number[];
+  engine?: "rust-wasm" | "awk";
+  truncated?: boolean;
 };
 export type SocConfig = {
   autoIncidents: boolean;
@@ -415,6 +422,8 @@ export type DetectionRule = {
   pattern: string;
   threshold: number;
   windowMin: number;
+  /** Рахувати збіги окремо по IP або користувачу (потребує Rust-ядра). */
+  groupBy?: "none" | "ip" | "user";
   severity: Incident["severity"];
   technique: string;
   category: string;

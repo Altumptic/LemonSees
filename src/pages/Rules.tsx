@@ -8,7 +8,7 @@ import { EmptyState, GhostButton, IconBtn, Kpi, Modal, PageHeader, Panel, Pill, 
 
 const SEVS = ["critical", "high", "medium", "low", "info"] as const;
 const SEV_TXT: Record<string, string> = { critical: "критичний", high: "високий", medium: "середній", low: "низький", info: "інфо" };
-const BLANK: Partial<DetectionRule> = { name: "", enabled: true, source: "journal", path: "", pattern: "", threshold: 1, windowMin: 15, severity: "medium", technique: "", category: "", hosts: [] };
+const BLANK: Partial<DetectionRule> = { name: "", enabled: true, source: "journal", path: "", pattern: "", threshold: 1, windowMin: 15, groupBy: "none", severity: "medium", technique: "", category: "", hosts: [] };
 
 export default function RulesPage() {
   const { hosts, demo } = useAppState();
@@ -166,6 +166,13 @@ function RuleForm({ initial, hosts, onClose, onSave }: { initial: Partial<Detect
         </L>
         <L label={t("Вікно, хв")}>
           <input type="number" min={1} value={f.windowMin} onChange={(e) => set({ windowMin: parseInt(e.target.value, 10) || 15 })} className={inputCls} />
+        </L>
+        <L label={t("Групувати збіги")}>
+          <select value={f.groupBy ?? "none"} onChange={(e) => set({ groupBy: e.target.value as "none" | "ip" | "user" })} className={inputCls}>
+            <option value="none">{t("Без групування")}</option>
+            <option value="ip">{t("За IP-адресою")}</option>
+            <option value="user">{t("За користувачем")}</option>
+          </select>
         </L>
         <L label={t("Техніка MITRE (напр. T1110)")}>
           <input value={f.technique ?? ""} onChange={(e) => set({ technique: e.target.value })} className={`${inputCls} mono`} />
