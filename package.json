@@ -46,6 +46,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:core": "node scripts/build-core.mjs",
+    "bench": "node bench/core.bench.mjs",
+    "docs:map": "node scripts/gen-repo-map.mjs",
+    "docs:check": "node scripts/gen-repo-map.mjs --check",
     "typecheck": "tsc --noEmit -p .",
     "server": "node server/index.js",
     "start": "node server/index.js",

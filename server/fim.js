@@ -1,3 +1,5 @@
+import { core } from "./core/index.js";
+
 // FIM — контроль цілісності критичних файлів по SSH (як syscheck у Wazuh, але без агента).
 // Знімаємо sha256 + атрибути, порівнюємо з базовою лінією, що зберігається локально.
 
@@ -24,6 +26,10 @@ export const FIM_PATHS = [
 ];
 const FIM_DIRS = ["/etc/cron.d", "/etc/sudoers.d", "/etc/systemd/system"];
 
+/** Критичні шляхи: зміна тут піднімає серйозність інциденту. `*` не перетинає `/`, `/**` — піддерево. */
+export const FIM_CRITICAL = ["/etc/passwd", "/etc/shadow", "/etc/gshadow", "/etc/sudoers", "/etc/sudoers.d/*", "/etc/ssh/sshd_config", "/etc/ld.so.preload", "/root/.ssh/**", "/etc/pam.d/*"];
+
+const known = (h) => !!h && h !== "?";
 const q = (s) => `'${String(s).replace(/'/g, "'\\''")}'`;
 
 function script() {
@@ -55,8 +61,16 @@ export async function scanFim(conn) {
   return files;
 }
 
-/** Порівняння з базовою лінією. */
+/** Порівняння з базовою лінією: Rust-ядро, а без нього — JS-резерв із тією ж семантикою. */
 export function diffFim(current, baseline) {
+  const r = core.available() ? core.fim({ baseline: baseline ? { at: baseline.at || 0, files: baseline.files || [] } : null, current, critical: FIM_CRITICAL, now_ms: Date.now() }) : null;
+  if (r) {
+    return { baselineAt: r.baseline_at ?? null, at: r.at, files: r.files, changed: r.changed, criticalChanged: r.critical_changed, truncated: r.truncated, engine: "rust-wasm" };
+  }
+  return diffFimJs(current, baseline);
+}
+
+function diffFimJs(current, baseline) {
   const base = new Map((baseline?.files || []).map((f) => [f.path, f]));
   const out = current.map((f) => {
     const b = base.get(f.path);
@@ -64,7 +78,7 @@ export function diffFim(current, baseline) {
     if (!baseline) status = f.missing ? "missing" : "new";
     else if (f.missing) status = b && !b.missing ? "missing" : "ok";
     else if (!b || b.missing) status = "added";
-    else if (b.sha256 !== f.sha256 || b.mode !== f.mode || b.owner !== f.owner) status = "modified";
+    else if ((known(b.sha256) && known(f.sha256) && b.sha256 !== f.sha256) || b.mode !== f.mode || b.owner !== f.owner) status = "modified";
     const { missing, ...rest } = f;
     return { ...rest, status: f.missing && status === "ok" ? "missing" : status };
   });
@@ -72,5 +86,5 @@ export function diffFim(current, baseline) {
     if (!current.some((f) => f.path === path) && !b.missing) out.push({ ...b, status: "missing" });
   }
   const changed = baseline ? out.filter((f) => f.status === "modified" || f.status === "added" || (f.status === "missing" && base.get(f.path) && !base.get(f.path).missing)).length : 0;
-  return { baselineAt: baseline?.at ?? null, at: Date.now(), files: out, changed };
+  return { baselineAt: baseline?.at ?? null, at: Date.now(), files: out, changed, engine: "js" };
 }

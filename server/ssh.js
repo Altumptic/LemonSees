@@ -161,7 +161,7 @@ export class HostConnection {
   }
 
   /** Виконати команду; повертає {code, stdout, stderr}. */
-  exec(command, { timeout = 25000 } = {}) {
+  exec(command, { timeout = 25000, maxBytes = 48 * 1024 * 1024 } = {}) {
     return this.connect().then(
       (client) =>
         new Promise((resolve, reject) => {
@@ -181,11 +181,21 @@ export class HostConnection {
             }
             let stdout = "";
             let stderr = "";
-            stream.on("data", (d) => (stdout += d.toString("utf8")));
+            let size = 0;
+            let truncated = false;
+            stream.on("data", (d) => {
+              // Жорсткий ліміт: віддалений хост не може вичерпати памʼять сервера нескінченним виводом
+              if (size >= maxBytes) { truncated = true; return; }
+              const room = maxBytes - size;
+              const chunk = d.length > room ? d.subarray(0, room) : d;
+              if (chunk.length < d.length) truncated = true;
+              size += chunk.length;
+              stdout += chunk.toString("utf8");
+            });
             stream.stderr.on("data", (d) => (stderr += d.toString("utf8")));
             stream.on("close", (code) => {
               clearTimeout(timer);
-              if (!done) { done = true; resolve({ code: code ?? 0, stdout, stderr }); }
+              if (!done) { done = true; resolve({ code: code ?? 0, stdout, stderr, truncated }); }
             });
             stream.on("error", (e) => {
               clearTimeout(timer);

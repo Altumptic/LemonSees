@@ -320,13 +320,60 @@ export function saveAttest(map) {
 
 /* ---------------- Аудит-журнал (JSONL) ---------------- */
 
+// Tamper-evident: кожен запис містить h = sha256(prev + тіло). Зміна, видалення чи вставка запису посередині ламає ланцюжок.
+// Це виявлення, а не запобігання: хто має запис у каталог конфігу, може переписати весь журнал — для сильнішої гарантії відправляйте аудит у зовнішній SIEM.
+let auditPrev = null;
+const chainHash = (prev, body) => crypto.createHash("sha256").update(prev + body).digest("hex");
+
+function lastAuditHash() {
+  try {
+    const lines = fs.readFileSync(AUDIT_FILE, "utf8").trim().split("\n").filter(Boolean);
+    return JSON.parse(lines[lines.length - 1] || "{}").h || "";
+  } catch {
+    return "";
+  }
+}
+
 export function appendAudit(entry) {
   try {
     fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
-    fs.appendFileSync(AUDIT_FILE, JSON.stringify({ at: Date.now(), ...entry }) + "\n", { encoding: "utf8", mode: 0o600 });
+    if (auditPrev === null) auditPrev = lastAuditHash();
+    const body = JSON.stringify({ at: Date.now(), ...entry });
+    const h = chainHash(auditPrev, body);
+    fs.appendFileSync(AUDIT_FILE, JSON.stringify({ ...JSON.parse(body), h }) + "\n", { encoding: "utf8", mode: 0o600 });
+    auditPrev = h;
   } catch {
     /* ignore */
   }
+}
+
+/** Перевірка ланцюжка. Старі записи без h допускаються лише до першого записаного з h; обрізання (prune) зсуває початок — перший h береться як якір. */
+export function verifyAudit() {
+  let lines;
+  try {
+    lines = fs.readFileSync(AUDIT_FILE, "utf8").split("\n").filter(Boolean);
+  } catch {
+    return { ok: true, entries: 0, chained: 0, brokenAt: null };
+  }
+  let prev = null;
+  let chained = 0;
+  for (let i = 0; i < lines.length; i++) {
+    let o;
+    try {
+      o = JSON.parse(lines[i]);
+    } catch {
+      return { ok: false, entries: lines.length, chained, brokenAt: i + 1 };
+    }
+    if (!o.h) {
+      if (prev !== null) return { ok: false, entries: lines.length, chained, brokenAt: i + 1 };
+      continue;
+    }
+    const { h, ...rest } = o;
+    if (prev !== null && chainHash(prev, JSON.stringify(rest)) !== h) return { ok: false, entries: lines.length, chained, brokenAt: i + 1 };
+    prev = h;
+    chained++;
+  }
+  return { ok: true, entries: lines.length, chained, brokenAt: null };
 }
 
 /** Обрізає журнал аудиту до retentionDays. */

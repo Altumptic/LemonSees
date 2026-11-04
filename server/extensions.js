@@ -1,5 +1,6 @@
 // Розширення двигуна LemonSees 3.1: мережа/приватність, інтеграції (у т.ч. Wazuh), агенти, власні правила.
 import crypto from "node:crypto";
+import { core } from "./core/index.js";
 import {
   loadNetwork,
   saveNetwork,
@@ -59,14 +60,41 @@ function sanitizeRule(r, existing) {
   } catch {
     throw new Error("Некоректний регулярний вираз");
   }
+  // Ядро (Rust regex) не підтримує зворотні посилання та lookaround — відсікаємо одразу, а не під час перевірки
+  if (core.available()) {
+    const t = core.rules("", [{ id: "check", pattern: rule.pattern, threshold: 1, window_min: rule.windowMin }]);
+    if (t?.error) throw new Error("Шаблон не підтримується рушієм (лінійні регулярні вирази): " + String(t.error.message).split("\n").pop());
+  }
   if (rule.source === "file" && !rule.path.startsWith("/")) throw new Error("Вкажи абсолютний шлях до файлу журналу");
   return rule;
 }
 
 function ruleCommand(rule) {
   const pat = q(rule.pattern);
-  if (rule.source === "file") return `timeout 15 tail -n 20000 ${q(rule.path)} 2>/dev/null | grep -cE ${pat} || true`;
-  return `timeout 20 journalctl --since "-${rule.windowMin}min" --no-pager 2>/dev/null | grep -cE ${pat} || true`;
+  // `-e` — шаблон, що починається з «-», не стає опцією grep
+  if (rule.source === "file") return `timeout 15 tail -n 20000 ${q(rule.path)} 2>/dev/null | grep -cE -e ${pat} || true`;
+  return `timeout 20 journalctl --since "-${rule.windowMin}min" --no-pager 2>/dev/null | grep -cE -e ${pat} || true`;
+}
+
+/** Сирий журнал для правила + годинник сервера: регулярку виконує Rust-ядро (лінійний час), а не віддалений grep. */
+function ruleFetchCommand(rule) {
+  const head = `echo "@@NOW@@ $(date +%s) $(date +%z)"; `;
+  if (rule.source === "file") return head + `timeout 15 tail -n 100000 ${q(rule.path)} 2>/dev/null`;
+  return head + `timeout 20 journalctl --since "-${rule.windowMin}min" --no-pager -o short-iso 2>/dev/null | tail -n 200000`;
+}
+
+/** Кількість збігів правила за його вікно. Ядро — якщо доступне; інакше резервний віддалений grep. */
+async function ruleCount(conn, rule) {
+  if (core.available()) {
+    const { stdout } = await conn.exec(ruleFetchCommand(rule), { timeout: 30000, maxBytes: 32 * 1024 * 1024 });
+    const nl = stdout.indexOf("\n");
+    const m = /^@@NOW@@ (\d+) ([+-])(\d\d)(\d\d)/.exec(stdout.slice(0, nl < 0 ? 0 : nl));
+    const tz = m ? (m[2] === "-" ? -1 : 1) * (+m[3] * 60 + +m[4]) : 0;
+    const r = core.rules(nl < 0 ? "" : stdout.slice(nl + 1), [{ id: "r", pattern: rule.pattern, threshold: rule.threshold, window_min: rule.windowMin }], { now_ms: m ? +m[1] * 1000 : Date.now(), tz_offset_min: tz });
+    if (r?.results?.[0]) return r.results[0].in_window;
+  }
+  const { stdout } = await conn.exec(ruleCommand(rule), { timeout: 30000 });
+  return parseInt(stdout.trim(), 10) || 0;
 }
 
 /* ---------------- Підключення ---------------- */
@@ -301,8 +329,7 @@ export function mountExtensions(app, ctx) {
       const rule = sanitizeRule(req.body?.rule || {});
       const conn = ctx.conns.get(req.body?.hostId);
       if (!conn) throw new Error("Хост не підключено");
-      const { stdout } = await conn.exec(ruleCommand(rule), { timeout: 30000 });
-      const count = parseInt(stdout.trim(), 10) || 0;
+      const count = await ruleCount(conn, rule);
       res.json({ count, triggered: count >= rule.threshold });
     } catch (e) {
       res.status(400).json({ error: e.message });
@@ -316,8 +343,7 @@ export function mountExtensions(app, ctx) {
         const conn = ctx.conns.get(h.id);
         if (!conn || !conn.ready) continue;
         try {
-          const { stdout } = await conn.exec(ruleCommand(rule), { timeout: 30000 });
-          const count = parseInt(stdout.trim(), 10) || 0;
+          const count = await ruleCount(conn, rule);
           if (count < rule.threshold) continue;
           rule.lastHit = Date.now();
           ctx.addIncident({

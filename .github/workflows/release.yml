@@ -45,6 +45,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Build Rust core (WASM, locked)
+        run: npm run build:core
       - run: npm run ${{ matrix.script }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -70,6 +72,8 @@ jobs:
       - run: npm ci
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Build Rust core (WASM, locked)
+        run: npm run build:core
       - run: npm run build
       - name: Package web bundle
         run: |
