@@ -30,6 +30,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `docs/ARCHITECTURE.md` | Architecture |
 | `docs/PERFORMANCE.md` | Performance (measured, reproducible) |
 | `docs/ROADMAP.md` | Roadmap |
+| `docs/TESTING.md` | Help us test LemonSees (beta) |
 | `docs/security/RELEASE-NOTES-FOOTER.md` | ## Verify this release |
 | `docs/security/SECURITY-NOTES.md` | LemonSees — Security design notes |
 | `docs/security/THREAT-MODEL.md` | LemonSees — Threat model (short) |

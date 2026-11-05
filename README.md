@@ -6,10 +6,10 @@
 
 **A calm, agentless SOC console for Linux fleets — by [Altumptic](https://altumptic.com)**
 
-SIEM · EDR · file integrity · NDR · threat intel with MITRE ATT&CK · SOAR · GRC — over plain SSH.<br/>
+See attacks, file changes and suspicious logins on your Linux servers — over plain SSH, with nothing installed on them.<br/>
 Self-hosted web app, Windows installer/portable `.exe`, Linux AppImage/`.deb`, or macOS `.dmg`.
 
-`PSB-B` · `SIGNED (Sigstore)` · `ATTESTED` · `SBOM` · `NO-TELEMETRY` · `LOCAL-FIRST` · `FAIL-CLOSED` · `TOR-CAPABLE` · `AUDIT:NONE` · `DISCLOSURE:OK`
+`BETA` · `PSB-B` · `SIGNED (Sigstore)` · `ATTESTED` · `SBOM` · `NO-TELEMETRY` · `LOCAL-FIRST` · `FAIL-CLOSED` · `TOR-CAPABLE` · `AUDIT:NONE` · `DISCLOSURE:OK`
 
 [Download](https://github.com/Altumptic/LemonSees/releases/latest) · [Try the demo](#-try-it-in-30-seconds) · [Install](#-install) · [Verify a release](docs/security/VERIFY.md) · [Security notes](docs/security/SECURITY-NOTES.md)
 
@@ -23,12 +23,27 @@ Self-hosted web app, Windows installer/portable `.exe`, Linux AppImage/`.deb`, o
 
 ## What it is
 
-LemonSees connects to your Linux servers over SSH and turns what it reads — metrics, processes, sockets, logins, cron and
-services, file hashes, configuration — into a security console: live risk, incidents, MITRE ATT&CK mapping, compliance
-evidence and uptime. Nothing has to be installed on the servers. Everything runs on your machine or your own server; no
-data is sent to Altumptic.
+LemonSees is a self-hosted monitor for a small Linux fleet, roughly **3–30 servers**. It reads what it needs over SSH —
+failed and successful logins, hashes of critical files, running services, basic metrics — and shows it on one calm
+dashboard with incidents and alerts. Nothing is installed on the servers. Everything runs on your machine or your own
+server; no data is sent to Altumptic.
 
-## Highlights
+> **Status: beta.** The log analysis core is tested on synthetic logs and a fake SSH host, not yet on a real fleet — we
+> are looking for testers (see [Help us test](docs/TESTING.md)). There is **no independent security audit yet**
+> (`AUDIT:NONE`), and the Windows and macOS builds are not code-signed by a certificate authority.
+
+## Who it is for
+
+- Self-hosters and homelab owners with a handful of Linux servers.
+- Small teams and freelance sysadmins who want to see attacks and file changes without running a SIEM.
+- Anyone who finds Wazuh too heavy for a few servers and does not want agents on them.
+
+## Who it is not for
+
+- Large SOCs with thousands of endpoints, real-time file monitoring, or active response.
+- Compliance certification: LemonSees helps collect evidence; it does not certify anything.
+
+## Features (beta)
 
 - **SOC analytics** — alert volume by severity, MTTA / MTTR, response-SLA gauge, handling funnel, Sankey incident flow,
   day×hour heatmap, half-year activity calendar, most affected hosts, analyst workload.
@@ -72,17 +87,17 @@ data is sent to Altumptic.
 
 ## LemonSees and Wazuh — an honest comparison
 
-LemonSees is not a drop-in replacement for Wazuh. It optimises for **zero install on targets, privacy and a calm UI** for
-small and medium Linux fleets, and it can sit **next to** an existing Wazuh.
+LemonSees is not a drop-in replacement for Wazuh. It optimises for **nothing installed on targets, privacy and a calm
+UI** for small Linux fleets, and it can sit **next to** an existing Wazuh.
 
 | | LemonSees | Wazuh |
 |---|---|---|
 | On the monitored servers | nothing by default (SSH); optional sh agent | Wazuh agent on every endpoint |
 | Endpoints | Linux with a POSIX shell | Linux, Windows, macOS, more |
-| FIM | periodic SHA-256 sweep (default 5 min) | real-time (inotify / whodata) |
+| FIM | periodic SHA-256 sweep (default every 5 min) | real-time (inotify / whodata) |
 | Detection content | built-in checks + your regex rules | large decoder/rule set maintained by Wazuh |
 | Active response | no (detect & report) | yes |
-| Scale | tens to low hundreds of hosts | thousands of agents with indexer cluster |
+| Scale | designed for small fleets (3–30 servers); not load-tested at larger scale | thousands of agents with indexer cluster |
 | Analyst privacy | Tor / proxy / bastion, kill switch, DNS via proxy | not a focus |
 | Deployment | single process: web, portable `.exe`, AppImage, Docker | manager + indexer + dashboard |
 | Use together | imports Wazuh agents and alerts (level 12+ → incidents) | — |
