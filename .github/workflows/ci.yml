@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Toolchain (pinned in core/rust-toolchain.toml)
         run: rustup show active-toolchain || rustup toolchain install
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
