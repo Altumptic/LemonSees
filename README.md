@@ -213,6 +213,19 @@ npm run promo       # record the promo video from the live demo (needs npm start
 
 Design system: [DESIGN.md](DESIGN.md) · Changes: [CHANGELOG.md](CHANGELOG.md) · Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md)
 
+## 📚 Documentation and community
+
+| I want to… | Read |
+|---|---|
+| Understand the project and its status | [docs/README.md](docs/README.md) (the documentation index) |
+| Test it on my servers | [docs/TESTING.md](docs/TESTING.md) and [docs/VALIDATION.md](docs/VALIDATION.md) |
+| See where it is going | [docs/ROADMAP.md](docs/ROADMAP.md) · next feature: [SSH hygiene](docs/features/ssh-hygiene.md) |
+| Contribute code or docs | [CONTRIBUTING.md](CONTRIBUTING.md) · [development guide](docs/DEVELOPMENT.md) |
+| Ask a question or share a setup | [GitHub Discussions](https://github.com/Altumptic/LemonSees/discussions) |
+| Report a security issue | [SECURITY.md](SECURITY.md) (private reporting only) |
+
+Community standards: [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 [MIT](LICENSE) © 2026 [Altumptic](https://altumptic.com) and LemonSees contributors.

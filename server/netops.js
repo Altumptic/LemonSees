@@ -38,7 +38,8 @@ function shq(s) {
 }
 
 export async function runTool(conn, tool, target, port) {
-  if (!TOOLS[tool] && tool !== "port") throw new Error("Невідомий інструмент");
+  // Object.hasOwn: без цього ключі на кшталт "constructor" проходили б перевірку як "інструменти"
+  if (!Object.hasOwn(TOOLS, tool) && tool !== "port") throw new Error("Невідомий інструмент");
   const t = String(target || "").trim();
   if (!TARGET_RE.test(t) || t.startsWith("-")) throw new Error("Некоректна ціль (дозволено літери, цифри, .-_:)");
 

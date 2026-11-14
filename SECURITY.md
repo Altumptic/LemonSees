@@ -5,25 +5,20 @@ We take the security of a security product seriously — thank you for helping k
 
 ## Reporting a vulnerability
 
-Please **do not open public GitHub issues** for security problems. Report privately:
+Please **do not open public GitHub issues** for security problems. Report privately through
+**[GitHub private vulnerability reporting](https://github.com/Altumptic/LemonSees/security/advisories/new)**.
+The report stays visible only to maintainers until a fix and advisory are published.
 
-| Channel | Address |
-|---|---|
-| Email | thefear078@gmail.com |
-| Telegram | [@thefear078](https://t.me/thefear078) |
-| Policy | <https://altumptic.com/security> |
-| security.txt | <https://altumptic.com/.well-known/security.txt> |
-
-Encrypt sensitive reports with the Altumptic PGP key:
+If you need to send encrypted material, mention it in the advisory and we will agree a channel. Our public key:
 
 | | |
 |---|---|
-| Key | [`/.well-known/pgp-key.txt`](https://altumptic.com/.well-known/pgp-key.txt) (also bundled at [`public/.well-known/pgp-key.txt`](public/.well-known/pgp-key.txt)) |
+| Key | [`public/.well-known/pgp-key.txt`](public/.well-known/pgp-key.txt) |
 | Fingerprint | `117B A978 F332 80B5 12EE 84B5 D278 3C4F DE43 0CA6` |
-| Type | Ed25519 / Cv25519 · expires 13 Oct 2028 |
 
-Please include affected version, steps to reproduce and impact. We aim to acknowledge within 72 hours
-and to agree a disclosure timeline with you. Preferred languages: English, Ukrainian.
+Please include the affected version, steps to reproduce and the impact. We aim to acknowledge a report within
+**72 hours** and to agree a disclosure timeline with you (default: 90 days, shorter if the issue is being exploited).
+Preferred languages: English, Ukrainian.
 
 Every LemonSees instance also serves this contact information at `/.well-known/security.txt`.
 

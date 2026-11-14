@@ -11,6 +11,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `AGENTS.md` | AGENTS.md — LemonSees (read this first, then stop exploring) |
 | `CHANGELOG.md` | Changelog |
 | `CLAUDE.md` |  |
+| `CONTRIBUTING.md` | Contributing to LemonSees |
 | `CONTRIBUTORS.md` | Contributors |
 | `DESIGN.md` | LemonSees by Altumptic — Design Spec |
 | `README.md` | LemonSees |
@@ -28,9 +29,14 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `core/lemonsees-wasm/Cargo.toml` |  |
 | `core/lemonsees-wasm/src/lib.rs` | WebAssembly-обгортка над `lemonsees-core`. |
 | `docs/ARCHITECTURE.md` | Architecture |
+| `docs/DEVELOPMENT.md` | Development |
 | `docs/PERFORMANCE.md` | Performance (measured, reproducible) |
+| `docs/README.md` | LemonSees documentation |
+| `docs/RELEASE.md` | Release process |
 | `docs/ROADMAP.md` | Roadmap |
 | `docs/TESTING.md` | Help us test LemonSees (beta) |
+| `docs/VALIDATION.md` | Validation on real servers |
+| `docs/features/ssh-hygiene.md` | Design: SSH hygiene across the fleet |
 | `docs/security/RELEASE-NOTES-FOOTER.md` | ## Verify this release |
 | `docs/security/SECURITY-NOTES.md` | LemonSees — Security design notes |
 | `docs/security/THREAT-MODEL.md` | LemonSees — Threat model (short) |
@@ -124,5 +130,6 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `src/styles.css` | Self-hosted variable fonts — жодних мережевих запитів, миттєвий старт в Electron |
 | `test/auth.test.js` | Авторизація веб-режиму: без сесії — 401, неправильний токен — 401, обмеження спроб — 429. |
 | `test/core.test.js` | Тести Rust-ядра (WASM) та його інтеграції. Якщо .wasm не зібрано (npm run build:core) — тести ядра пропускаються, |
+| `test/hardening.test.js` | Регресійні тести на виправлення з аналізу CodeQL (chore/security-triage). |
 | `test/security.test.js` | Негативні тести безпеки (PSB §7): fail-closed, цілісність шифрування, Host/Origin, розбір недовіреного вводу. |
 | `test/tls.test.js` | HTTPS-режим: самопідписаний сертифікат має бути SHA-256 / RSA-2048, з SAN і чесним терміном дії (PSB §2.1). |

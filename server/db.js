@@ -72,6 +72,17 @@ function famOf(cfg) {
   return fam;
 }
 
+/** Фільтр/сортування Mongo лише декларативні: серверний JS ($where, $function, $accumulator) заборонено. */
+export function declarativeOnly(v) {
+  if (v && typeof v === "object") {
+    for (const k of Object.keys(v)) {
+      if (["$where", "$function", "$accumulator"].includes(k)) throw new Error("Оператор " + k + " заборонено");
+      declarativeOnly(v[k]);
+    }
+  }
+  return v;
+}
+
 export async function runQuery(cfg, conn, sql) {
   const fam = famOf(cfg);
   if (fam === "sqlite") return sqliteRun(conn, cfg, sql);
@@ -214,7 +225,7 @@ async function mongoQuery(port, cfg, sql) {
     if (!req.collection) throw new Error("Вкажи collection");
     const docs = await db
       .collection(req.collection)
-      .find(req.filter || {}, { limit: Math.min(500, req.limit || 50), sort: req.sort || {} })
+      .find(declarativeOnly(req.filter) || {}, { limit: Math.min(500, req.limit || 50), sort: declarativeOnly(req.sort) || {} })
       .toArray();
     return docsToResult(docs);
   });
@@ -335,7 +346,7 @@ async function httpQuery(port, cfg, raw) {
   const first = (lines[0] || "").trim();
   let method = "GET";
   let pathq = first || "/";
-  const m = first.match(/^(GET|POST|PUT|DELETE|HEAD|PATCH)\s+(.+)$/i);
+  const m = first.match(/^(GET|POST|PUT|DELETE|HEAD|PATCH) +(\S.*)$/i);
   if (m) {
     method = m[1].toUpperCase();
     pathq = m[2].trim();
