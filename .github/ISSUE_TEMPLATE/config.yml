@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/Altumptic/LemonSees/discussions
+    about: Ask how to use LemonSees, share setups, or discuss ideas before opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/Altumptic/LemonSees/security/advisories/new
+    about: Report vulnerabilities privately. Do not use public issues for security problems.
+  - name: Test on your servers
+    url: https://github.com/Altumptic/LemonSees/blob/main/docs/TESTING.md
+    about: Help us test LemonSees on real Linux servers and send redacted results.

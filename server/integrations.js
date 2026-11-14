@@ -101,7 +101,7 @@ const SENDERS = {
   syslog(c, e) {
     const esc = (v) => String(v ?? "").replace(/\\/g, "\\\\").replace(/=/g, "\\=").replace(/[\r\n]+/g, " ");
     const sev = { info: 1, low: 3, medium: 5, high: 8, critical: 10 }[e.severity] ?? 5;
-    const msg = `<${sev >= 8 ? 10 : 13}>${new Date(e.at).toISOString()} ${os.hostname()} CEF:0|Altumptic|LemonSees|3|${esc(e.kind)}|${esc(e.title).replace(/\|/g, "\\|")}|${sev}|msg=${esc(e.text)} dhost=${esc(e.host)} rt=${e.at}`;
+    const msg = `<${sev >= 8 ? 10 : 13}>${new Date(e.at).toISOString()} ${os.hostname()} CEF:0|Altumptic|LemonSees|3|${esc(e.kind).replace(/\|/g, "\\|")}|${esc(e.title).replace(/\|/g, "\\|")}|${sev}|msg=${esc(e.text)} dhost=${esc(e.host)} rt=${e.at}`;
     const port = parseInt(c.port, 10) || 514;
     return new Promise((resolve, reject) => {
       if ((c.protocol || "udp") === "udp") {

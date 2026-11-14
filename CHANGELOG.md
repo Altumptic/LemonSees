@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased — project documentation and security triage
+
+### Changed
+- Security contact: reports now go through **GitHub private vulnerability reporting**. The personal mailbox and messenger
+  handle have been removed from `SECURITY.md` and `security.txt`.
+- Documentation rewritten around a narrow promise (small Linux fleets, agentless, local-first) with an explicit beta
+  status. New: documentation index (`docs/README.md`), development guide, release process, validation page (no results
+  yet), testing guide for real-server runs, and the design of the next feature (`docs/features/ssh-hygiene.md`).
+- Roadmap restructured into milestones with explicit statuses; "out of scope" is listed in full.
+
+### Added
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue forms (bug report, feature request), pull request template, and
+  issue chooser with links to Discussions and private security reporting.
+
+### Security
+- Tool names are checked against the allowlist with `Object.hasOwn`; prototype keys such as `constructor` are rejected.
+- CEF syslog export escapes `|` in the signature name.
+- The request-line parser of the HTTP database console is linear-time (no overlapping whitespace and wildcard matching).
+- Mongo console filters and sort specifications refuse server-side JavaScript operators (`$where`, `$function`,
+  `$accumulator`) at any depth.
+- Regression tests for each fix in `test/hardening.test.js`.
+
 ## v3.2.1 — Windows installer fix
 
 - The Windows NSIS installer (`LemonSees-<v>-setup.exe`) was missing from v3.2.0 because the build script listed only portable/zip targets; it is now built and published. No other changes in the product; v3.2.0 artifacts remain valid.

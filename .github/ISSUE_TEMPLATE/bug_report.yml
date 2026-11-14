@@ -1,0 +1,87 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **Security vulnerabilities must not be reported here:** use
+        [private reporting](https://github.com/Altumptic/LemonSees/security/advisories/new).
+        Please remove IP addresses, usernames, hostnames and secrets from anything you paste.
+  - type: input
+    id: version
+    attributes:
+      label: LemonSees version
+      placeholder: "3.2.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run it?
+      options:
+        - Windows installer (setup.exe)
+        - Windows portable (.exe / .zip)
+        - macOS (.dmg / .zip)
+        - Linux AppImage
+        - Linux .deb
+        - Linux tar.gz
+        - Web (npm start / Docker)
+        - From source (git clone)
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Monitored server(s)
+      description: Distribution and version, e.g. "Debian 12", "Ubuntu 24.04", "RHEL 9". OpenSSH version if known (`ssh -V`).
+    validations:
+      required: true
+  - type: dropdown
+    id: logsource
+    attributes:
+      label: Where do the SSH logs come from?
+      options:
+        - journald
+        - /var/log/auth.log
+        - /var/log/secure
+        - Other (describe below)
+        - Not sure
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add host …
+        2. Open …
+        3. Click …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Screenshots are welcome. Blur real IPs and usernames.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines (redacted)
+      description: A few lines in the same format as your server's logs. Replace IPs with `X.X.X.X` and usernames with `user`.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and Discussions.
+          required: true
+        - label: I removed secrets, IP addresses and usernames from this report.
+          required: true
