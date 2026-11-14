@@ -37,9 +37,11 @@ function shq(s) {
   return `'${String(s).replace(/'/g, "")}'`;
 }
 
+// Явний allowlist через Map: ключі на кшталт "constructor" не є записами Map, а виклик іде без динамічного доступу до властивостей
+const TOOL_FN = new Map(Object.entries(TOOLS));
+
 export async function runTool(conn, tool, target, port) {
-  // Object.hasOwn: без цього ключі на кшталт "constructor" проходили б перевірку як "інструменти"
-  if (!Object.hasOwn(TOOLS, tool) && tool !== "port") throw new Error("Невідомий інструмент");
+  if (!TOOL_FN.has(tool) && tool !== "port") throw new Error("Невідомий інструмент");
   const t = String(target || "").trim();
   if (!TARGET_RE.test(t) || t.startsWith("-")) throw new Error("Некоректна ціль (дозволено літери, цифри, .-_:)");
 
@@ -49,7 +51,7 @@ export async function runTool(conn, tool, target, port) {
     if (!(pnum > 0 && pnum < 65536)) throw new Error("Некоректний порт");
     cmd = `timeout 5 bash -c 'exec 3<>/dev/tcp/${t}/${pnum} && echo "OPEN — ${t}:${pnum} приймає зʼєднання" || echo "CLOSED/FILTERED — ${t}:${pnum}"' 2>&1 || echo "CLOSED/FILTERED — ${t}:${pnum}"`;
   } else {
-    cmd = TOOLS[tool](t);
+    cmd = TOOL_FN.get(tool)(t);
   }
   const { stdout } = await conn.exec(cmd, { timeout: 30000 });
   return { tool, target: t, output: stdout.trim() || "(порожній вивід)", at: Date.now() };

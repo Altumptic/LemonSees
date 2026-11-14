@@ -99,9 +99,11 @@ const SENDERS = {
   elastic: (c, e) => post(`${c.url.replace(/\/$/, "")}/${c.index || "lemonsees-alerts"}/_doc`, { "@timestamp": new Date(e.at).toISOString(), ...e, "event.module": "lemonsees" }, c.apiKey ? { Authorization: `ApiKey ${c.apiKey}` } : {}, !!c.insecure),
   pagerduty: (c, e) => post("https://events.pagerduty.com/v2/enqueue", { routing_key: c.routingKey, event_action: "trigger", dedup_key: e.id, payload: { summary: e.title, source: e.host || "lemonsees", severity: e.severity === "critical" ? "critical" : e.severity === "high" ? "error" : e.severity === "medium" ? "warning" : "info", custom_details: { text: e.text, kind: e.kind } } }),
   syslog(c, e) {
-    const esc = (v) => String(v ?? "").replace(/\\/g, "\\\\").replace(/=/g, "\\=").replace(/[\r\n]+/g, " ");
+    // CEF: в заголовку екрануються \ і |; в розширенні — \ і =; переноси рядків прибираються в обох
+    const cefHeader = (v) => String(v ?? "").replace(/[\\|]/g, (ch) => "\\" + ch).replace(/[\r\n]/g, " ");
+    const cefExt = (v) => String(v ?? "").replace(/[\\=]/g, (ch) => "\\" + ch).replace(/[\r\n]/g, " ");
     const sev = { info: 1, low: 3, medium: 5, high: 8, critical: 10 }[e.severity] ?? 5;
-    const msg = `<${sev >= 8 ? 10 : 13}>${new Date(e.at).toISOString()} ${os.hostname()} CEF:0|Altumptic|LemonSees|3|${esc(e.kind).replace(/\|/g, "\\|")}|${esc(e.title).replace(/\|/g, "\\|")}|${sev}|msg=${esc(e.text)} dhost=${esc(e.host)} rt=${e.at}`;
+    const msg = `<${sev >= 8 ? 10 : 13}>${new Date(e.at).toISOString()} ${os.hostname()} CEF:0|Altumptic|LemonSees|3|${cefHeader(e.kind)}|${cefHeader(e.title)}|${sev}|msg=${cefExt(e.text)} dhost=${cefExt(e.host)} rt=${e.at}`;
     const port = parseInt(c.port, 10) || 514;
     return new Promise((resolve, reject) => {
       if ((c.protocol || "udp") === "udp") {
