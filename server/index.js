@@ -54,6 +54,7 @@ import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
 import { collectThreats, countRecentFailed } from "./threats.js";
 import { core } from "./core/index.js";
 import { mountHygiene } from "./hygiene.js";
+import { handleTerminal } from "./terminal.js";
 import { scanVulns } from "./vulns.js";
 import { geoLookup } from "./geoip.js";
 import { collectProcesses, collectPersistence } from "./edr.js";
@@ -982,46 +983,20 @@ wssState.on("connection", (ws) => {
 
 // Термінал: \x01 + data — ввід; \x02 + JSON — керування (resize)
 wssTerm.on("connection", async (ws, req) => {
+  // Обробник помилок — першим і синхронно: завеликий кадр не повинен зупиняти двигун (див. server/terminal.js)
+  ws.on("error", () => {});
   if (wssTerm.clients.size > MAX_TERMINALS) {
     ws.close(1013, "too many terminals");
     return;
   }
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const hostId = url.searchParams.get("host");
-  const conn = conns.get(hostId);
+  const conn = conns.get(url.searchParams.get("host"));
   if (!conn) {
     ws.send("\r\n[ШОК] Хост не знайдено.\r\n");
     ws.close();
     return;
   }
-  let stream;
-  try {
-    stream = await conn.shell({ cols: 120, rows: 32 });
-  } catch (e) {
-    ws.send(`\r\n[ШОК] Не вдалося відкрити shell: ${e.message}\r\n`);
-    ws.close();
-    return;
-  }
-  stream.on("data", (d) => ws.readyState === 1 && ws.send(d));
-  stream.stderr?.on("data", (d) => ws.readyState === 1 && ws.send(d));
-  stream.on("close", () => ws.close());
-  ws.on("message", (raw) => {
-    const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
-    if (buf.length === 0) return;
-    const kind = buf[0];
-    const payload = buf.subarray(1);
-    if (kind === 0x01) {
-      stream.write(payload);
-    } else if (kind === 0x02) {
-      try {
-        const msg = JSON.parse(payload.toString("utf8"));
-        if (msg.type === "resize") stream.setWindow(msg.rows, msg.cols, 0, 0);
-      } catch { /* ignore */ }
-    }
-  });
-  ws.on("close", () => {
-    try { stream.close(); } catch { /* ignore */ }
-  });
+  await handleTerminal(ws, conn);
 });
 
 /* ---------------- старт ---------------- */
