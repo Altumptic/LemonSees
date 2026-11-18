@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `THIRD-PARTY-LICENSES.md` no longer lists versions, so a routine dependency bump (for example a Dependabot pull request)
+  does not make the licence check fail. The file changes when a package is added or removed or a licence changes; the full
+  texts shipped in releases still carry exact versions. A new package without a permissive licence still fails CI.
+
 ## v3.3.0 — SSH hygiene, project documentation, security triage
 
 ### Added
