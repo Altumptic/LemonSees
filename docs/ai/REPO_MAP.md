@@ -25,6 +25,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `core/lemonsees-core/src/ip.rs` | Розбір та класифікація IP-адрес у рядках журналів. |
 | `core/lemonsees-core/src/lib.rs` | LemonSees core — гарячі шляхи двигуна, написані на безпечному Rust. |
 | `core/lemonsees-core/src/rules.rs` | Рушій правил виявлення. |
+| `core/lemonsees-core/src/ssh.rs` | SSH-гігієна парку: розбір `sshd -T`, `authorized_keys`, використання ключів у журналі та оцінка по всьому парку. |
 | `core/lemonsees-core/src/time.rs` | Розбір часових міток рядків журналів без зовнішніх залежностей. |
 | `core/lemonsees-wasm/Cargo.toml` |  |
 | `core/lemonsees-wasm/src/lib.rs` | WebAssembly-обгортка над `lemonsees-core`. |
@@ -36,7 +37,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `docs/ROADMAP.md` | Roadmap |
 | `docs/TESTING.md` | Help us test LemonSees (beta) |
 | `docs/VALIDATION.md` | Validation on real servers |
-| `docs/features/ssh-hygiene.md` | Design: SSH hygiene across the fleet |
+| `docs/features/ssh-hygiene.md` | SSH hygiene across the fleet |
 | `docs/security/RELEASE-NOTES-FOOTER.md` | ## Verify this release |
 | `docs/security/SECURITY-NOTES.md` | LemonSees — Security design notes |
 | `docs/security/THREAT-MODEL.md` | LemonSees — Threat model (short) |
@@ -62,6 +63,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `server/fim.js` | FIM — контроль цілісності критичних файлів по SSH (як syscheck у Wazuh, але без агента). |
 | `server/geoip.js` | Гео-IP збагачення адрес атакуючих — OPT-IN (PSB P2 «least data»). |
 | `server/guard.js` | Захист периметра двигуна (PSB §5.1, §5.3): |
+| `server/hygiene.js` | SSH-гігієна парку (docs/features/ssh-hygiene.md): ефективні налаштування sshd, ключі в authorized_keys з відбитками, |
 | `server/index.js` | LemonSees by Altumptic — двигун SOC-платформи. |
 | `server/integrations.js` | Інтеграції LemonSees — повністю опційні: без них продукт працює автономно. |
 | `server/netops.js` | NDR та утиліти аналітика: активні зʼєднання, мережеві інструменти (dig/whois/ping/…), |
@@ -104,6 +106,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `src/pages/Events.tsx` |  |
 | `src/pages/Fim.tsx` |  |
 | `src/pages/Hosts.tsx` |  |
+| `src/pages/Hygiene.tsx` | Локалізовані назви й поради за кодом знахідки. Невідомий код показує англійський текст з ядра. |
 | `src/pages/Incidents.tsx` |  |
 | `src/pages/Integrations.tsx` |  |
 | `src/pages/Investigate.tsx` |  |
@@ -131,5 +134,6 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `test/auth.test.js` | Авторизація веб-режиму: без сесії — 401, неправильний токен — 401, обмеження спроб — 429. |
 | `test/core.test.js` | Тести Rust-ядра (WASM) та його інтеграції. Якщо .wasm не зібрано (npm run build:core) — тести ядра пропускаються, |
 | `test/hardening.test.js` | Регресійні тести на виправлення з аналізу CodeQL (chore/security-triage). |
+| `test/hygiene.test.js` | SSH-гігієна: серверна частина (docs/features/ssh-hygiene.md). Тести ядра, що потребують .wasm, пропускаються без нього. |
 | `test/security.test.js` | Негативні тести безпеки (PSB §7): fail-closed, цілісність шифрування, Host/Origin, розбір недовіреного вводу. |
 | `test/tls.test.js` | HTTPS-режим: самопідписаний сертифікат має бути SHA-256 / RSA-2048, з SAN і чесним терміном дії (PSB §2.1). |

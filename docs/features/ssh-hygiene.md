@@ -1,6 +1,6 @@
-# Design: SSH hygiene across the fleet
+# SSH hygiene across the fleet
 
-**Status:** designed, not implemented. Milestone M3 in the [roadmap](../ROADMAP.md).
+**Status:** implemented in v3.3.0 (beta). Not yet validated on a real fleet: see [VALIDATION.md](../VALIDATION.md).
 **Owner:** maintainers. Changes to this design are made here, with the reason in the commit message.
 
 ## Problem
@@ -10,94 +10,159 @@ keys, keys copied between servers and never removed, and keys of people who left
 checked alone. The risk is visible only across the fleet.
 
 Agent-based suites can report this, but they need an agent everywhere. LemonSees already connects to every host over SSH,
-so it can answer the question with read-only commands.
+so it answers the question with read-only commands.
 
-## Goals
+## What you get
 
-1. Show the **effective** sshd configuration for each host, not only the file on disk.
-2. Inventory the keys that can log in to each host, per user, with fingerprints.
-3. Show keys that are **duplicated** across hosts or users, **unknown** (not on the analyst's list), or **stale**.
-4. For each finding, explain the risk in plain words and show the change to make. The analyst applies it.
-5. Produce a dated report that can be shared.
+Open **Endpoints · EDR → SSH hygiene** and press **Scan fleet**. You see:
 
-## Non-goals
+- **Findings**, most severe first, each with a plain explanation and the change to make. The change is shown, never applied.
+- **sshd settings** per host: `PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`, `MaxAuthTries`,
+  `X11Forwarding`, and where the value came from.
+- **Keys** per host and account: type, size, SHA-256 fingerprint, comment, when it was last used, and whether it is on your
+  expected list.
+- **Expected keys:** you mark the keys that should exist. From then on, any other key is a finding.
+- **Export** of the report as Markdown, CSV or JSON. Key comments are masked unless you ask for them.
 
-- Applying any change to a server. Remediation stays with the analyst.
-- Installing software or agents on servers.
-- Scanning hosts that the analyst has not added.
-- Scoring against a compliance framework. Mapping to CIS or NIST controls can come later, as evidence only.
-- Storing private keys. The tool only reads public keys and fingerprints.
+## Goals and non-goals
+
+Goals: show the **effective** sshd configuration; inventory every key that can log in, with fingerprints; find
+duplicated, unknown, weak and stale keys; explain each finding and show the fix; produce a dated, shareable report.
+
+Non-goals: applying any change to a server; installing anything on servers; scanning hosts the analyst has not added;
+scoring against a compliance framework; storing private keys (only public keys and fingerprints are read).
+
+## How it works
+
+Two steps, so that the expensive part runs once and the judgement can be repeated for free:
+
+```
+host (SSH, read-only)         Node engine                    Rust core (WebAssembly)
+  keys script  ───────────►  parse markers  ───────────►  ssh_parse  (op 6)
+  usage script ───────────►  usage lines    ───────────►    sshd settings, keys, fingerprints, last use
+                                  │                              │ ParsedHost (no raw text)
+                                  ▼                              ▼
+                       config/ssh-hygiene.json  ◄──────  stored parsed hosts + expected keys
+                                  │
+                                  ▼
+                              ssh_judge (op 7)  ───────►  Report: findings, shared keys, counts
+```
+
+1. **Scan** (`POST /api/hygiene/scan`): for each connected host, two scripts run over the existing SSH connection (with
+   limited concurrency). The Rust core parses the raw output into a `ParsedHost`. Only the parsed result is stored; the raw
+   `authorized_keys` text is not.
+2. **Judge** (`GET /api/hygiene`): the stored hosts and your expected-keys list are evaluated by the core. Changing the
+   expected list or the stale threshold re-evaluates instantly, with no new scan.
+
+The fingerprint is computed in the core (SHA-256 of the key blob, base64 without padding), as `ssh-keygen -l` does. Tests
+compare it with `ssh-keygen` output for Ed25519, ECDSA and RSA keys.
 
 ## Data collected (read-only)
 
-Each command runs over the existing SSH connection, with a timeout and an output cap.
-
 | Data | Source | Notes |
 |---|---|---|
-| Effective sshd settings | `sshd -T` (fallback: parse `sshd_config` and `sshd_config.d/*`) | `sshd -T` needs root or the right to read the config; record which path was used |
-| Login users with a home directory | `getent passwd`, filtered to real login shells | Only names and home paths are kept |
-| Authorized keys per user | `authorized_keys` and `authorized_keys2` in each home directory, as configured by `AuthorizedKeysFile` | Read as far as the account can read; unreadable files are reported, not skipped silently |
-| Last successful logins | Existing auth-log analysis (`core.auth`) | Used only for the stale-key check, when logs are available |
+| Effective sshd settings | `sshd -T`; fallback: the `sshd_config.d/*.conf` files then `sshd_config` | With `sshd -T` all values are real. From files, OpenSSH defaults fill missing keys and are marked as defaults. |
+| Login accounts | `getent passwd`, uid 0 or ≥ 1000, with a real shell and an absolute home | Only names and home paths are used. |
+| Authorized keys | `~/.ssh/authorized_keys` and `authorized_keys2` of each account | Read up to 256 KiB per file; unreadable files are reported, not skipped silently. |
+| Last use of keys | `Accepted publickey` lines from journald and `auth.log`/`secure` (up to 400 days) | The lines name the account and the key fingerprint. |
+| Log history depth | Oldest sshd log line available | Needed to decide whether "stale" can be judged at all. |
 
-Key lines are reduced on the host to: key type, base64 length, fingerprint (SHA256) and comment. The full key blob is not
-sent back, and the comment is shown only after redaction rules are applied (see Privacy).
+`sudo -n` is used only when it works without a password (as in the file-integrity scan). Otherwise the scan reads what the
+connecting account may read, and reports what it could not.
 
 ## Findings
 
-| Finding | Severity | Example text | Suggested change (shown, not applied) |
+| Code | Severity | Meaning | Suggested change (shown, not applied) |
 |---|---|---|---|
-| Root login allowed | high | `PermitRootLogin yes` on web-01 | `PermitRootLogin no` (or `prohibit-password` if keys are required) |
-| Password login allowed | high | `PasswordAuthentication yes` | `PasswordAuthentication no`, after confirming keys work |
-| Empty passwords allowed | critical | `PermitEmptyPasswords yes` | `PermitEmptyPasswords no` |
-| Same key on several hosts | medium | key `SHA256:…` on 4 hosts | Use a separate key per host, or per role |
-| Same key used by several users | medium | key `SHA256:…` for `deploy` and `ops` | Give each person their own key |
-| Unknown key | high | key on db-01 is not in the expected list | Confirm the owner; remove the key if nobody claims it |
-| Stale key | low | key unused for 180 days (from auth log) | Confirm, then remove |
-| Key without a comment | info | cannot tell whose key this is | Add an identifying comment |
-| Unreadable authorized_keys | info | `/home/x/.ssh/authorized_keys` not readable with this account | Grant read access or accept the gap, and say so |
+| `EMPTY_PASSWORDS` | critical | `PermitEmptyPasswords yes` | `PermitEmptyPasswords no` |
+| `ROOT_LOGIN` | high | `PermitRootLogin yes` | `PermitRootLogin no`, or `prohibit-password` |
+| `PASSWORD_AUTH` | high | `PasswordAuthentication yes` | `PasswordAuthentication no`, after confirming keys work |
+| `KEY_WEAK_RSA` | high | RSA key shorter than 2048 bits | Replace with Ed25519 |
+| `KEY_DSA` | high | DSA key (deprecated) | Replace with Ed25519 |
+| `KEY_UNKNOWN` | high | Key is not on the expected list (only when a list exists) | Find the owner; add it to the list or remove it |
+| `KEY_WRONG_HOST` | high | Key is on the list but not allowed on this host | Remove it here, or widen its allowed hosts |
+| `KEY_SHARED_USERS` | medium | One key authorised for several accounts | One key per account |
+| `MAX_AUTH_TRIES` | low | `MaxAuthTries` above 6 | Lower to 4 or less |
+| `KEY_STALE` | low | Not used for the threshold (default 180 days) | Confirm; remove if not needed |
+| `X11_FORWARDING` | info | `X11Forwarding yes` | `X11Forwarding no` unless needed |
+| `KEY_ON_MANY_HOSTS` | info | Same key on several hosts | Normal for one person's admin key; review if it is a shared service key |
+| `KEY_NO_COMMENT` | info | Key without a comment | Add owner and purpose |
+| `AUTHKEYS_UNREADABLE` | info | A file or home directory could not be read | Grant read access, or accept the gap |
+| `SSHD_UNAVAILABLE` | info | No sshd configuration could be read | Scan with an account that may read it |
+| `LOG_COVERAGE_SHORT` | info | Logs cover fewer days than the stale threshold | Keep logs longer |
+| `HOST_UNSCANNED` | info | Host not connected or scan failed | Check the connection |
 
-Severities are advice, not a score. The report explains each one; the analyst decides.
+Severities are advice, not a score. The same key on several hosts is **info**, not a problem: one admin key everywhere is
+normal. The same key under several accounts is **medium**, because logins can no longer be attributed to a person.
 
-## Expected keys list
+### How "stale" is decided
 
-The analyst keeps a list of expected keys: fingerprint, owner, purpose, hosts allowed. Deviations from this list are
-the main "unknown key" signal. The list lives in local configuration, like all other LemonSees data, and is exported with
-the rest of the configuration.
+A key is reported stale only when the available logs reach back at least as far as the threshold. If the logs are shorter,
+LemonSees says so (`LOG_COVERAGE_SHORT`) instead of guessing. "Not seen in the logs" is not proof that a key is unused, and
+the finding says that.
+
+## Expected keys
+
+You keep a list of keys that should exist: fingerprint, owner, purpose, and optionally the hosts where each is allowed. It
+lives in local configuration with the rest of the LemonSees data. With no list, the "unknown key" check is off and the page
+says so. The UI offers **Mark as expected** next to every key.
 
 ## Privacy
 
-- Usernames, hostnames and fingerprints stay on the analyst's machine, like all other data.
-- Comments in keys often contain email addresses or names. They are shown in the UI, but the **exported report** masks
-  them by default, with an option to include them.
-- Nothing is sent to third parties, and there is no telemetry.
+- Usernames, hostnames and fingerprints stay on the analyst's machine. Nothing is sent to third parties; there is no telemetry.
+- Key comments often contain names or email addresses. They are shown in the UI, and **masked in exports** by default.
+- Only parsed results are stored. Raw `authorized_keys` text is processed in memory and discarded.
 
 ## Safety of the commands
 
-- Every command is a fixed template in the code. The only variable parts are a user name and a path that the host itself
-  reported; both are validated against the same rules as the other remote paths (quoting, no leading `-`, length limits).
-- No command writes to the server. The implementation must never use `>`, `tee`, `sed -i`, `chmod`, or `ssh-keygen`
-  against remote paths.
-- Output is capped per host and per command. A host that returns megabytes of keys is reported as truncated.
+- Both scripts are fixed templates. The only variable part is a one-time marker (nonce), generated per scan.
+- The output markers contain that nonce, so the content of a file cannot forge them. A test covers this.
+- No script writes to a server. A test fails if a script gains any write, delete, kill, network or key-generation command.
+- Output is capped per file (256 KiB), per host (24 MiB for keys, 48 MiB for logs) and in the core (hosts, keys, findings).
+- User names and paths come from the host itself and are only treated as data. They are never put into a shell command.
 
-## Phases
+## HTTP API
 
-1. **Read-only sshd audit.** Effective settings per host, findings for root and password login, CSV and JSON export.
-2. **Key inventory.** Keys per user and host, fingerprints, duplicates across the fleet.
-3. **Expected keys.** The analyst's list, deviations as findings.
-4. **Stale keys.** Correlate with successful logins from the auth log, when available.
-5. **Report.** A dated, shareable hygiene report with masked comments by default.
+All routes require an authenticated session.
 
-Each phase ships on its own, with tests:
+| Method and path | Purpose |
+|---|---|
+| `GET /api/hygiene` | Current view: hosts, keys, expected list, and the judged report |
+| `POST /api/hygiene/scan` | Scan all hosts, or `{ "hostIds": [...] }`. One scan at a time (409 otherwise). |
+| `PUT /api/hygiene/expected` | Replace the expected list and optionally `staleDays` |
+| `GET /api/hygiene/export?format=md\|csv\|json&comments=0\|1` | Download the report |
 
-- Parsers for `sshd -T` output and `authorized_keys` lines, including options (`from=`, `command=`, `no-pty`) and
-  malformed lines, as negative tests.
-- A fleet test on the fake SSH host with one host of each finding.
-- Confirmation that no command in the implementation writes to a server.
+Audit-log entries: `hygiene.scan`, `hygiene.expected`, `hygiene.export`.
 
-## Open questions
+## Known limits
 
-- Should the expected keys list be importable from a file in the repository, or only from the UI?
-- How should keys that appear in `AuthorizedKeysFile` paths outside the home directory be shown?
-- What is the right "stale" threshold by default: 90, 180 or 365 days?
+- **Only the global scope of sshd is evaluated.** `Match` blocks can override a value for some users or addresses; they are
+  not evaluated. With `sshd -T` the settings are exact for the default context.
+- **Default key files only.** Custom `AuthorizedKeysFile`, `AuthorizedKeysCommand`, certificate authorities and
+  `AuthorizedPrincipalsFile` are not analysed yet.
+- **`sshd -T` usually needs root.** Without root or passwordless sudo the settings come from the config files, which is
+  less exact (defaults are marked), and other users' keys may be unreadable (reported).
+- **Last use comes from logs.** It needs `Accepted publickey` lines in journald or `auth.log`/`secure`, and the
+  `LogLevel` must be at least `INFO` (the default) for the key fingerprint to be logged.
+- **POSIX shell and Linux only**, like the rest of LemonSees.
+- **Needs the Rust core.** Without it the feature is off and says why; there is no slower fallback.
+- **Not validated on a real fleet yet.** The scripts were run under a strict POSIX shell with stub commands, and the
+  parsers are tested with real keys and fuzzed, but a run on real servers from several distributions is the next
+  milestone ([ROADMAP.md](../ROADMAP.md)).
 
-These are decided before phase 3 starts.
+## Decisions taken while building
+
+- **Key on several hosts is `info`, not `medium`.** The first design said "medium", which would flag every admin's
+  personal key. The risky case is the same key under several accounts, which stays `medium`.
+- **The expected list is edited in the UI only** for now. Importing it from a file is on the roadmap.
+- **Stale threshold defaults to 180 days**, configurable from 7 to 3650.
+- **Parsed results are stored, raw text is not**, so the judgement can be repeated without a scan and without keeping
+  `authorized_keys` content on disk.
+
+## Tests
+
+- Core (Rust): parsers for `sshd -T`, config files with `Match` and defaults, `authorized_keys` lines with options and
+  quoting, fingerprints against `ssh-keygen`, key sizes, usage matching, every finding, caps, and garbage input.
+- Core: randomized robustness test and two `cargo-fuzz` targets (`ssh_keys`, `ssh_judge`), run in CI.
+- Node: read-only guarantee for the scripts, nonce protection against forged markers, incomplete output, end to end
+  through the core, unreachable hosts, expected-list validation, export masking and CSV formula neutralisation.

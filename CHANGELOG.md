@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased — project documentation and security triage
+## v3.3.0 — SSH hygiene, project documentation, security triage
+
+### Added
+- **SSH hygiene across the fleet (beta).** One page (*Endpoints → SSH hygiene*) shows the effective `sshd` settings of every
+  host, every key that can log in with its SHA-256 fingerprint, when each key was last used, and findings with the change
+  to make: root login, password login, empty passwords, weak RSA and DSA keys, keys not on your expected list, one key
+  under several accounts, stale keys. The change is shown, never applied. The scan is read-only; the raw `authorized_keys`
+  text is not stored; exports mask key comments by default. Needs the Rust core. **Not yet validated on a real fleet.**
+  Design, limits and API: `docs/features/ssh-hygiene.md`.
+- Rust core: `ssh` module (parsers for `sshd -T`, config files and `authorized_keys`; fingerprints checked against
+  `ssh-keygen`), two new WebAssembly operations, a randomized robustness test and two more fuzz targets (`ssh_keys`,
+  `ssh_judge`) run in CI.
+- New page translated to English and Russian; Polish and Chinese fall back to English until translated.
 
 ### Changed
 - Security contact: reports now go through **GitHub private vulnerability reporting**. The personal mailbox and messenger

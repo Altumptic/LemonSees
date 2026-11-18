@@ -10,7 +10,8 @@
 //!   * `ls_out_ptr() / ls_out_len()` — результат останнього виклику (JSON), діє до наступного виклику;
 //!   * статуси: 0 — ок; 1 — невідома операція; 2 — некоректні параметри; 3 — помилка правила (у виводі `{rule_id, message}`).
 //!
-//! Операції: 1 = аналіз auth-журналу, 2 = виконання правил, 3 = FIM-diff, 4 = інформація про ядро, 5 = самоперевірка.
+//! Операції: 1 = аналіз auth-журналу, 2 = виконання правил, 3 = FIM-diff, 4 = інформація про ядро, 5 = самоперевірка,
+//! 6 = SSH-гігієна: розбір одного хоста (`b` — рядки `Accepted publickey`), 7 = SSH-гігієна: оцінка парку.
 #![allow(unsafe_code)]
 
 use lemonsees_core as core;
@@ -21,6 +22,8 @@ const OP_RULES: u32 = 2;
 const OP_FIM: u32 = 3;
 const OP_INFO: u32 = 4;
 const OP_SELFTEST: u32 = 5;
+const OP_SSH_PARSE: u32 = 6;
+const OP_SSH_JUDGE: u32 = 7;
 
 const OK: i32 = 0;
 const E_OP: i32 = 1;
@@ -112,6 +115,14 @@ fn call(op: u32, params: &[u8], text: &str) -> i32 {
         },
         OP_INFO => ok_json(&serde_json::json!({ "name": "lemonsees-core", "version": core::VERSION, "max_line_bytes": core::MAX_LINE_BYTES, "max_rules": core::rules::MAX_RULES })),
         OP_SELFTEST => selftest(),
+        OP_SSH_PARSE => match serde_json::from_slice::<core::ssh::ParseInput>(params) {
+            Ok(i) => ok_json(&core::ssh::parse_host(&i, text)),
+            Err(e) => fail(E_PARAMS, &e.to_string()),
+        },
+        OP_SSH_JUDGE => match serde_json::from_slice::<core::ssh::JudgeInput>(params) {
+            Ok(i) => ok_json(&core::ssh::judge(&i)),
+            Err(e) => fail(E_PARAMS, &e.to_string()),
+        },
         _ => fail(E_OP, "unknown operation"),
     }
 }
@@ -197,6 +208,27 @@ mod tests {
         assert_eq!(run(OP_FIM, "1", "").0, E_PARAMS);
         assert_eq!(run(99, "", "").0, E_OP);
         assert_eq!(call(OP_AUTH, b"{}", "\u{0}\u{fffd}garbage").min(0), 0);
+    }
+
+    #[test]
+    fn ssh_hygiene_through_abi() {
+        let key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOsaPnH+kDs2S8IZea60Y+gd2+FeoTvbpM+ECev87Q4g alice@laptop";
+        let params = serde_json::json!({
+            "sshd_text": "permitrootlogin yes
+        passwordauthentication no",
+            "sshd_source": "sshd -T",
+            "keys": [{ "user": "alice", "path": "/home/alice/.ssh/authorized_keys", "text": key }],
+            "now_ms": 1_793_780_101_000_i64
+        });
+        let (c, parsed) = run(OP_SSH_PARSE, &params.to_string(), "");
+        assert_eq!(c, OK);
+        assert_eq!(parsed["keys"][0]["fingerprint"], "SHA256:UO3e7fNaujDTrJHSSWU1MosxbDhkcfckgQiWWgGVt3o");
+        let judge = serde_json::json!({ "hosts": [{ "id": "h1", "name": "web", "host": parsed }], "now_ms": 1_793_780_101_000_i64 });
+        let (c, rep) = run(OP_SSH_JUDGE, &judge.to_string(), "");
+        assert_eq!(c, OK);
+        assert!(rep["findings"].as_array().unwrap().iter().any(|f| f["code"] == "ROOT_LOGIN"));
+        assert_eq!(run(OP_SSH_PARSE, "not json", "").0, E_PARAMS);
+        assert_eq!(run(OP_SSH_JUDGE, "1", "").0, E_PARAMS);
     }
 
     #[test]

@@ -7,6 +7,7 @@ import {
   Cog,
   Shield,
   Bug,
+  KeyRound,
   Waypoints,
   Cable,
   Crosshair,
@@ -64,6 +65,7 @@ export const SECTIONS: Section[] = [
       { id: "agents", label: "Агенти", icon: Bot, load: () => import("@/pages/Agents") },
       { id: "posture", label: "Постура", icon: Shield, load: () => import("@/pages/Security") },
       { id: "vulns", label: "Вразливості", icon: Bug, load: () => import("@/pages/Vulnerabilities") },
+      { id: "hygiene", label: "SSH-гігієна", icon: KeyRound, load: () => import("@/pages/Hygiene") },
     ],
   },
   {

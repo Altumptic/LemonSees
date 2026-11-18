@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WASM = join(dirname(fileURLToPath(import.meta.url)), "lemonsees_core.wasm");
-const OP = { auth: 1, rules: 2, fim: 3, info: 4, selftest: 5 };
+const OP = { auth: 1, rules: 2, fim: 3, info: 4, selftest: 5, sshParse: 6, sshJudge: 7 };
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -94,6 +94,16 @@ export const core = {
     const r = run(OP.rules, { rules, ...opts }, text);
     if (!r) return null;
     return r.ok ? r.data : r.status === 3 ? { error: r.data } : null;
+  },
+  /** SSH-гігієна, крок 1: сирі дані хоста + рядки `Accepted publickey` → розібраний хост (або null). */
+  sshParse(params, usageText = "") {
+    const r = run(OP.sshParse, params, usageText);
+    return r?.ok ? r.data : null;
+  },
+  /** SSH-гігієна, крок 2: розібрані хости + очікувані ключі → звіт (або null). */
+  sshJudge(input) {
+    const r = run(OP.sshJudge, input);
+    return r?.ok ? r.data : null;
   },
   /** FIM-diff. */
   fim(input) {

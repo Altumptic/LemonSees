@@ -61,6 +61,7 @@ SSH library negotiate legacy algorithms for old servers — that is an explicit,
 | SSH passwords, key passphrases, DB passwords, proxy passwords, integration tokens/API keys | config dir | **encrypted** (AES-256-GCM), file mode 0600 |
 | SSH private keys | wherever you keep them | LemonSees stores only the **path**, never the key |
 | Hosts, incidents, audit log, FIM baselines, rules, monitors | config dir | file mode 0600, dir 0700 — **not encrypted** (see exception EX-001) |
+| SSH hygiene: parsed key inventory (fingerprints, comments, account names), expected-keys list | config dir (`ssh-hygiene.json`) | file mode 0600, dir 0700 — **not encrypted** (EX-001). Raw `authorized_keys` text is **not** stored; exports mask key comments by default. |
 | UI preferences | browser localStorage | no secrets |
 | Telemetry to Altumptic | — | **none** (`NO-TELEMETRY`) |
 
@@ -118,6 +119,7 @@ All of the above honour the proxy / Tor route and the kill switch.
   Expires: **2027-03-31**. Trusted Types are not enforced yet.
 * **EX-003:** Windows builds are **not Authenticode-signed**; verify via SHA256SUMS + Sigstore signature + build
   attestation. Expires: when an Altumptic code-signing certificate is available.
+* **SSH hygiene is a beta feature, not yet validated on a real fleet.** It runs read-only commands (some through `sudo -n` when that works without a password), evaluates only the global `sshd` scope, and covers only the default `authorized_keys` files. See [features/ssh-hygiene.md](../features/ssh-hygiene.md#known-limits).
 * Targets must be **Linux** with a POSIX shell; Windows/macOS endpoints are not monitored.
 * FIM is **periodic** (every sweep, default 5 min), not real-time (no inotify/auditd agent).
 * MITRE ATT&CK mapping of LemonSees' own incidents is **heuristic** (category keywords). Wazuh-imported alerts keep

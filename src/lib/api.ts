@@ -31,6 +31,8 @@ import type {
   ToolResult,
   IpIntel,
   FimReport,
+  HygieneView,
+  ExpectedKey,
   NetworkConfig,
   SecurityStatus,
   Integration,
@@ -140,6 +142,11 @@ export const api = {
   history: (hostId: string) => req<{ history: MetricSample[] }>(`/api/hosts/${hostId}/history`),
   fim: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim`, { method: "POST" }),
   fimBaseline: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim-baseline`, { method: "POST" }),
+
+  // SSH-гігієна парку
+  hygiene: () => req<HygieneView>("/api/hygiene"),
+  hygieneScan: (hostIds?: string[]) => req<HygieneView>("/api/hygiene/scan", { method: "POST", body: JSON.stringify({ hostIds }) }),
+  hygieneExpected: (expected: ExpectedKey[], staleDays?: number) => req<HygieneView>("/api/hygiene/expected", { method: "PUT", body: JSON.stringify({ expected, staleDays }) }),
 
   // Приватність і мережа
   network: () => req<NetworkConfig>("/api/network"),

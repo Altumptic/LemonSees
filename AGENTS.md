@@ -23,7 +23,7 @@ Windows: mingw linking fails on paths with spaces/Cyrillic — set `LS_CORE_TARG
 Env: `LEMONSEES_PORT`(5199) `LEMONSEES_HOST`(127.0.0.1) `LEMONSEES_TOKEN` `LEMONSEES_ALLOWED_HOSTS` `SHOK_CONFIG_DIR` `LEMONSEES_CORE=off` (disable wasm, use fallback paths).
 
 ## Where things are
-- `server/index.js` routes + WebSockets; `guard.js` Host/Origin/CSP; `auth.js` token/session; `vault.js` AES-256-GCM secrets; `config.js` persistence + **hash-chained audit log** (`GET /api/audit/verify`); `ssh.js` connections (proxy/Tor/SOCKS5/bastion, kill switch, output cap); `threats.js`, `fim.js`, `extensions.js` (rules, integrations, agents) call `core`.
+- `server/index.js` routes + WebSockets; `guard.js` Host/Origin/CSP; `auth.js` token/session; `vault.js` AES-256-GCM secrets; `config.js` persistence + **hash-chained audit log** (`GET /api/audit/verify`); `ssh.js` connections (proxy/Tor/SOCKS5/bastion, kill switch, output cap); `threats.js`, `fim.js`, `extensions.js` (rules, integrations, agents) call `core`; `hygiene.js` (SSH hygiene: read-only scripts, expected keys, export) calls `core.sshParse/sshJudge`.
 - `server/core/index.js` facade: `core.available()`, `core.auth/rules/fim`. Returns `null` when wasm is missing or trapped → the caller uses the legacy path (remote awk / JS diff / remote `grep -e`).
 - `core/lemonsees-core` safe Rust (`#![forbid(unsafe_code)]`); `core/lemonsees-wasm` is the ONLY crate with `unsafe` (C-ABI: `ls_alloc/ls_free/ls_call/ls_out_*`).
 - UI: `src/pages/*` one file per page; `src/lib/api.ts` client; `src/lib/demo.ts` + `demoExt.ts` demo data; `src/lib/i18n.ts` (**the Ukrainian string is the key**, EN dictionary + fallback).
@@ -35,7 +35,8 @@ Env: `LEMONSEES_PORT`(5199) `LEMONSEES_HOST`(127.0.0.1) `LEMONSEES_TOKEN` `LEMON
 4. Secrets only in the vault; never in logs, URLs or responses. API responses are `Cache-Control: no-store`.
 5. Honest labelling: PSB labels, `AUDIT:NONE`, no unverifiable claims (no "military-grade", no "Wazuh-equivalent" in product copy). Benchmarks must be reproducible.
 6. Core semantics (documented in `auth.rs`/`rules.rs` headers): attempts = `max(Failed*, Invalid user, PAM)` per IP/user (not a sum); rule windows are trailing windows relative to the SERVER clock; an unreadable hash `?` is not a FIM change.
-7. New user-visible string → add EN to `src/lib/i18n.ts`; new page → add demo data.
+7. Anything that runs on a monitored host must be read-only. `test/hygiene.test.js` fails if the hygiene scripts gain a write, delete, kill or network command; keep that true for any new script.
+8. New user-visible string → add EN to `src/lib/i18n.ts`; new page → add demo data.
 
 ## Product principles — do NOT add
 Cloud accounts/SaaS backends, telemetry/analytics, mandatory agents on monitored hosts, active exploitation/attack features, auto-remediation that changes hosts without an explicit analyst action, noisy/gamified UI (the UI is calm, cream, Anthropic-style), anything that sends analyst data to third parties by default.

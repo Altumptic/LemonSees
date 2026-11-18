@@ -37,3 +37,15 @@ name = "fim"
 path = "fuzz_targets/fim.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "ssh_keys"
+path = "fuzz_targets/ssh_keys.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "ssh_judge"
+path = "fuzz_targets/ssh_judge.rs"
+test = false
+doc = false
