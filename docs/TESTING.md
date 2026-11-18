@@ -13,6 +13,16 @@ because real logs look different from ours: different distributions, syslog setu
 Time from install to the first useful screen is one of the things we want to measure. Please note roughly how long it
 took.
 
+## SSH hygiene (new, beta)
+
+The **Endpoints → SSH hygiene** page is the newest and least tested part. If you can, scan a server you own and tell us:
+
+- whether `sshd -T` worked, or the page said it read the config from files;
+- whether the keys it lists match `authorized_keys` (count and types, not the keys themselves);
+- whether any finding is wrong or missing, and why.
+
+It only reads data. See [features/ssh-hygiene.md](features/ssh-hygiene.md) for what it does and its known limits.
+
 ## What to report
 
 Open an issue with the details below. Please **do not** attach raw logs or real IP addresses.

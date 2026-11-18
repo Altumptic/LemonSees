@@ -20,6 +20,7 @@ const AUDIT_FILE = path.join(CONFIG_DIR, "audit.jsonl");
 const SOC_FILE = path.join(CONFIG_DIR, "soc.json");
 const MONITORS_FILE = path.join(CONFIG_DIR, "monitors.json");
 const FIM_FILE = path.join(CONFIG_DIR, "fim-baseline.json");
+const HYGIENE_FILE = path.join(CONFIG_DIR, "ssh-hygiene.json");
 const NETWORK_FILE = path.join(CONFIG_DIR, "network.json");
 const INTEGRATIONS_FILE = path.join(CONFIG_DIR, "integrations.json");
 const RULES_FILE = path.join(CONFIG_DIR, "rules.json");
@@ -408,6 +409,15 @@ export function loadFimBaselines() {
 export function saveFimBaselines(all) {
   fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
   fs.writeFileSync(FIM_FILE, JSON.stringify(all), { encoding: "utf8", mode: 0o600 });
+}
+
+/** SSH-гігієна: список очікуваних ключів, поріг застарілості та останнє сканування (розібрані дані, без сирого тексту). */
+export function loadHygiene() {
+  return readJson(HYGIENE_FILE, {});
+}
+
+export function saveHygiene(data) {
+  writeJson(HYGIENE_FILE, data);
 }
 
 export function loadAudit(limit = 500) {

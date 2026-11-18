@@ -231,6 +231,76 @@ export type FimFile = {
 };
 export type FimReport = { baselineAt: number | null; at: number; files: FimFile[]; changed: number };
 
+/* ---------------- SSH-гігієна парку ---------------- */
+
+export type HygieneSeverity = "critical" | "high" | "medium" | "low" | "info";
+export type HygieneFinding = {
+  code: string;
+  severity: HygieneSeverity;
+  host_id: string | null;
+  host_name: string | null;
+  user: string | null;
+  fingerprint: string | null;
+  /** Змінні частини (значення, кількості, списки) для локалізації. */
+  params: Record<string, string>;
+  /** Англійський текст для експортів; в інтерфейсі показується локалізований за `code`. */
+  title: string;
+  detail: string;
+  suggestion: string;
+};
+export type HygieneKey = {
+  user: string;
+  path: string;
+  key_type: string;
+  bits: number | null;
+  fingerprint: string;
+  comment: string;
+  from_restricted: boolean;
+  forced_command: boolean;
+  restricted: boolean;
+  last_used_ms: number | null;
+  uses: number;
+};
+export type HygieneHost = {
+  id: string;
+  name: string;
+  error: string | null;
+  sshd_source: string;
+  settings: Record<string, string>;
+  defaulted: string[];
+  keys: HygieneKey[];
+  unreadable: string[];
+  skipped_lines: number;
+  coverage_days: number | null;
+  truncated: boolean;
+};
+export type ExpectedKey = { fingerprint: string; owner: string; purpose: string; hosts: string[] };
+export type HygieneShared = { fingerprint: string; hosts: string[]; users: string[] };
+export type HygieneReport = {
+  generated_ms: number;
+  hosts_total: number;
+  hosts_scanned: number;
+  keys_total: number;
+  unique_keys: number;
+  expected_declared: boolean;
+  stale_days: number;
+  by_severity: Partial<Record<HygieneSeverity, number>>;
+  findings: HygieneFinding[];
+  on_many_hosts: HygieneShared[];
+  shared_users: HygieneShared[];
+  truncated: boolean;
+};
+export type HygieneView = {
+  /** Чи доступне Rust-ядро (без нього SSH-гігієна не працює). */
+  core: boolean;
+  scanning: boolean;
+  scannedAt: number | null;
+  staleDays: number;
+  expected: ExpectedKey[];
+  report: HygieneReport | null;
+  hosts: HygieneHost[];
+};
+
 export type VulnFinding = {
   id: string;
   title: string;

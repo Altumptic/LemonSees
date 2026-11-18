@@ -53,6 +53,7 @@ import { collectSecurity } from "./security.js";
 import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
 import { collectThreats, countRecentFailed } from "./threats.js";
 import { core } from "./core/index.js";
+import { mountHygiene } from "./hygiene.js";
 import { scanVulns } from "./vulns.js";
 import { geoLookup } from "./geoip.js";
 import { collectProcesses, collectPersistence } from "./edr.js";
@@ -284,6 +285,8 @@ app.get("/api/info", (req, res) =>
 const TLS = await loadTls(CONFIG_DIR);
 mountAuth(app, { secure: !!TLS || process.env.LEMONSEES_SECURE_COOKIE === "1" });
 app.get("/api/audit/verify", (req, res) => res.json(verifyAudit()));
+// SSH-гігієна парку: після mountAuth, тож усі маршрути /api/hygiene/* лише з сесією
+mountHygiene(app, { hosts: () => hosts, conns, audit, version: VERSION });
 ext = mountExtensions(app, {
   hosts: () => hosts,
   conns,

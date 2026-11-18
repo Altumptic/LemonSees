@@ -17,11 +17,11 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 |---|---|---|
 | **M1 · Trustworthy core** | Analysis engine tested on synthetic data, fuzzed, fallback paths | Shipped |
 | **M2 · Real-world validation** | Run on real Linux servers from ≥5 distributions; publish redacted results | **Next** |
-| **M3 · Fleet hygiene** | SSH hygiene across the fleet (see below) | Planned |
+| **M3 · Fleet hygiene** | SSH hygiene across the fleet: [design and status](features/ssh-hygiene.md) | **Shipped in v3.3.0 (beta)**; follow-ups below |
 | **M4 · Easy to adopt** | Auto-discovery of hosts, headless CLI, package managers | Planned |
 | **M5 · Independent trust** | External security review; signed Windows and macOS builds | Considering |
 
-## Shipped (v3.2)
+## Shipped (v3.2 and v3.3)
 
 - **Rust → WebAssembly core** for the hot paths: SSH auth-log analysis (IPv4 and IPv6, three timestamp formats,
   suspicious logins, hourly histogram), linear-time rules with `group_by`, FIM diff with critical paths.
@@ -29,6 +29,7 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 - **Suspicious logins** and **48-hour activity chart** on the Threats page.
 - **Hardening:** argument-injection fixes, WebSocket payload limits, terminal limit, HTTP timeouts, SSH output cap,
   `no-store` API responses, global per-IP API limit, hash-chained audit log with a verification endpoint.
+- **SSH hygiene** for the whole fleet (beta): effective sshd settings, key inventory with fingerprints, last use, expected keys, export. See [features/ssh-hygiene.md](features/ssh-hygiene.md).
 - **Fuzz targets** for the parsers (`core/fuzz`) and randomized robustness tests, both run in CI.
 - **Installers:** Windows installer, portable build and zip; Linux AppImage, `.deb` and tarball; macOS `.dmg`
   for Apple Silicon and Intel; web tarball. Every release has checksums, a Sigstore signature, build provenance and an SBOM.
@@ -44,33 +45,20 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 
 See [TESTING.md](TESTING.md) for how to take part.
 
-## Planned (M3): SSH hygiene across the fleet
+## Shipped (v3.3): SSH hygiene across the fleet
 
-**Why:** this is what a fleet of a few servers actually needs most, and it is the feature that differs most from
-agent-based suites. It needs only SSH and read-only commands.
+One page for the whole fleet: effective `sshd` settings, every key that can log in (with SHA-256 fingerprints), the
+last time each key was used, and findings with the change to make. The change is shown, never applied. Details, limits
+and API: [features/ssh-hygiene.md](features/ssh-hygiene.md).
 
-**What:** one table across all connected hosts showing:
+It is a **beta feature that has not yet been validated on a real fleet**: see [M2](#next-m2-validation-on-real-servers).
 
-- `PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`, `X11Forwarding`, `MaxAuthTries`, and other
-  sshd settings, with the effective value (`sshd -T`), not just the file.
-- Keys in `authorized_keys` for every user, with type, fingerprint, comment and the last login they were used for.
-- **Duplicates:** the same key on several servers, or the same key used by several users.
-- **Unknown keys:** keys that are not in the analyst's list of expected keys.
-- **Stale keys:** keys not used in N days (from the auth log, when available).
-- A short finding per issue with a plain explanation and the change to make. The **change is shown, never applied**.
+## Planned: SSH hygiene follow-ups
 
-**Phases:**
-
-1. *Read-only sshd audit* — effective settings per host, findings list, export to CSV/JSON.
-2. *Key inventory* — keys per host and user, fingerprints, duplicates across the fleet.
-3. *Expected keys* — the analyst declares which keys are allowed; deviations become findings.
-4. *Last-used and stale keys* — correlate with successful logins from the auth log.
-5. *Report* — a dated, shareable hygiene report for a review or an audit trail.
-
-**Principles check:** SSH only, no agent, read-only commands, nothing sent to third parties, no change on a server
-without the analyst's explicit action.
-
-**Status:** designed, not started. Implementation waits for the go-ahead.
+- **Import the expected-keys list from a file** (today it is edited in the UI).
+- **Per-user `Match` evaluation** with `sshd -T -C`, so overrides for some users or addresses are judged too.
+- **Custom `AuthorizedKeysFile`**, `AuthorizedKeysCommand` and certificate authorities.
+- **Hygiene history:** compare two scans and show what changed since the last one.
 
 ## Planned (M4): easier to adopt
 

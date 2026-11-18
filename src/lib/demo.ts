@@ -21,6 +21,12 @@ import type {
   ThreatReport,
   VulnReport,
   FimReport,
+  HygieneView,
+  HygieneFinding,
+  HygieneHost,
+  HygieneKey,
+  HygieneSeverity,
+  ExpectedKey,
 } from "./types";
 
 import { settingsStore } from "./settings";
@@ -287,6 +293,105 @@ function threats(): ThreatReport {
   };
 }
 
+/* ---------------- SSH-гігієна (демо) ----------------
+ * У робочому режимі аналіз виконує Rust-ядро (server/hygiene.js + core/lemonsees-core/src/ssh.rs).
+ * Тут — спрощене відтворення тих самих правил на демо-даних, щоб сторінку можна було оглянути без сервера.
+ * Відбитки — справжні (згенеровані ssh-keygen) ключі з тестів ядра. */
+const FP = {
+  alice: "SHA256:UO3e7fNaujDTrJHSSWU1MosxbDhkcfckgQiWWgGVt3o",
+  old: "SHA256:DmgzUgWSjsaRd0Nx+a2g4rWp6vXhaw95UWcg6vvKCCY",
+  bob: "SHA256:cwwaTyq1czQRTe317HCvY1aRlYzaOBEOSvhxtjh4VYI",
+  ci: "SHA256:6djpTzVZncUDyvu3a7EZQfOPCaanDGlNGXrHEe13Kow",
+};
+let hygExpected: ExpectedKey[] = [
+  { fingerprint: FP.alice, owner: "Alice", purpose: "admin", hosts: [] },
+  { fingerprint: FP.ci, owner: "CI", purpose: "deploy", hosts: [] },
+];
+let hygStale = 180;
+let hygScannedAt: number | null = null;
+
+function hygKey(user: string, fp: string, type: string, bits: number, comment: string, daysAgo: number | null, uses: number): HygieneKey {
+  return { user, path: `/home/${user}/.ssh/authorized_keys`, key_type: type, bits, fingerprint: fp, comment, from_restricted: false, forced_command: false, restricted: false, last_used_ms: daysAgo === null ? null : NOW() - daysAgo * 86_400_000, uses };
+}
+function hygHost(id: string, name: string, settings: Record<string, string>, keys: HygieneKey[], extra: Partial<HygieneHost> = {}): HygieneHost {
+  return { id, name, error: null, sshd_source: "sshd -T", settings: { permitrootlogin: "no", passwordauthentication: "no", permitemptypasswords: "no", maxauthtries: "4", x11forwarding: "no", pubkeyauthentication: "yes", ...settings }, defaulted: [], keys, unreadable: [], skipped_lines: 0, coverage_days: 400, truncated: false, ...extra };
+}
+function hygieneHosts(): HygieneHost[] {
+  return [
+    hygHost("h_web01", "web-prod-01", {}, [hygKey("alice", FP.alice, "ssh-ed25519", 256, "alice@laptop", 1, 41), hygKey("deploy", FP.ci, "ecdsa-sha2-nistp256", 256, "carol@ci", 0, 612)]),
+    hygHost("h_web02", "web-prod-02", { passwordauthentication: "yes" }, [hygKey("alice", FP.alice, "ssh-ed25519", 256, "alice@laptop", 3, 17), hygKey("deploy", FP.ci, "ecdsa-sha2-nistp256", 256, "carol@ci", 0, 598)]),
+    hygHost("h_db01", "db-primary", { permitrootlogin: "yes", maxauthtries: "10" }, [hygKey("alice", FP.alice, "ssh-ed25519", 256, "alice@laptop", 2, 9), hygKey("backup", FP.old, "ssh-rsa", 1024, "old@weak", 260, 3)]),
+    hygHost("h_edge", "edge-gateway", {}, [hygKey("alice", FP.alice, "ssh-ed25519", 256, "alice@laptop", 5, 22), hygKey("ops", FP.bob, "ssh-rsa", 2048, "bob@work", 12, 8)]),
+    hygHost("h_k8s1", "k8s-worker-a", {}, [hygKey("deploy", FP.ci, "ecdsa-sha2-nistp256", 256, "carol@ci", 0, 1203), hygKey("ops", FP.ci, "ecdsa-sha2-nistp256", 256, "carol@ci", 0, 331)]),
+    { ...hygHost("h_mail", "mail-relay", {}, []), error: "connection timed out", sshd_source: "unavailable", settings: {}, coverage_days: null },
+  ];
+}
+
+const HYG_TEXT: Record<string, [HygieneSeverity, string, string]> = {
+  ROOT_LOGIN: ["high", "Root login over SSH is allowed", "Set 'PermitRootLogin no' and reload sshd."],
+  PASSWORD_AUTH: ["high", "Password authentication is enabled", "After confirming key login works, set 'PasswordAuthentication no'."],
+  MAX_AUTH_TRIES: ["low", "MaxAuthTries is high", "Lower MaxAuthTries to 4 or less."],
+  KEY_WEAK_RSA: ["high", "RSA key shorter than 2048 bits", "Replace it with an Ed25519 key and remove this one."],
+  KEY_UNKNOWN: ["high", "Key is not in the expected-keys list", "Find out who owns the key; add it to the list or remove it."],
+  KEY_SHARED_USERS: ["medium", "One key is authorised for several accounts", "Give each account its own key."],
+  KEY_ON_MANY_HOSTS: ["info", "Same key on several hosts", "Normal for one admin key; review it if the key is a shared service key."],
+  KEY_STALE: ["low", "Key not used recently", "Confirm the key is still needed; remove it otherwise."],
+  HOST_UNSCANNED: ["info", "Host was not scanned", "Check the connection to the host and scan again."],
+};
+
+function hygieneView(): HygieneView {
+  const hosts = hygieneHosts();
+  const findings: HygieneFinding[] = [];
+  const add = (code: string, h: HygieneHost | null, extra: Partial<HygieneFinding> = {}) => {
+    const [severity, title, suggestion] = HYG_TEXT[code];
+    findings.push({ code, severity, host_id: h?.id ?? null, host_name: h?.name ?? null, user: null, fingerprint: null, params: {}, title, detail: title, suggestion, ...extra });
+  };
+  const exp = new Map(hygExpected.map((e) => [e.fingerprint, e]));
+  const byFp = new Map<string, { hosts: Set<string>; users: Set<string> }>();
+  let keysTotal = 0;
+  for (const h of hosts) {
+    if (h.error) {
+      add("HOST_UNSCANNED", h, { params: { reason: h.error } });
+      continue;
+    }
+    if (h.settings.permitrootlogin === "yes") add("ROOT_LOGIN", h, { params: { value: "yes", source: "sshd -T" } });
+    if (h.settings.passwordauthentication === "yes") add("PASSWORD_AUTH", h, { params: { value: "yes", source: "sshd -T" } });
+    if (Number(h.settings.maxauthtries) > 6) add("MAX_AUTH_TRIES", h, { params: { value: h.settings.maxauthtries } });
+    for (const k of h.keys) {
+      keysTotal++;
+      const e = byFp.get(k.fingerprint) ?? { hosts: new Set<string>(), users: new Set<string>() };
+      e.hosts.add(h.name);
+      e.users.add(k.user);
+      byFp.set(k.fingerprint, e);
+      const base = { user: k.user, fingerprint: k.fingerprint };
+      if (k.key_type === "ssh-rsa" && (k.bits ?? 0) < 2048) add("KEY_WEAK_RSA", h, { ...base, params: { bits: String(k.bits) } });
+      if (exp.size && !exp.has(k.fingerprint)) add("KEY_UNKNOWN", h, { ...base, params: { comment: k.comment } });
+      const age = k.last_used_ms === null ? null : Math.floor((NOW() - k.last_used_ms) / 86_400_000);
+      if (age !== null && age >= hygStale) add("KEY_STALE", h, { ...base, params: { days: String(age) } });
+    }
+  }
+  const shared = [...byFp].filter(([, v]) => v.users.size > 1).map(([fingerprint, v]) => ({ fingerprint, hosts: [...v.hosts], users: [...v.users] }));
+  const many = [...byFp].filter(([, v]) => v.hosts.size > 1).map(([fingerprint, v]) => ({ fingerprint, hosts: [...v.hosts], users: [...v.users] }));
+  for (const x of shared) add("KEY_SHARED_USERS", null, { fingerprint: x.fingerprint, params: { users: x.users.join(", "), hosts: x.hosts.join(", ") } });
+  for (const x of many) add("KEY_ON_MANY_HOSTS", null, { fingerprint: x.fingerprint, params: { count: String(x.hosts.length), hosts: x.hosts.join(", ") } });
+  const rank = ["critical", "high", "medium", "low", "info"];
+  findings.sort((a, b) => rank.indexOf(a.severity) - rank.indexOf(b.severity) || (a.host_name ?? "").localeCompare(b.host_name ?? ""));
+  const by_severity: Partial<Record<HygieneSeverity, number>> = {};
+  for (const f of findings) by_severity[f.severity] = (by_severity[f.severity] ?? 0) + 1;
+  return {
+    core: true,
+    scanning: false,
+    scannedAt: hygScannedAt,
+    staleDays: hygStale,
+    expected: hygExpected,
+    hosts,
+    report:
+      hygScannedAt === null
+        ? null
+        : { generated_ms: NOW(), hosts_total: hosts.length, hosts_scanned: hosts.filter((h) => !h.error).length, keys_total: keysTotal, unique_keys: byFp.size, expected_declared: exp.size > 0, stale_days: hygStale, by_severity, findings, on_many_hosts: many, shared_users: shared, truncated: false },
+  };
+}
+
 function posture(id: string): SecurityPosture {
   const k = Math.max(0, HOSTS.findIndex((h) => h.id === id));
   const weak = k === 2 || k === 5;
@@ -518,6 +623,17 @@ export async function demoRequest(method: string, url: string, body?: unknown): 
     if (method === "DELETE") monitors = monitors.filter((x) => x.id !== r![1]);
     else monitors = monitors.map((x) => (x.id === r![1] ? { ...x, ...(body as object) } : x));
     return { ok: true };
+  }
+  if (p === "/api/hygiene" && method === "GET") return hygieneView();
+  if (p === "/api/hygiene/scan" && method === "POST") {
+    hygScannedAt = NOW();
+    return hygieneView();
+  }
+  if (p === "/api/hygiene/expected" && method === "PUT") {
+    const b = body as { expected?: ExpectedKey[]; staleDays?: number };
+    hygExpected = b.expected ?? [];
+    if (b.staleDays) hygStale = b.staleDays;
+    return hygieneView();
   }
   if (p === "/api/dbs") return [];
   if (p === "/api/hosts/test") return { ok: true, output: "demo: SSH OK · Ubuntu 24.04" };

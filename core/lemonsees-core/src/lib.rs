@@ -15,6 +15,7 @@ pub mod fim;
 pub mod hash;
 pub mod ip;
 pub mod rules;
+pub mod ssh;
 pub mod time;
 
 /// Версія ядра (збігається з версією крейта).

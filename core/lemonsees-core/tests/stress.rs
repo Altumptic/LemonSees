@@ -139,3 +139,37 @@ fn fim_diff_is_consistent_on_random_snapshots() {
         assert!(counted <= r.changed);
     }
 }
+
+#[test]
+fn ssh_parsers_survive_mutated_key_files() {
+    use lemonsees_core::ssh::{judge, parse_host, HostEntry, JudgeInput, KeyFile, ParseInput};
+    const KEYS: &[&str] = &[
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOsaPnH+kDs2S8IZea60Y+gd2+FeoTvbpM+ECev87Q4g alice@laptop",
+        "from=\"10.0.0.0/8\",command=\"echo a b\",no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOsaPnH+kDs2S8IZea60Y+gd2+FeoTvbpM+ECev87Q4g x",
+        "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDPW7fodqxG5H2HDLpeq4YhvkOgUad3nxkxbSOlLG7OjRgFLxHhL/U+RrJ5INlM9SqrhHheDZnObyvKiUy5cY80= carol@ci",
+        "PermitRootLogin yes\nPasswordAuthentication=no\nMatch User x\n  PasswordAuthentication yes",
+    ];
+    let mut rng = Rng(0xABCD_EF01_2345_6789);
+    for _ in 0..400 {
+        let mut text = String::new();
+        for _ in 0..1 + rng.below(8) {
+            let k = rng.below(KEYS.len());
+            text.push_str(&mutate(&mut rng, KEYS[k]));
+            text.push('\n');
+        }
+        let source = ["file", "sshd -T", "unavailable", "x"][rng.below(4)];
+        let input = ParseInput {
+            sshd_text: text.clone(),
+            sshd_source: source.into(),
+            keys: vec![KeyFile { user: "u".into(), path: "/p".into(), text: text.clone(), unreadable: rng.below(10) == 0, truncated: false }],
+            oldest_line: mutate(&mut rng, SEEDS[0]),
+            now_ms: 1_793_780_101_000,
+            tz_offset_min: 0,
+            seed: rng.next(),
+        };
+        let host = parse_host(&input, &text);
+        assert!(host.keys.len() <= 20_000);
+        let r = judge(&JudgeInput { hosts: vec![HostEntry { id: "h".into(), name: "h".into(), error: None, host }], expected: vec![], stale_days: rng.below(400) as u32, now_ms: 1_793_780_101_000 });
+        assert!(r.keys_total >= r.unique_keys);
+    }
+}

@@ -48,7 +48,7 @@ jobs:
       - name: Run targets
         working-directory: core
         run: |
-          for t in auth rules time fim; do
+          for t in auth rules time fim ssh_keys ssh_judge; do
             cargo +nightly fuzz run "$t" -- -max_total_time=60 -rss_limit_mb=2048 -max_len=200000
           done
       - uses: actions/upload-artifact@v7

@@ -48,6 +48,9 @@ server; no data is sent to Altumptic.
 - **SOC analytics** — alert volume by severity, MTTA / MTTR, response-SLA gauge, handling funnel, Sankey incident flow,
   day×hour heatmap, half-year activity calendar, most affected hosts, analyst workload.
 - **MITRE ATT&CK** — incidents are mapped to tactics and techniques (keyword heuristic; Wazuh alerts keep Wazuh's IDs).
+- **SSH hygiene (beta)** — one page for the whole fleet: effective `sshd` settings, every key that can log in with its
+  SHA-256 fingerprint, when it was last used, duplicates, weak and unknown keys, and the change to make (shown,
+  never applied). Read-only. [Details and limits](docs/features/ssh-hygiene.md).
 - **File integrity (FIM)** — SHA-256 + mode/owner of `/etc/shadow`, `sudoers`, `sshd_config`, `authorized_keys`, cron,
   systemd units…; checked on every sweep (default 5 min); drift opens an incident.
 - **Detection rules** — your own regex + threshold + time window over journald or any log file, with MITRE technique,
