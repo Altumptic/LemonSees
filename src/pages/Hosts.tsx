@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useIntent } from "@/lib/intent";
+import { SshConfigImport } from "@/components/SshConfigImport";
 import { Cpu, HardDrive, MemoryStick, Server, Pencil, Trash2, Plug } from "lucide-react";
 import { api, useAppState } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -37,6 +38,7 @@ export default function Hosts() {
   const { t } = useI18n();
   const [editing, setEditing] = useState<HostState | null>(null);
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
   useIntent("new", () => setAdding(true));
 
   return (
@@ -45,7 +47,12 @@ export default function Hosts() {
         eyebrow={t("Флот")}
         title={t("Хости")}
         lede={t("Кожен сервер, доступний по SSH. Ключ або пароль — дані лишаються тільки на цьому ПК.")}
-        action={<PrimaryButton onClick={() => setAdding(true)}>{t("Додати хост")}</PrimaryButton>}
+        action={
+          <span className="flex flex-wrap gap-2">
+            <GhostButton onClick={() => setImporting(true)}>{t("Імпорт з ~/.ssh/config")}</GhostButton>
+            <PrimaryButton onClick={() => setAdding(true)}>{t("Додати хост")}</PrimaryButton>
+          </span>
+        }
       />
 
       <Panel eyebrow={`${hosts.length} ${t("серверів")}`} title={t("Інвентар флоту")}>
@@ -117,6 +124,8 @@ export default function Hosts() {
           </div>
         )}
       </Panel>
+
+      {importing && <SshConfigImport onClose={() => setImporting(false)} />}
 
       {(adding || editing) && (
         <HostForm

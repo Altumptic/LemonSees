@@ -44,6 +44,7 @@ is in [security/SECURITY-NOTES.md](../security/SECURITY-NOTES.md#3-secrets--data
 - The raw `authorized_keys` text is processed in memory and not stored. Only the parsed result is kept.
 - The audit log is retained for a configurable number of days (*Settings → retention*), then pruned.
 - UI preferences live in your browser's local storage and contain no secrets.
+- **Import from `~/.ssh/config`** reads that one file on the machine that runs LemonSees, only when you open the import dialog. It lists host names, addresses, users, ports and key *paths*; it checks that key files exist but never opens them. Nothing is sent anywhere, and nothing is stored until you choose to add a host.
 
 ## Where the data can go
 

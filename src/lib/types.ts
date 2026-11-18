@@ -79,6 +79,23 @@ export type HostInput = {
   tags?: string[];
 };
 
+/** Хост із ~/.ssh/config машини, де працює LemonSees (імпорт; див. server/sshconfig.js). */
+export type SshConfigEntry = {
+  alias: string;
+  host: string;
+  user: string;
+  userSource: "config" | "local";
+  port: number;
+  keyPath: string;
+  keySource: "config" | "default" | "none";
+  keyExists: boolean;
+  proxyJump: string;
+  ready: boolean;
+  /** Англійські причини, чому хост не можна імпортувати як є. */
+  reasons: string[];
+};
+export type SshConfigView = { path: string; found: boolean; entries: SshConfigEntry[]; skipped: number; warnings: string[] };
+
 /* ---------------- Бази даних ---------------- */
 
 export type DbType = string; // id рушія з реєстру engines.ts

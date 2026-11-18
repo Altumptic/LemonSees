@@ -72,7 +72,8 @@ WebSockets: `/ws/state` pushes host state to the UI (payload limit 64 KiB); `/ws
    crosses a threshold becomes an **incident**, deduplicated by a stable key.
 4. **Incidents** (`index.js`, `extensions.js`): stored locally, mapped to MITRE ATT&CK by keyword, optionally forwarded to
    the integrations you configured. A failing integration is recorded and never blocks the engine.
-5. **On-demand scans:** posture, vulnerabilities, compliance, processes, persistence, and SSH hygiene run when you ask.
+5. **Adding hosts:** by hand, or from `~/.ssh/config` (`sshconfig.js`: fixed path, read-only, key files only checked for existence). The chosen entries go through the normal add-host route and its validation.
+6. **On-demand scans:** posture, vulnerabilities, compliance, processes, persistence, and SSH hygiene run when you ask.
 
 All commands that run on hosts are fixed templates, read-only, and bounded (timeout and output cap). Values that reach a
 remote shell are quoted and validated (see [AGENTS.md](../AGENTS.md) invariants).

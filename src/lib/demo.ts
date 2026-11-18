@@ -17,6 +17,7 @@ import type {
   PersistenceReport,
   ProcessReport,
   SecurityPosture,
+  SshConfigView,
   SocConfig,
   ThreatReport,
   VulnReport,
@@ -290,6 +291,24 @@ function threats(): ThreatReport {
     suspects: [{ ip: attackers[3].ip, user: "deploy", method: "password", accepted_ms: NOW() - 3 * 3600_000, failures_before: 37 }],
     hourly: Array.from({ length: 48 }, (_, h) => Math.round(40 + 30 * Math.sin(h / 4) + ri(0, 25) + (h > 40 ? 60 : 0))),
     engine: "rust-wasm",
+  };
+}
+
+/* ---------------- Імпорт з ~/.ssh/config (демо) ---------------- */
+function sshConfigDemo(): SshConfigView {
+  const base = { userSource: "config" as const, keySource: "config" as const, keyExists: true, proxyJump: "", ready: true, reasons: [] as string[] };
+  return {
+    path: "~/.ssh/config",
+    found: true,
+    skipped: 2,
+    warnings: ["Include is not followed; only ~/.ssh/config itself is read."],
+    entries: [
+      { ...base, alias: "web-prod-03", host: "10.20.0.13", user: "deploy", port: 22, keyPath: "/home/analyst/.ssh/id_ed25519" },
+      { ...base, alias: "staging", host: "staging.example.org", user: "ubuntu", port: 2222, keyPath: "/home/analyst/.ssh/id_ed25519" },
+      { ...base, alias: "db-replica", host: "10.20.1.6", user: "postgres", port: 22, keyPath: "/home/analyst/.ssh/id_ed25519", proxyJump: "bastion" },
+      { ...base, alias: "legacy-gw", host: "198.51.100.20", user: "root", port: 22, keyPath: "/home/analyst/.ssh/id_rsa", ready: false, reasons: ["ProxyCommand is not supported"] },
+      { ...base, alias: "backup-nas", host: "nas.example.org", user: "backup", userSource: "local" as const, port: 22, keyPath: "", keySource: "none" as const, keyExists: false, ready: false, reasons: ["No key found: add IdentityFile or place a key in ~/.ssh"] },
+    ],
   };
 }
 
@@ -624,6 +643,7 @@ export async function demoRequest(method: string, url: string, body?: unknown): 
     else monitors = monitors.map((x) => (x.id === r![1] ? { ...x, ...(body as object) } : x));
     return { ok: true };
   }
+  if (p === "/api/ssh-config" && method === "GET") return sshConfigDemo();
   if (p === "/api/hygiene" && method === "GET") return hygieneView();
   if (p === "/api/hygiene/scan" && method === "POST") {
     hygScannedAt = NOW();
