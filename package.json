@@ -1,6 +1,6 @@
 {
   "name": "lemonsees",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "LemonSees by Altumptic — agentless SOC platform over SSH: SIEM, EDR, FIM, NDR, MITRE ATT&CK, SOAR, GRC, Wazuh/Datadog integrations, optional agents, proxy/Tor routing with kill switch and encrypted secrets. Web app or portable desktop app for Windows and Linux.",
   "author": {
     "name": "Altumptic",

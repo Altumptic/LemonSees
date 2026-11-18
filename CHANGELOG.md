@@ -1,7 +1,22 @@
 # Changelog
 
-## Unreleased
+## v3.3.1 — Terminal stability fix and dependency updates
 
+### Security
+- **The engine could be stopped by one oversized or malformed frame on the terminal WebSocket (`/ws/term`).** The socket had no
+  `error` handler, so Node treated the error as unhandled and exited, which stopped monitoring of every host. Reaching it
+  needs an authenticated session (or local access in local mode), so the impact is a denial of service, not data access.
+  It affects every earlier version. The terminal now lives in `server/terminal.js`, registers the handler before anything
+  else, and closes the shell on any socket error. Found while checking the `ws` update; covered by `test/terminal.test.js`
+  on real sockets (the test fails without the fix). Please upgrade.
+- A terminal shell that finished opening after the client had already gone is now closed instead of staying open on the host.
+
+### Dependencies
+- Runtime: `ws` 8.23, `mongodb` 7.9, `sql.js` 1.16, `lucide-react` 1.73.
+- Build: `electron` 45.3, `vite` 8.3.8, `@tailwindcss/vite` 4.3, `@vitejs/plugin-react` 6.3, `d3-geo` 3.1.2.
+- CI: `actions/download-artifact` 8, `actions/cache` 6, `sigstore/cosign-installer` 4.1.3, `github/codeql-action` 4.
+
+### Changed
 - `THIRD-PARTY-LICENSES.md` no longer lists versions, so a routine dependency bump (for example a Dependabot pull request)
   does not make the licence check fail. The file changes when a package is added or removed or a licence changes; the full
   texts shipped in releases still carry exact versions. A new package without a permissive licence still fails CI.
