@@ -25,6 +25,7 @@ PSB-B · version 3.1 · reviewed 2026-10-28
 | T10 | A hostile server forges the structure of scan output (for example a fake `authorized_keys` file that imitates another account) | Markers carry a one-time nonce per scan, so file contents cannot forge them; incomplete output is rejected; output is size-capped | ✅ tested |
 | T11 | Injection through exported reports (CSV formulas, Markdown links or images built from names a host controls) | CSV cells that start with a formula character are neutralised; Markdown special characters are escaped; key comments are masked by default | ✅ tested |
 | T12 | An SSH hygiene scan changes something on a server | All commands are fixed read-only templates; a test fails if a script gains a write, delete, kill, network or key-generation command | ✅ tested |
+| T13 | The host import is used to read arbitrary files or to expose private keys | The path is fixed to `~/.ssh/config` and cannot be chosen by the client; key files are only `stat`-ed, never read; size, line and entry limits; pattern matching without regular expressions; the route requires an authenticated session | ✅ tested |
 
 ## Non-goals — what LemonSees does **not** protect against
 

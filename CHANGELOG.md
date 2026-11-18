@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.4.0 — Import hosts from ~/.ssh/config
+
+### Added
+- **Import from `~/.ssh/config`.** A button on the Hosts page lists the hosts of that file, with address, user, port and key,
+  and adds the ones you pick through the normal add-host path. It follows OpenSSH rules (the first value wins, `Host *`
+  defaults, `!` negation, wildcards not listed as hosts) and **reports instead of importing silently** what it does not support:
+  `Include`, `Match`, `ProxyCommand`, `%`-substitutions, missing keys. Hosts already added are not added twice.
+  New route `GET /api/ssh-config` (authenticated). It reads a fixed path on the machine that runs the engine, only checks that
+  key files exist and never opens them, and is size- and line-limited. 16 tests.
+- **Polish and Chinese** translations of the SSH hygiene page and of the import dialog; two older strings that lacked
+  RU/PL/ZH translations were added.
+
+### Docs
+- Roadmap, privacy, security notes, threat model (T13), architecture and README describe the import and its limits.
+
 ## v3.3.1 — Terminal stability fix and dependency updates
 
 ### Security

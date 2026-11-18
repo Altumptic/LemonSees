@@ -33,6 +33,7 @@ import type {
   FimReport,
   HygieneView,
   ExpectedKey,
+  SshConfigView,
   NetworkConfig,
   SecurityStatus,
   Integration,
@@ -142,6 +143,9 @@ export const api = {
   history: (hostId: string) => req<{ history: MetricSample[] }>(`/api/hosts/${hostId}/history`),
   fim: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim`, { method: "POST" }),
   fimBaseline: (hostId: string) => req<FimReport>(`/api/hosts/${hostId}/fim-baseline`, { method: "POST" }),
+
+  // Імпорт хостів з ~/.ssh/config
+  sshConfig: () => req<SshConfigView>("/api/ssh-config"),
 
   // SSH-гігієна парку
   hygiene: () => req<HygieneView>("/api/hygiene"),

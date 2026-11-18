@@ -18,10 +18,10 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 | **M1 · Trustworthy core** | Analysis engine tested on synthetic data, fuzzed, fallback paths | Shipped |
 | **M2 · Real-world validation** | Run on real Linux servers from ≥5 distributions; publish redacted results | **Next** |
 | **M3 · Fleet hygiene** | SSH hygiene across the fleet: [design and status](features/ssh-hygiene.md) | **Shipped in v3.3.0 (beta)**; follow-ups below |
-| **M4 · Easy to adopt** | Auto-discovery of hosts, headless CLI, package managers | Planned |
+| **M4 · Easy to adopt** | Host import from `~/.ssh/config` (shipped in v3.4.0), headless CLI, package managers | In progress |
 | **M5 · Independent trust** | External security review; signed Windows and macOS builds | Considering |
 
-## Shipped (v3.2 and v3.3)
+## Shipped (v3.2 to v3.4)
 
 - **Rust → WebAssembly core** for the hot paths: SSH auth-log analysis (IPv4 and IPv6, three timestamp formats,
   suspicious logins, hourly histogram), linear-time rules with `group_by`, FIM diff with critical paths.
@@ -29,6 +29,8 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 - **Suspicious logins** and **48-hour activity chart** on the Threats page.
 - **Hardening:** argument-injection fixes, WebSocket payload limits, terminal limit, HTTP timeouts, SSH output cap,
   `no-store` API responses, global per-IP API limit, hash-chained audit log with a verification endpoint.
+- **Import from `~/.ssh/config`** (v3.4): a button on the Hosts page lists the hosts of the file on the machine that runs LemonSees, with user, port, address and key, and adds the ones you choose. Read-only; key contents are never opened.
+- **Polish and Chinese** translations of the SSH hygiene page and the import dialog.
 - **SSH hygiene** for the whole fleet (beta): effective sshd settings, key inventory with fingerprints, last use, expected keys, export. See [features/ssh-hygiene.md](features/ssh-hygiene.md).
 - **Fuzz targets** for the parsers (`core/fuzz`) and randomized robustness tests, both run in CI.
 - **Installers:** Windows installer, portable build and zip; Linux AppImage, `.deb` and tarball; macOS `.dmg`
@@ -62,7 +64,7 @@ It is a **beta feature that has not yet been validated on a real fleet**: see [M
 
 ## Planned (M4): easier to adopt
 
-- **Auto-discovery:** offer hosts from `~/.ssh/config` on first run, with a confirmation step.
+- **Import follow-ups:** offer the import on first run; map `ProxyJump` to a bastion host; follow `Include`; evaluate `Match` blocks.
 - **Headless CLI:** `lemonsees check <host>` for cron and CI, with JSON output and an exit code.
 - **Shared rule sets as files:** import and export rules as YAML; community rule sets in a git repository. No telemetry.
 - **Packages:** Homebrew cask (macOS), AUR (Arch), Docker Hub image. Winget after code signing (M5).
