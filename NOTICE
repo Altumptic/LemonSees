@@ -1,0 +1,22 @@
+LemonSees
+Copyright (c) 2026 Altumptic (https://altumptic.com) and LemonSees contributors
+
+This product is licensed under the MIT License. See the file LICENSE.
+
+This product bundles third-party software, each under its own licence:
+
+  * THIRD-PARTY-LICENSES.md lists every bundled npm package and Rust crate with its
+    licence identifier. It is generated and checked in CI.
+  * Release builds (installers and the web bundle) contain THIRD-PARTY-LICENSES.txt
+    with the full licence texts and copyright notices.
+
+Fonts: DM Sans, JetBrains Mono and Source Serif 4 are bundled unmodified through the
+@fontsource-variable packages under the SIL Open Font License, Version 1.1. Their
+copyright notices are in the licence file of each package, reproduced in
+THIRD-PARTY-LICENSES.txt.
+
+Desktop builds also include the notices of Electron and Chromium (LICENSE.electron.txt
+and LICENSES.chromium.html) next to the executable.
+
+The names "LemonSees" and "Altumptic" and the logos are not licensed under the MIT
+License. See docs/legal/TRADEMARKS.md.

@@ -83,7 +83,7 @@ jobs:
         run: |
           V=$(node -p "require('./package.json').version")
           mkdir -p out/LemonSees-$V-web
-          cp -r dist server package.json package-lock.json lemonsees.sh LemonSees.bat LICENSE README.md SECURITY.md out/LemonSees-$V-web/
+          cp -r dist server package.json package-lock.json lemonsees.sh LemonSees.bat LICENSE NOTICE THIRD-PARTY-LICENSES.md README.md SECURITY.md out/LemonSees-$V-web/
           tar -C out -czf LemonSees-$V-web.tar.gz LemonSees-$V-web
       - name: SBOM (CycloneDX, production dependencies)
         run: |

@@ -5,7 +5,13 @@ use lemonsees_core::ssh::{judge, parse_host, HostEntry, JudgeInput, KeyFile, Par
 // Вхід: перша половина — authorized_keys і sshd_config, друга — журнал `Accepted publickey`. Паніки бути не може.
 fuzz_target!(|data: &[u8]| {
     let text = String::from_utf8_lossy(data);
-    let (a, b) = text.split_at(text.len() / 2);
+    // Середина тексту мусить бути межею символа: `split_at` у середині багатобайтового символа (наприклад, U+FFFD від
+    // `from_utf8_lossy`) панікує. Саме це знайшов перший запуск у CI (вхід `0B C0`): помилка була в обгортці, не в ядрі.
+    let mut mid = text.len() / 2;
+    while !text.is_char_boundary(mid) {
+        mid -= 1;
+    }
+    let (a, b) = text.split_at(mid);
     let a = a.to_string();
     let input = ParseInput {
         sshd_text: a.clone(),

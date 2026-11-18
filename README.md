@@ -229,6 +229,11 @@ Design system: [DESIGN.md](DESIGN.md) · Changes: [CHANGELOG.md](CHANGELOG.md) �
 
 Community standards: [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## License
+## License and legal
 
 [MIT](LICENSE) © 2026 [Altumptic](https://altumptic.com) and LemonSees contributors.
+
+- Bundled third-party software and its licences: [NOTICE](NOTICE) and [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
+  No dependency is under a copyleft licence, and CI enforces that.
+- What data the software handles and where it can go: [docs/legal/PRIVACY.md](docs/legal/PRIVACY.md).
+- Use of the names and logos: [docs/legal/TRADEMARKS.md](docs/legal/TRADEMARKS.md).

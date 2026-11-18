@@ -15,7 +15,7 @@ While the project is in beta, a breaking change in a minor version is allowed on
 
 ## Before tagging
 
-1. `main` is green in CI (Rust, fuzz, Node tests, build, CodeQL).
+1. `main` is green in CI (Rust, fuzz, Node tests, build, CodeQL, licence check).
 2. `package.json` version is bumped; `npm run docs:map` and `npm run docs:check` pass.
 3. `CHANGELOG.md` has a section `## vX.Y.Z — <short title>` at the top. The release notes are generated from that section.
 4. New known limits are added to `docs/security/SECURITY-NOTES.md` if the release adds any.
@@ -35,6 +35,12 @@ Pushing a `v*` tag runs `.github/workflows/release.yml`:
 3. **web** — web tarball and the CycloneDX SBOM.
 4. **publish** — `SHA256SUMS`, Sigstore keyless signature of the checksums, GitHub build provenance attestation, and a
    GitHub release with the CHANGELOG section as notes.
+
+## Licences
+
+`npm run build` writes `dist/THIRD-PARTY-LICENSES.txt` (full texts), which ends up in every installer and in the web bundle.
+If a new dependency has an unknown or copyleft licence, the build and CI fail. After adding or updating dependencies run
+`npm run legal` and commit `THIRD-PARTY-LICENSES.md`.
 
 ## After the release
 

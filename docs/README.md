@@ -12,6 +12,7 @@ Start here. Pick the path that matches what you want to do.
 | [security/VERIFY.md](security/VERIFY.md) | How to verify a release: checksums, Sigstore, provenance, SBOM |
 | [security/THREAT-MODEL.md](security/THREAT-MODEL.md) | What LemonSees protects against, and what it does not |
 | [security/SECURITY-NOTES.md](security/SECURITY-NOTES.md) | Security design, data inventory, known limits and exceptions |
+| [legal/PRIVACY.md](legal/PRIVACY.md) | What data LemonSees handles and where it can go |
 
 ## I want to contribute
 
@@ -28,9 +29,19 @@ Start here. Pick the path that matches what you want to do.
 | Document | What it covers |
 |---|---|
 | [ROADMAP.md](ROADMAP.md) | Shipped, next, planned, considered, and out of scope |
-| [features/ssh-hygiene.md](features/ssh-hygiene.md) | Design of the next major feature |
+| [features/ssh-hygiene.md](features/ssh-hygiene.md) | SSH hygiene across the fleet: how it works, limits, HTTP API |
 | [PERFORMANCE.md](PERFORMANCE.md) | Benchmarks, method, and honest limits |
 | [../CHANGELOG.md](../CHANGELOG.md) | What changed in each release |
+
+## Legal, privacy and licences
+
+| Document | What it covers |
+|---|---|
+| [../LICENSE](../LICENSE) | The MIT License for LemonSees itself |
+| [../NOTICE](../NOTICE) | Copyright notice and pointers to bundled third-party software |
+| [../THIRD-PARTY-LICENSES.md](../THIRD-PARTY-LICENSES.md) | Every bundled npm package and Rust crate with its licence (generated, checked in CI) |
+| [legal/PRIVACY.md](legal/PRIVACY.md) | What data LemonSees handles, where it goes, and what you control |
+| [legal/TRADEMARKS.md](legal/TRADEMARKS.md) | Use of the names and logos |
 
 ## I maintain or release LemonSees
 

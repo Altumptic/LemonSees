@@ -22,11 +22,15 @@ PSB-B · version 3.1 · reviewed 2026-10-28
 | T7 | Forged agent data | Per-agent 192-bit token, constant-time compare, strict sample sanitisation | ✅ tested |
 | T8 | Tampered release download | SHA256SUMS signed with Sigstore (keyless, GitHub OIDC) + GitHub build provenance + SBOM | ✅ from v3.1.0 |
 | T9 | Vulnerable dependency | `npm audit` gate (critical blocks), Dependabot, lockfile | ✅ |
+| T10 | A hostile server forges the structure of scan output (for example a fake `authorized_keys` file that imitates another account) | Markers carry a one-time nonce per scan, so file contents cannot forge them; incomplete output is rejected; output is size-capped | ✅ tested |
+| T11 | Injection through exported reports (CSV formulas, Markdown links or images built from names a host controls) | CSV cells that start with a formula character are neutralised; Markdown special characters are escaped; key comments are masked by default | ✅ tested |
+| T12 | An SSH hygiene scan changes something on a server | All commands are fixed read-only templates; a test fails if a script gains a write, delete, kill, network or key-generation command | ✅ tested |
 
 ## Non-goals — what LemonSees does **not** protect against
 
 * A **compromised analyst machine** (malware, keylogger, admin access) — it can read decrypted secrets in memory.
 * A **compromised target server** hiding its activity from read-only commands (rootkits can lie to `ps`, `ss`, `sha256sum`).
+  The same applies to SSH hygiene: a server that is controlled by an attacker can hide keys or report false settings.
 * Anonymity against a global adversary — proxy/Tor routing hides your IP from servers and services, it is not a guarantee
   of anonymity. We do not claim “100 % anonymous”.
 * Multi-user separation — web mode has one shared token; anyone with it has full access.
