@@ -38,6 +38,8 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `docs/TESTING.md` | Help us test LemonSees (beta) |
 | `docs/VALIDATION.md` | Validation on real servers |
 | `docs/features/ssh-hygiene.md` | SSH hygiene across the fleet |
+| `docs/legal/PRIVACY.md` | Privacy |
+| `docs/legal/TRADEMARKS.md` | Names and logos |
 | `docs/security/RELEASE-NOTES-FOOTER.md` | ## Verify this release |
 | `docs/security/SECURITY-NOTES.md` | LemonSees — Security design notes |
 | `docs/security/THREAT-MODEL.md` | LemonSees — Threat model (short) |
@@ -46,6 +48,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `package.json` |  |
 | `scripts/build-core.mjs` | Збірка Rust-ядра у WebAssembly → server/core/lemonsees_core.wasm (+ .sha256). |
 | `scripts/gen-repo-map.mjs` | Генерує docs/ai/REPO_MAP.md: файл → однорядковий опис (перший коментар/doc-рядок) + розмір. |
+| `scripts/gen-third-party.mjs` | Перелік сторонніх ліцензій. |
 | `scripts/promo-overlay.js` | Оверлей «режисера» для промо-ролику LemonSees by Altumptic. |
 | `scripts/promo.cjs` | LemonSees by Altumptic — промо-ролик із ЖИВОГО застосунку (демо-режим), без монтажу картинок. |
 | `scripts/render.cjs` | LemonSees by Altumptic — генератор графіки через офскрін-рендер Electron. |

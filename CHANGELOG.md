@@ -13,6 +13,11 @@
   `ssh-keygen`), two new WebAssembly operations, a randomized robustness test and two more fuzz targets (`ssh_keys`,
   `ssh_judge`) run in CI.
 - New page translated to English and Russian; Polish and Chinese fall back to English until translated.
+- **Legal and licences.** `NOTICE`; `THIRD-PARTY-LICENSES.md`, generated from `package-lock.json` and `cargo metadata`
+  (`npm run legal`); release builds now ship the **full licence texts** (`THIRD-PARTY-LICENSES.txt`) inside the installers
+  and the web bundle, together with `LICENSE` and `NOTICE`. CI fails on an out-of-date list and on any unknown or copyleft
+  licence in the production dependencies. New: `docs/legal/PRIVACY.md` (what data is handled and where it can go) and
+  `docs/legal/TRADEMARKS.md` (use of the names and logos).
 
 ### Changed
 - Security contact: reports now go through **GitHub private vulnerability reporting**. The personal mailbox and messenger
@@ -21,6 +26,9 @@
   status. New: documentation index (`docs/README.md`), development guide, release process, validation page (no results
   yet), testing guide for real-server runs, and the design of the next feature (`docs/features/ssh-hygiene.md`).
 - Roadmap restructured into milestones with explicit statuses; "out of scope" is listed in full.
+- `docs/ARCHITECTURE.md` rewritten: components, process model, request path, data stores, trust boundaries, failure
+  modes, design decisions and extension points. The threat model gains three SSH-hygiene threats (forged output markers,
+  report injection, a scan that changes a server). `CONTRIBUTING.md` states the contribution licence and dependency policy.
 
 ### Added
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue forms (bug report, feature request), pull request template, and
@@ -33,6 +41,8 @@
 - Mongo console filters and sort specifications refuse server-side JavaScript operators (`$where`, `$function`,
   `$accumulator`) at any depth.
 - Regression tests for each fix in `test/hardening.test.js`.
+- The first CI fuzz run found a panic in the **fuzz harness** for `ssh_keys` (splitting a string inside a multi-byte
+  character), not in the core. The harness is fixed and the input is kept as a regression test.
 
 ## v3.2.1 — Windows installer fix
 

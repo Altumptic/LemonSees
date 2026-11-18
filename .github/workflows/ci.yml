@@ -25,6 +25,9 @@ jobs:
             ~/.cargo/registry
             core/target
           key: cargo-${{ hashFiles('core/Cargo.lock') }}
+      - name: Third-party licence list is current (and no copyleft or unknown licence)
+        working-directory: .
+        run: node scripts/gen-third-party.mjs --check
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked

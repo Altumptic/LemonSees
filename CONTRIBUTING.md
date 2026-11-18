@@ -59,7 +59,10 @@ Explain the *why* in the body when it is not obvious.
 
 ## Licensing of contributions
 
-By contributing you agree that your contribution is licensed under the project's license (see [LICENSE](LICENSE)).
+There is no CLA and no sign-off requirement. By opening a pull request you confirm that you wrote the change or have the
+right to submit it, and that it is licensed under the project's license (see [LICENSE](LICENSE)). Do not copy code from
+projects whose licence is incompatible with MIT. New dependencies must have a permissive licence: `npm run legal:check`
+fails the build on an unknown or copyleft licence (GPL, LGPL, AGPL, MPL and similar).
 
 ## Code of conduct
 

@@ -173,3 +173,30 @@ fn ssh_parsers_survive_mutated_key_files() {
         assert!(r.keys_total >= r.unique_keys);
     }
 }
+
+/// Вхід, на якому перший запуск cargo-fuzz у CI впав (байти `0B C0`): `from_utf8_lossy` дає багатобайтовий U+FFFD.
+/// Падала обгортка фаззера, а не ядро; цей тест фіксує, що ядро на такому вході працює, у т.ч. при поділі по межі символа.
+#[test]
+fn ssh_parsers_handle_replacement_characters() {
+    use lemonsees_core::ssh::{judge, parse_host, HostEntry, JudgeInput, KeyFile, ParseInput};
+    let text = String::from_utf8_lossy(&[0x0b, 0xc0]).into_owned();
+    assert_eq!(text.len(), 4, "U+FFFD takes three bytes");
+    for mid in 0..=text.len() {
+        if !text.is_char_boundary(mid) {
+            continue;
+        }
+        let (a, b) = text.split_at(mid);
+        let input = ParseInput {
+            sshd_text: a.into(),
+            sshd_source: "file".into(),
+            keys: vec![KeyFile { user: "u".into(), path: "/p".into(), text: a.into(), unreadable: false, truncated: false }],
+            oldest_line: b.into(),
+            now_ms: 1_793_780_101_000,
+            tz_offset_min: 0,
+            seed: 1,
+        };
+        let host = parse_host(&input, b);
+        let r = judge(&JudgeInput { hosts: vec![HostEntry { id: "h".into(), name: "h".into(), error: None, host }], expected: vec![], stale_days: 0, now_ms: 1_793_780_101_000 });
+        assert!(r.hosts_scanned <= r.hosts_total);
+    }
+}
