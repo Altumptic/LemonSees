@@ -9,6 +9,7 @@
   It affects every earlier version. The terminal now lives in `server/terminal.js`, registers the handler before anything
   else, and closes the shell on any socket error. Found while checking the `ws` update; covered by `test/terminal.test.js`
   on real sockets (the test fails without the fix). Please upgrade.
+  Advisory: [GHSA-9wg3-6q3h-7m9c](https://github.com/Altumptic/LemonSees/security/advisories/GHSA-9wg3-6q3h-7m9c) (medium, CVSS 6.5).
 - A terminal shell that finished opening after the client had already gone is now closed instead of staying open on the host.
 
 ### Dependencies
