@@ -233,10 +233,11 @@ export default function SettingsPage() {
         {/* SOC */}
         <Panel title={<Title icon={ShieldAlert}>{t("SOC-двигун")}</Title>} className="xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Toggle label={t("Автоінциденти")} desc={t("Брутфорс SSH і зміни критичних файлів (FIM) стають інцидентами автоматично.")} on={soc.autoIncidents} onChange={(v) => updateSoc({ autoIncidents: v })} />
+            <Toggle label={t("Автоінциденти")} desc={t("Брутфорс SSH, підозрілі входи та зміни критичних файлів (FIM) стають інцидентами автоматично.")} on={soc.autoIncidents} onChange={(v) => updateSoc({ autoIncidents: v })} />
             <Toggle label={t("Сповіщення про даунтайм")} desc={t("Десктоп-сповіщення, коли монітор сайту падає чи відновлюється.")} on={soc.notifyDowntime !== false} onChange={(v) => updateSoc({ notifyDowntime: v })} />
             <Toggle label={t("Гео-IP збагачення (opt-in)")} desc={t("Країна та провайдер атакуючих. Надсилає лише публічні IP атакуючих у ipwho.is по HTTPS (через проксі, якщо налаштовано). За замовчуванням вимкнено.")} on={settings.geoip} onChange={(v) => set({ geoip: v })} />
             <Slider label={t("Поріг брутфорсу (за 24 год)")} desc={t("Скільки невдалих логінів запускає інцидент.")} min={50} max={5000} step={50} value={soc.bruteThreshold} onChange={(v) => updateSoc({ bruteThreshold: v })} />
+            <Slider label={t("Поріг підозрілого входу")} desc={t("Скільки невдалих спроб з однієї адреси перед успішним входом створює інцидент. Менше — чутливіше, але більше хибних тривог (наприклад, спільна адреса офісу).")} min={3} max={100} step={1} value={soc.suspectThreshold ?? 10} unit={t("спроб")} onChange={(v) => updateSoc({ suspectThreshold: v })} />
             <Slider label={t("Перевірка загроз")} desc={t("Як часто двигун сканує журнали хостів.")} min={1} max={60} step={1} value={soc.sweepMinutes ?? 5} unit={t("хв")} onChange={(v) => updateSoc({ sweepMinutes: v })} />
             <Slider label={t("Зберігати аудит")} desc={t("Старіші записи журналу дій видаляються.")} min={7} max={730} step={7} value={soc.retentionDays ?? 90} unit={t("днів")} onChange={(v) => updateSoc({ retentionDays: v })} />
           </div>

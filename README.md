@@ -57,7 +57,7 @@ server; no data is sent to Altumptic.
   systemd units…; checked on every sweep (default 5 min); drift opens an incident.
 - **Detection rules** — your own regex + threshold + time window over journald or any log file, with MITRE technique,
   severity and host scope; templates and a live *test on host*.
-- **Threat intel** — brute-force sources on a world map (geo-IP is opt-in), targeted usernames, IP investigation.
+- **Threat intel** — brute-force sources on a world map (geo-IP is opt-in), targeted usernames, IP investigation. A successful login after a run of failures from the same address raises an incident and a notification.
 - **EDR / NDR** — processes, persistence, posture with a hardening radar, configuration vulnerabilities with
   remediation, live traffic and sockets.
 - **SOAR & GRC** — incident register with timeline, auto-incidents, playbooks; CIS / NIST / ISO 27001 / GDPR control

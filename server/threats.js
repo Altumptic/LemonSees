@@ -2,9 +2,11 @@
 // Один прохід awk агрегує топ IP атакуючих, цільові логіни та успішні входи.
 import { geoLookup } from "./geoip.js";
 import { core } from "./core/index.js";
+import { loadSoc } from "./config.js";
 
+// Запасний шлях без ядра. Як і у rawScript, джерело одне (journald, інакше файли), щоб не рахувати подію двічі.
 const SCAN = String.raw`LANG=C
-( timeout 15 journalctl _COMM=sshd --since "48 hours ago" --no-pager 2>/dev/null; cat /var/log/auth.log /var/log/secure 2>/dev/null ) | awk '
+{ J=$(timeout 15 journalctl _COMM=sshd --since "48 hours ago" --no-pager 2>/dev/null); if [ -n "$J" ]; then printf '%s\n' "$J"; else cat /var/log/auth.log /var/log/secure 2>/dev/null; fi; } | awk '
 /Failed password|authentication failure|Invalid user/ { if (match($0, /from [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) { ip=substr($0,RSTART+5,RLENGTH-5); fip[ip]++; tot++ } }
 /Invalid user/ { if (match($0, /Invalid user [A-Za-z0-9._-]+/)) { u=substr($0,RSTART+13,RLENGTH-13); usr[u]++ } }
 /Accepted / { if (match($0, /from [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) { a=substr($0,RSTART+5,RLENGTH-5); acc[a]++ } }
@@ -43,10 +45,27 @@ function pairs(lines = [], limit = 100) {
     .slice(0, limit);
 }
 
-// Сирі рядки sshd за 48 год (відфільтровані на хості, ≤ 400k рядків) + годинник і пояс СЕРВЕРА — аналіз виконує Rust-ядро.
-const RAW = String.raw`LANG=C
-echo "@@NOW@@ $(date +%s) $(date +%z)"
-( timeout 20 journalctl _COMM=sshd --since "48 hours ago" --no-pager -o short-iso 2>/dev/null; cat /var/log/auth.log /var/log/secure 2>/dev/null ) | grep -aE 'sshd.*(Failed |Invalid user |Accepted |authentication failure)' | tail -n 400000`;
+const AUTH_PATTERN = "sshd.*(Failed |Invalid user |Accepted |authentication failure)";
+
+/**
+ * Сценарій збору рядків sshd за `hours` годин + годинник і пояс СЕРВЕРА (аналіз виконує Rust-ядро).
+ *
+ * Джерело ОДНЕ: journald, а якщо він порожній, то файли журналу. Раніше брались обидва, і на хостах із rsyslog
+ * (Debian, Ubuntu) кожна подія потрапляла в обидва джерела й рахувалась двічі: завищені лічильники атак і хибні
+ * «підозрілі входи». Фільтр і ліміт рядків діють на хості, ще до того як дані потраплять у змінну.
+ * `files` і `journal` перевизначаються лише в тестах.
+ */
+export function rawScript({ hours = 48, maxLines = 400000, files = "/var/log/auth.log /var/log/secure", journal } = {}) {
+  const h = Math.max(1, Math.min(168, Math.floor(Number(hours)) || 48));
+  const n = Math.max(1000, Math.min(1_000_000, Math.floor(Number(maxLines)) || 400000));
+  const j = journal ?? `timeout 20 journalctl _COMM=sshd --since "${h} hours ago" --no-pager -o short-iso 2>/dev/null`;
+  return [
+    "LANG=C",
+    'echo "@@NOW@@ $(date +%s) $(date +%z)"',
+    `J=$( ${j} | grep -aE '${AUTH_PATTERN}' | tail -n ${n} )`,
+    `if [ -n "$J" ]; then printf '%s\\n' "$J"; else tail -q -n ${n} ${files} 2>/dev/null | grep -aE '${AUTH_PATTERN}'; fi`,
+  ].join("\n");
+}
 
 /** "+0200" → хвилини. */
 function tzMinutes(z) {
@@ -54,13 +73,32 @@ function tzMinutes(z) {
   return m ? (m[1] === "-" ? -1 : 1) * (+m[2] * 60 + +m[3]) : 0;
 }
 
-async function collectViaCore(conn) {
-  const { stdout, truncated } = await conn.exec(RAW, { timeout: 60000, maxBytes: 64 * 1024 * 1024 });
+/** Розбір виводу rawScript: час сервера, пояс і текст журналу. */
+export function parseRaw(stdout) {
   const nl = stdout.indexOf("\n");
   const head = /^@@NOW@@ (\d+) ([+-]\d{4})/.exec(stdout.slice(0, nl < 0 ? 0 : nl));
-  const nowMs = head ? +head[1] * 1000 : Date.now();
-  const rep = core.auth(nl < 0 ? "" : stdout.slice(nl + 1), { now_ms: nowMs, tz_offset_min: tzMinutes(head?.[2]), window_hours: 48 });
+  return { nowMs: head ? +head[1] * 1000 : Date.now(), tz: tzMinutes(head?.[2]), text: nl < 0 ? "" : stdout.slice(nl + 1) };
+}
+
+/** Забирає журнал і аналізує ядром: { rep, truncated } або null, якщо ядро недоступне чи відхилило дані. */
+async function analyzeAuthLog(conn, { hours = 48, maxLines = 400000, timeout = 60000, maxBytes = 64 * 1024 * 1024 } = {}) {
+  if (!core.available()) return null;
+  const { stdout, truncated } = await conn.exec(rawScript({ hours, maxLines }), { timeout, maxBytes });
+  const { nowMs, tz, text } = parseRaw(stdout);
+  // Поріг «підозрілого входу» один для сторінки загроз і для планових сповіщень (Налаштування → SOC)
+  const rep = core.auth(text, { now_ms: nowMs, tz_offset_min: tz, window_hours: hours, suspect_threshold: loadSoc().suspectThreshold });
   return rep ? { rep, truncated: !!truncated } : null;
+}
+
+const collectViaCore = (conn) => analyzeAuthLog(conn);
+
+/**
+ * Легка перевірка для планових циклів: лише останні години, до 50k рядків, без геолокації.
+ * Повертає { suspects, truncated } або null (ядро недоступне). Помилки хоста не кидаються.
+ */
+export async function scanSuspects(conn, { hours = 3 } = {}) {
+  const r = await analyzeAuthLog(conn, { hours, maxLines: 50000, timeout: 30000, maxBytes: 8 * 1024 * 1024 }).catch(() => null);
+  return r ? { suspects: r.rep.suspects, truncated: r.truncated || !!r.rep.truncated } : null;
 }
 
 export async function collectThreats(conn, { geo = true } = {}) {

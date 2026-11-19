@@ -120,6 +120,7 @@ All of the above honour the proxy / Tor route and the kill switch.
 * **EX-003:** Windows builds are **not Authenticode-signed**; verify via SHA256SUMS + Sigstore signature + build
   attestation. Expires: when an Altumptic code-signing certificate is available.
 * **SSH hygiene is a beta feature, not yet validated on a real fleet.** It runs read-only commands (some through `sudo -n` when that works without a password), evaluates only the global `sshd` scope, and covers only the default `authorized_keys` files. See [features/ssh-hygiene.md](../features/ssh-hygiene.md#known-limits).
+* **Suspicious-login alerts count failures per address, not per person.** A shared (NAT) address or automation with wrong credentials can cause a false alarm. The threshold is configurable (default 10), internal addresses and key logins rank lower, and there is no allow-list yet. Alerts need the Rust core.
 * **Host import reads `~/.ssh/config` of the machine that runs the engine**, not of the analyst's own computer when the web UI is used remotely. The path is fixed, key files are only checked for existence, and the file is size- and line-limited. `Include`, `Match`, `ProxyCommand` and `%`-token substitutions are not supported and are reported instead of being imported silently.
 * Targets must be **Linux** with a POSIX shell; Windows/macOS endpoints are not monitored.
 * FIM is **periodic** (every sweep, default 5 min), not real-time (no inotify/auditd agent).

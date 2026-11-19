@@ -136,6 +136,8 @@ pub struct Suspect {
     pub accepted_ms: Option<i64>,
     /// Скільки спроб було до успіху.
     pub failures_before: u32,
+    /// Адреса внутрішня (RFC 1918, loopback, link-local, CGNAT, ULA): впливає на серйозність.
+    pub private: bool,
 }
 
 /// Підсумок аналізу.
@@ -275,7 +277,14 @@ impl State {
     fn accepted(&mut self, ip: &str, user: &str, method: &str, ts: Option<i64>) {
         let before = self.ips.get(ip).map_or(0, IpStat::attempts);
         if before >= self.o.suspect_threshold && self.suspects.len() < MAX_SUSPECTS && !self.suspects.iter().any(|s| s.ip == ip && s.user == user) {
-            self.suspects.push(Suspect { ip: ip.to_string(), user: label(user).to_string(), method: method.to_string(), accepted_ms: ts, failures_before: before });
+            self.suspects.push(Suspect {
+                ip: ip.to_string(),
+                user: label(user).to_string(),
+                method: method.to_string(),
+                accepted_ms: ts,
+                failures_before: before,
+                private: ip::parse_ip(ip).is_some_and(|a| ip::is_private(&a)),
+            });
         }
         if !self.acc.contains_key(ip) && self.acc.len() >= self.o.max_ips {
             self.r.overflow += 1;
@@ -458,10 +467,39 @@ mod tests {
         let s = &r.suspects[0];
         assert_eq!((s.ip.as_str(), s.user.as_str(), s.method.as_str()), ("203.0.113.9", "root", "password"));
         assert!(s.failures_before >= 5);
+        assert!(!s.private, "203.0.113.9 is a public (documentation) address");
         // легітимний вхід з внутрішньої адреси не підозрілий
         assert!(r.accepted.iter().any(|a| a.ip == "10.0.0.5" && a.private));
         // рядок не від sshd ігнорується
         assert!(r.accepted.iter().all(|a| a.ip != "1.2.3.4"));
+    }
+
+    fn failures_then_success(ip: &str, n: usize) -> String {
+        let mut log = String::new();
+        for i in 0..n {
+            log.push_str(&format!("2026-11-04T10:0{i}:00+0200 srv sshd[{i}]: Failed password for root from {ip} port 4000{i} ssh2\n"));
+        }
+        log.push_str(&format!("2026-11-04T10:09:00+0200 srv sshd[9]: Accepted password for root from {ip} port 40010 ssh2\n"));
+        log
+    }
+
+    #[test]
+    fn suspect_from_a_private_address_is_marked_private() {
+        let r = analyze(&failures_then_success("10.0.0.9", 6), &opts());
+        assert_eq!(r.suspects.len(), 1);
+        assert!(r.suspects[0].private);
+        let public = analyze(&failures_then_success("198.51.100.9", 6), &opts());
+        assert!(!public.suspects[0].private);
+    }
+
+    #[test]
+    fn suspect_threshold_is_configurable() {
+        let log = failures_then_success("198.51.100.9", 6);
+        assert_eq!(analyze(&log, &opts()).suspects.len(), 1, "default threshold is 5");
+        let strict = AuthOpts { suspect_threshold: 10, ..opts() };
+        assert_eq!(analyze(&log, &strict).suspects.len(), 0, "6 failures stay below a threshold of 10");
+        let lax = AuthOpts { suspect_threshold: 3, ..opts() };
+        assert_eq!(analyze(&log, &lax).suspects.len(), 1);
     }
 
     #[test]

@@ -74,6 +74,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `server/security.js` | Збір постури безпеки хоста по SSH (агентлес). Один exec на запит. |
 | `server/ssh.js` | SSH-пул: одне тривале з'єднання на хост (multiplexing), |
 | `server/sshconfig.js` | Імпорт хостів з ~/.ssh/config (лише читання, лише на запит аналітика). |
+| `server/suspects.js` | Автоматичні інциденти про «підозрілий вхід»: успішний вхід з адреси, яка перед тим багато разів невдало намагалась. |
 | `server/terminal.js` | Інтерактивний термінал (/ws/term): міст між WebSocket і SSH-shell. |
 | `server/threats.js` | Threat intelligence: аналіз auth.log / journald на предмет SSH-атак. |
 | `server/tls.js` | HTTPS для веб-режиму: власний сертифікат (LEMONSEES_TLS_CERT / LEMONSEES_TLS_KEY) |
@@ -143,5 +144,6 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `test/hygiene.test.js` | SSH-гігієна: серверна частина (docs/features/ssh-hygiene.md). Тести ядра, що потребують .wasm, пропускаються без нього. |
 | `test/security.test.js` | Негативні тести безпеки (PSB §7): fail-closed, цілісність шифрування, Host/Origin, розбір недовіреного вводу. |
 | `test/sshconfig.test.js` | Імпорт з ~/.ssh/config: семантика OpenSSH, безпека читання, стійкість до сміття. |
+| `test/suspects.test.js` | Підозрілі входи: серйозність, дедуплікація, збір журналу (одне джерело), наскрізно через ядро. |
 | `test/terminal.test.js` | Термінал (/ws/term): завеликий кадр чи порушення протоколу не повинні зупиняти двигун. |
 | `test/tls.test.js` | HTTPS-режим: самопідписаний сертифікат має бути SHA-256 / RSA-2048, з SAN і чесним терміном дії (PSB §2.1). |

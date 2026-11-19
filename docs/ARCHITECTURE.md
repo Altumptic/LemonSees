@@ -68,7 +68,7 @@ WebSockets: `/ws/state` pushes host state to the UI (payload limit 64 KiB); `/ws
    It can go through a SOCKS5/Tor/HTTP proxy or a bastion. With the **kill switch** on and a proxy configured but down,
    connections fail instead of going out directly. Host keys are pinned on first use; a changed key blocks the host.
 2. **Metrics** (`collector.js`): one command per cycle (default every 5 seconds) returns CPU, memory, disk, load and so on.
-3. **Sweeps** (default every 5 minutes, configurable): threat analysis, custom rules, file integrity. A finding that
+3. **Sweeps** (default every 5 minutes, configurable): the SSH brute-force counter, a light check of the last 3 hours for **suspicious logins** (a success after a run of failures from the same address; `suspects.js`), custom rules, file integrity. A finding that
    crosses a threshold becomes an **incident**, deduplicated by a stable key.
 4. **Incidents** (`index.js`, `extensions.js`): stored locally, mapped to MITRE ATT&CK by keyword, optionally forwarded to
    the integrations you configured. A failing integration is recorded and never blocks the engine.

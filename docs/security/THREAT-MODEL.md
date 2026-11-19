@@ -26,6 +26,7 @@ PSB-B · version 3.1 · reviewed 2026-10-28
 | T11 | Injection through exported reports (CSV formulas, Markdown links or images built from names a host controls) | CSV cells that start with a formula character are neutralised; Markdown special characters are escaped; key comments are masked by default | ✅ tested |
 | T12 | An SSH hygiene scan changes something on a server | All commands are fixed read-only templates; a test fails if a script gains a write, delete, kill, network or key-generation command | ✅ tested |
 | T13 | The host import is used to read arbitrary files or to expose private keys | The path is fixed to `~/.ssh/config` and cannot be chosen by the client; key files are only `stat`-ed, never read; size, line and entry limits; pattern matching without regular expressions; the route requires an authenticated session | ✅ tested |
+| T14 | A hostile log injects control characters, escape sequences or oversized names into incident titles and notifications | Names are stripped of control characters and clipped before they reach an incident; React escapes them in the UI; one host can raise at most 20 suspicious-login incidents per sweep | ✅ tested |
 
 ## Non-goals — what LemonSees does **not** protect against
 

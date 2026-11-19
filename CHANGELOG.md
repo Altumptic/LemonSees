@@ -1,5 +1,33 @@
 # Changelog
 
+## v3.5.0 — Alerts for suspicious logins
+
+### Added
+- **Automatic incidents for suspicious logins.** A successful SSH login from an address that had failed many times just before
+  now raises an incident and goes through your notifications (Slack, Telegram, webhooks and the rest), like any other incident.
+  Until now this was only visible when the Threats page was open. Severity depends on the address and the method:
+  public address with a password → critical; public with a key → high; internal with a password → medium; internal with a key →
+  low. A light check of the last 3 hours runs on every sweep (default every 5 minutes). One incident per host, address and user;
+  the same login is not raised again for 24 hours, even after the incident is closed. Names from the log are cleaned and clipped.
+- **Setting: suspicious login threshold** (*Settings → SOC*, default **10**, range 3–100): how many failed attempts from one
+  address before a success counts. The Threats page uses the same value.
+- The suspicious-login record now says whether the address is internal.
+
+### Fixed
+- **Attempts were counted twice on hosts that have both journald and an rsyslog `auth.log`** (the default on Debian and Ubuntu):
+  the log collection read both sources, and each event is in both. Attack counts on the Threats page were doubled there, and
+  the new alert would have fired on half as many real failures. Collection now uses one source: journald, or the log files when
+  journald has nothing. Verified with a negative control (the old behaviour gives 12 for 6 real attempts). The fallback
+  without the Rust core is fixed the same way. (The brute-force *incident* counter was not affected: it already took the larger
+  of the two counts.)
+
+### Known limits
+- The threshold counts failures **per address, not per person**. A shared office (NAT) address with several mistyped passwords,
+  or automation with wrong credentials, can raise a false alarm; that is why the default is 10 and why internal addresses and
+  key logins rank lower. There is no allow-list yet.
+- Needs the Rust core. Without it there is no suspicious-login incident, and the Threats page shows no such list (it does not explain why).
+- Alerts on SSH hygiene changes (a new key, a setting that got worse) are not part of this release; hygiene is still scanned on demand.
+
 ## v3.4.0 — Import hosts from ~/.ssh/config
 
 ### Added

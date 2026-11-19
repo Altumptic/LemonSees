@@ -3,6 +3,10 @@
 import { useSettings, type Lang } from "./settings";
 
 const EN: Record<string, string> = {
+  "Брутфорс SSH, підозрілі входи та зміни критичних файлів (FIM) стають інцидентами автоматично.": "SSH brute force, suspicious logins and critical file changes (FIM) become incidents automatically.",
+  "Поріг підозрілого входу": "Suspicious login threshold",
+  "Скільки невдалих спроб з однієї адреси перед успішним входом створює інцидент. Менше — чутливіше, але більше хибних тривог (наприклад, спільна адреса офісу).": "How many failed attempts from one address before a successful login create an incident. Lower is more sensitive but gives more false alarms (for example a shared office address).",
+  "спроб": "attempts",
   "Імпорт з ~/.ssh/config": "Import from ~/.ssh/config",
   "Хости з файлу ~/.ssh/config на машині, де працює LemonSees. Читається лише сам файл: вміст ключів не відкривається, нічого не надсилається.": "Hosts from the ~/.ssh/config file on the machine that runs LemonSees. Only the file itself is read: key contents are never opened and nothing is sent.",
   "Файл ~/.ssh/config не знайдено.": "The ~/.ssh/config file was not found.",
@@ -852,7 +856,6 @@ const EN: Record<string, string> = {
   "Бокова панель з підписами (Ctrl B).": "Sidebar with labels (Ctrl B).",
   "Браузер ще не дозволив сповіщення.": "The browser hasn't allowed notifications yet.",
   "Брутфорс": "Brute force",
-  "Брутфорс SSH і зміни критичних файлів (FIM) стають інцидентами автоматично.": "SSH brute force and critical file changes (FIM) become incidents automatically.",
   "Веб": "Web",
   "Вигляд, поведінка й параметри SOC-двигуна. Налаштування інтерфейсу зберігаються на цьому пристрої, параметри SOC — у двигуні.": "Appearance, behaviour and SOC engine parameters. Interface settings are stored on this device, SOC parameters in the engine.",
   "Вийти": "Sign out",
@@ -1267,6 +1270,10 @@ const EN: Record<string, string> = {
 };
 
 const RU: Record<string, string> = {
+  "Брутфорс SSH, підозрілі входи та зміни критичних файлів (FIM) стають інцидентами автоматично.": "Брутфорс SSH, подозрительные входы и изменения критичных файлов (FIM) автоматически становятся инцидентами.",
+  "Поріг підозрілого входу": "Порог подозрительного входа",
+  "Скільки невдалих спроб з однієї адреси перед успішним входом створює інцидент. Менше — чутливіше, але більше хибних тривог (наприклад, спільна адреса офісу).": "Сколько неудачных попыток с одного адреса перед успешным входом создают инцидент. Меньше — чувствительнее, но больше ложных тревог (например, общий адрес офиса).",
+  "спроб": "попыток",
   "Немає даних": "Нет данных",
   "Немає хостів": "Нет хостов",
   "Імпорт з ~/.ssh/config": "Импорт из ~/.ssh/config",
@@ -1716,6 +1723,10 @@ const RU: Record<string, string> = {
 };
 
 const PL: Record<string, string> = {
+  "Брутфорс SSH, підозрілі входи та зміни критичних файлів (FIM) стають інцидентами автоматично.": "Brute force SSH, podejrzane logowania i zmiany krytycznych plików (FIM) automatycznie stają się incydentami.",
+  "Поріг підозрілого входу": "Próg podejrzanego logowania",
+  "Скільки невдалих спроб з однієї адреси перед успішним входом створює інцидент. Менше — чутливіше, але більше хибних тривог (наприклад, спільна адреса офісу).": "Ile nieudanych prób z jednego adresu przed udanym logowaniem tworzy incydent. Mniej oznacza większą czułość, ale więcej fałszywych alarmów (na przykład wspólny adres biura).",
+  "спроб": "prób",
   "Немає даних": "Brak danych",
   "Немає хостів": "Brak hostów",
   "Імпорт з ~/.ssh/config": "Import z ~/.ssh/config",
@@ -2165,6 +2176,10 @@ const PL: Record<string, string> = {
 };
 
 const ZH: Record<string, string> = {
+  "Брутфорс SSH, підозрілі входи та зміни критичних файлів (FIM) стають інцидентами автоматично.": "SSH 暴力破解、可疑登录和关键文件变更（FIM）会自动生成事件。",
+  "Поріг підозрілого входу": "可疑登录阈值",
+  "Скільки невдалих спроб з однієї адреси перед успішним входом створює інцидент. Менше — чутливіше, але більше хибних тривог (наприклад, спільна адреса офісу).": "同一地址在成功登录前失败多少次会生成事件。数值越小越敏感，但误报越多（例如办公室共用地址）。",
+  "спроб": "次",
   "Немає даних": "暂无数据",
   "Немає хостів": "没有主机",
   "Імпорт з ~/.ssh/config": "从 ~/.ssh/config 导入",

@@ -51,7 +51,8 @@ import * as dbmod from "./db.js";
 import { engineFamily } from "./engines.js";
 import { collectSecurity } from "./security.js";
 import { runAuto, AUTO_CONTROLS, MANUAL_CONTROLS } from "./compliance.js";
-import { collectThreats, countRecentFailed } from "./threats.js";
+import { collectThreats, countRecentFailed, scanSuspects } from "./threats.js";
+import { newIncidents } from "./suspects.js";
 import { core } from "./core/index.js";
 import { mountHygiene } from "./hygiene.js";
 import { handleTerminal } from "./terminal.js";
@@ -98,6 +99,14 @@ async function threatSweep() {
     try {
       const failed = await countRecentFailed(conn);
       evaluateBruteforce(h, failed, soc.bruteThreshold);
+    } catch {
+      /* хост недоступний — пропускаємо */
+    }
+    // Підозрілий вхід (успіх після серії невдалих з тієї ж адреси): власний try, щоб збій однієї перевірки не пропускав іншу.
+    // Потрібне Rust-ядро: без нього scanSuspects повертає null і сповіщень про такі входи немає.
+    try {
+      const r = await scanSuspects(conn);
+      if (r) for (const spec of newIncidents(h, r.suspects, incidents)) addIncident(spec);
     } catch {
       /* хост недоступний — пропускаємо */
     }

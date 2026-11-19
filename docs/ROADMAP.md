@@ -21,7 +21,7 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 | **M4 · Easy to adopt** | Host import from `~/.ssh/config` (shipped in v3.4.0), headless CLI, package managers | In progress |
 | **M5 · Independent trust** | External security review; signed Windows and macOS builds | Considering |
 
-## Shipped (v3.2 to v3.4)
+## Shipped (v3.2 to v3.5)
 
 - **Rust → WebAssembly core** for the hot paths: SSH auth-log analysis (IPv4 and IPv6, three timestamp formats,
   suspicious logins, hourly histogram), linear-time rules with `group_by`, FIM diff with critical paths.
@@ -29,6 +29,7 @@ Principles: agentless first, local-first, no telemetry, calm UI, privacy by defa
 - **Suspicious logins** and **48-hour activity chart** on the Threats page.
 - **Hardening:** argument-injection fixes, WebSocket payload limits, terminal limit, HTTP timeouts, SSH output cap,
   `no-store` API responses, global per-IP API limit, hash-chained audit log with a verification endpoint.
+- **Suspicious-login incidents** (v3.5): a success after a run of failures from the same address raises an incident and a notification. Threshold in Settings (default 10); severity by address and method; no repeat for 24 hours.
 - **Import from `~/.ssh/config`** (v3.4): a button on the Hosts page lists the hosts of the file on the machine that runs LemonSees, with user, port, address and key, and adds the ones you choose. Read-only; key contents are never opened.
 - **Polish and Chinese** translations of the SSH hygiene page and the import dialog.
 - **SSH hygiene** for the whole fleet (beta): effective sshd settings, key inventory with fingerprints, last use, expected keys, export. See [features/ssh-hygiene.md](features/ssh-hygiene.md).

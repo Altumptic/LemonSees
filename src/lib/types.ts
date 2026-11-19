@@ -230,6 +230,7 @@ export type ThreatReport = {
 export type SocConfig = {
   autoIncidents: boolean;
   bruteThreshold: number;
+  suspectThreshold?: number; // скільки невдалих спроб з однієї адреси перед успішним входом робить його підозрілим
   notifyDowntime?: boolean; // desktop-сповіщення про даунтайм моніторів
   retentionDays?: number; // скільки днів тримати аудит
   sweepMinutes?: number; // як часто перевіряти брутфорс
