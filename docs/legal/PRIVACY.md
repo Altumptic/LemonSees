@@ -24,7 +24,7 @@ Over SSH, for the hosts you add, and only with the account you give it:
 | Metrics and processes | CPU, memory, disk, process list, listening ports, connections | Dashboard, endpoint view |
 | Authentication logs | SSH login attempts (account names, source IP addresses, times) from journald or `auth.log`/`secure` | Threat view, rules, incidents |
 | File integrity | SHA-256, size, mode, owner, modification time of a fixed list of system files | Integrity monitoring |
-| SSH hygiene | Effective `sshd` settings; the public keys in `authorized_keys` (type, size, fingerprint, comment) and account names; times of key logins | SSH hygiene page |
+| SSH hygiene | Effective `sshd` settings; the public keys in `authorized_keys` (type, size, fingerprint, comment) and account names; times of key logins; re-read every 24 hours by default (a setting, 0 = off) so that changes can be detected | SSH hygiene page, incidents |
 | Configuration and exposure | Settings that affect security (a lightweight, Lynis-style scan) | Posture and vulnerability pages |
 
 The scans are read-only. Some commands use `sudo -n`, which works only if the account may run it without a password.

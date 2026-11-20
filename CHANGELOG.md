@@ -1,8 +1,33 @@
 # Changelog
 
-## v3.5.0 — Alerts for suspicious logins
+## v3.5.0 — Alerts for suspicious logins and SSH hygiene changes
 
 ### Added
+- **Alerts for SSH hygiene changes.** Each scan is compared with the previous one of the same host. A **new key** in an
+  `authorized_keys` file, or a setting that got **worse** (`PermitRootLogin`, `PasswordAuthentication`, `PermitEmptyPasswords`
+  turning to `yes`), raises an incident and goes through your notifications. Severity of a new key: weak (1024-bit RSA, DSA) →
+  high; a key for `root` → high; a key you declared expected for that host → low; an unlisted key once you keep an expected
+  list → high; otherwise medium. `PermitEmptyPasswords` → critical, the other two settings → high. LemonSees changes nothing on
+  the server; the incident text says what to check.
+  The first scan of a host is only a baseline and raises nothing. To avoid false alarms nothing is compared when it cannot be
+  trusted: a failed or truncated scan, accounts whose key file was unreadable in either scan, or settings taken from different
+  sources (`sshd -T` versus the config file). Each guard has a negative control in the tests. A removed key is not an alert.
+  Names from the host are cleaned; at most 20 incidents per host per scan; an open incident, or one created in the last 24 hours,
+  is not raised again.
+- **Scheduled hygiene scan** (*Settings → SOC*, default every **24 hours**, 0 = off, up to 168). Without a schedule there would be
+  nothing to compare, so the scan now also runs on its own for connected hosts. It is read-only, like the manual scan.
+  The Hygiene page says how often it runs.
+- **Suspicious-login alerts work without the Rust core.** A JavaScript implementation (`server/authfallback.js`) is used when the
+  core is missing or off (`LEMONSEES_CORE=off`); the result says which engine produced it (`rust-wasm` or `js`). It is kept
+  equivalent to the Rust code by a differential test on 600 generated logs, and the test was checked with deliberately
+  introduced bugs (all detected).
+- **Automatic incidents for suspicious logins.** A successful SSH login from an address that had failed many times just before
+  now raises an incident and goes through your notifications (Slack, Telegram, webhooks and the rest), like any other incident.
+  Until now this was only visible when the Threats page was open. Severity depends on the address and the method:
+  public address with a password → critical; public with a key → high; internal with a password → medium; internal with a key →
+  low. A light check of the last 3 hours runs on every sweep (default every 5 minutes). One incident per host, address and user;
+  the same login is not raised again for 24 hours, even after the incident is closed. Names from the log are cleaned and clipped.
+- Strings for the new settings and messages in English, Ukrainian, Polish and Chinese.
 - **Automatic incidents for suspicious logins.** A successful SSH login from an address that had failed many times just before
   now raises an incident and goes through your notifications (Slack, Telegram, webhooks and the rest), like any other incident.
   Until now this was only visible when the Threats page was open. Severity depends on the address and the method:
@@ -25,8 +50,13 @@
 - The threshold counts failures **per address, not per person**. A shared office (NAT) address with several mistyped passwords,
   or automation with wrong credentials, can raise a false alarm; that is why the default is 10 and why internal addresses and
   key logins rank lower. There is no allow-list yet.
-- Needs the Rust core. Without it there is no suspicious-login incident, and the Threats page shows no such list (it does not explain why).
-- Alerts on SSH hygiene changes (a new key, a setting that got worse) are not part of this release; hygiene is still scanned on demand.
+- The SSH **hygiene scan itself still needs the Rust core** (it parses keys with it), so hygiene alerts and the scheduled scan
+  do nothing without it. Suspicious-login incidents do not need it. The Threats page list still comes from the core only.
+- Scheduled scans read the `authorized_keys` files of all connected hosts every N hours (the parsed result is stored locally,
+  as before). Set the interval to 0 to turn this off.
+- Hygiene alerts are only as good as the baseline: a key added before the first scan is not "new".
+- Neither alert type has been validated on a real fleet yet; they are covered by unit, differential and end-to-end tests
+  against a simulated host.
 
 ## v3.4.0 — Import hosts from ~/.ssh/config
 

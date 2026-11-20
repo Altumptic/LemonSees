@@ -401,6 +401,7 @@ function hygieneView(): HygieneView {
     core: true,
     scanning: false,
     scannedAt: hygScannedAt,
+    scanEveryHours: 24,
     staleDays: hygStale,
     expected: hygExpected,
     hosts,

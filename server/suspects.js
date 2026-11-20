@@ -45,9 +45,14 @@ export function incidentFor(host, s) {
 }
 
 /**
- * Які підозрілі входи ще не мають інциденту. Пропускаються ті, для яких є відкритий інцидент, АБО будь-який (навіть закритий)
- * створений за останню добу: інакше вхід, що лишається у вікні перевірки, породжував би новий інцидент щоциклу.
+ * Чи слід пропустити інцидент із цим ключем: для нього є відкритий інцидент, АБО будь-який (навіть закритий), створений за
+ * останню добу. Інакше подія, що лишається у вікні перевірки, породжувала б новий інцидент щоциклу. Спільне для всіх автоінцидентів.
  */
+export function isSuppressed(existing, rule, now = Date.now()) {
+  return existing.some((i) => i.rule === rule && (i.status !== "closed" || now - (i.createdAt ?? 0) < DAY));
+}
+
+/** Які підозрілі входи ще не мають інциденту (див. isSuppressed). */
 export function newIncidents(host, suspects, existing, now = Date.now()) {
   const out = [];
   const seen = new Set();
@@ -55,7 +60,7 @@ export function newIncidents(host, suspects, existing, now = Date.now()) {
     const rule = ruleKey(host.id, s);
     if (seen.has(rule)) continue;
     seen.add(rule);
-    if (existing.some((i) => i.rule === rule && (i.status !== "closed" || now - (i.createdAt ?? 0) < DAY))) continue;
+    if (isSuppressed(existing, rule, now)) continue;
     out.push(incidentFor(host, s));
     if (out.length >= MAX_PER_SWEEP) break; // обмеження: один хост під атакою не повинен засипати журнал
   }

@@ -3,6 +3,7 @@
 import { geoLookup } from "./geoip.js";
 import { core } from "./core/index.js";
 import { loadSoc } from "./config.js";
+import { findSuspects } from "./authfallback.js";
 
 // Запасний шлях без ядра. Як і у rawScript, джерело одне (journald, інакше файли), щоб не рахувати подію двічі.
 const SCAN = String.raw`LANG=C
@@ -80,25 +81,41 @@ export function parseRaw(stdout) {
   return { nowMs: head ? +head[1] * 1000 : Date.now(), tz: tzMinutes(head?.[2]), text: nl < 0 ? "" : stdout.slice(nl + 1) };
 }
 
-/** Забирає журнал і аналізує ядром: { rep, truncated } або null, якщо ядро недоступне чи відхилило дані. */
-async function analyzeAuthLog(conn, { hours = 48, maxLines = 400000, timeout = 60000, maxBytes = 64 * 1024 * 1024 } = {}) {
-  if (!core.available()) return null;
+/** Забирає рядки журналу з хоста разом із годинником і поясом сервера. Кидає помилку, якщо хост не відповів. */
+async function fetchAuthRaw(conn, { hours = 48, maxLines = 400000, timeout = 60000, maxBytes = 64 * 1024 * 1024 } = {}) {
   const { stdout, truncated } = await conn.exec(rawScript({ hours, maxLines }), { timeout, maxBytes });
-  const { nowMs, tz, text } = parseRaw(stdout);
+  return { ...parseRaw(stdout), truncated: !!truncated };
+}
+
+/** Аналіз ядром для сторінки загроз: { rep, truncated } або null, якщо ядро недоступне чи відхилило дані. */
+async function analyzeAuthLog(conn, opts = {}) {
+  if (!core.available()) return null;
+  const hours = opts.hours ?? 48;
+  const raw = await fetchAuthRaw(conn, opts);
   // Поріг «підозрілого входу» один для сторінки загроз і для планових сповіщень (Налаштування → SOC)
-  const rep = core.auth(text, { now_ms: nowMs, tz_offset_min: tz, window_hours: hours, suspect_threshold: loadSoc().suspectThreshold });
-  return rep ? { rep, truncated: !!truncated } : null;
+  const rep = core.auth(raw.text, { now_ms: raw.nowMs, tz_offset_min: raw.tz, window_hours: hours, suspect_threshold: loadSoc().suspectThreshold });
+  return rep ? { rep, truncated: raw.truncated } : null;
 }
 
 const collectViaCore = (conn) => analyzeAuthLog(conn);
 
 /**
  * Легка перевірка для планових циклів: лише останні години, до 50k рядків, без геолокації.
- * Повертає { suspects, truncated } або null (ядро недоступне). Помилки хоста не кидаються.
+ * Повертає { suspects, truncated, engine } або null, якщо хост не відповів.
+ * Спершу Rust-ядро; якщо його немає (немає .wasm, LEMONSEES_CORE=off, збій модуля), працює JS-відповідник
+ * (server/authfallback.js), який тестами зведено до тієї самої поведінки. Тож сповіщення не залежать від ядра.
  */
 export async function scanSuspects(conn, { hours = 3 } = {}) {
-  const r = await analyzeAuthLog(conn, { hours, maxLines: 50000, timeout: 30000, maxBytes: 8 * 1024 * 1024 }).catch(() => null);
-  return r ? { suspects: r.rep.suspects, truncated: r.truncated || !!r.rep.truncated } : null;
+  let raw;
+  try {
+    raw = await fetchAuthRaw(conn, { hours, maxLines: 50000, timeout: 30000, maxBytes: 8 * 1024 * 1024 });
+  } catch {
+    return null;
+  }
+  const threshold = loadSoc().suspectThreshold;
+  const rep = core.available() ? core.auth(raw.text, { now_ms: raw.nowMs, tz_offset_min: raw.tz, window_hours: hours, suspect_threshold: threshold }) : null;
+  if (rep) return { suspects: rep.suspects, truncated: raw.truncated || !!rep.truncated, engine: "rust-wasm" };
+  return { suspects: findSuspects(raw.text, { nowMs: raw.nowMs, tzOffsetMin: raw.tz, windowHours: hours, threshold }), truncated: raw.truncated, engine: "js" };
 }
 
 export async function collectThreats(conn, { geo = true } = {}) {

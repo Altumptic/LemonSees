@@ -151,6 +151,8 @@ function scheduleSweep(delay) {
     await threatSweep().catch(() => {});
     await ext?.runRules().catch(() => {});
     await fimSweep().catch(() => {});
+    // Плановий скан SSH-гігієни (за інтервалом із налаштувань) і сповіщення про зміни: новий ключ, гірші налаштування
+    await hygiene.scheduled().catch(() => {});
     scheduleSweep((loadSoc().sweepMinutes || 5) * 60 * 1000);
   }, delay);
 }
@@ -299,7 +301,7 @@ app.get("/api/audit/verify", (req, res) => res.json(verifyAudit()));
 // Імпорт хостів з ~/.ssh/config цієї машини: лише читання фіксованого файлу (див. server/sshconfig.js), лише з сесією
 app.get("/api/ssh-config", (req, res) => res.json(readSshConfig()));
 // SSH-гігієна парку: після mountAuth, тож усі маршрути /api/hygiene/* лише з сесією
-mountHygiene(app, { hosts: () => hosts, conns, audit, version: VERSION });
+const hygiene = mountHygiene(app, { hosts: () => hosts, conns, audit, version: VERSION, addIncident, incidents: () => incidents });
 ext = mountExtensions(app, {
   hosts: () => hosts,
   conns,

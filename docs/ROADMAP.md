@@ -61,7 +61,7 @@ It is a **beta feature that has not yet been validated on a real fleet**: see [M
 - **Import the expected-keys list from a file** (today it is edited in the UI).
 - **Per-user `Match` evaluation** with `sshd -T -C`, so overrides for some users or addresses are judged too.
 - **Custom `AuthorizedKeysFile`**, `AuthorizedKeysCommand` and certificate authorities.
-- **Hygiene history:** compare two scans and show what changed since the last one.
+- **Hygiene history view:** the page does not yet show what changed between scans (changes already raise incidents since v3.5.0).
 
 ## Planned (M4): easier to adopt
 

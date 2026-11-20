@@ -3,7 +3,8 @@
 // Аналіз виконує Rust-ядро (core.sshParse / core.sshJudge); без ядра функція недоступна (чесна помилка, не мовчазний резерв).
 import crypto from "node:crypto";
 import { core } from "./core/index.js";
-import { loadHygiene, saveHygiene } from "./config.js";
+import { loadHygiene, saveHygiene, loadSoc } from "./config.js";
+import { driftIncidents } from "./hygienealerts.js";
 
 const MAX_FILE_BYTES = 262144;
 const MAX_EXPECTED = 2000;
@@ -250,6 +251,9 @@ export function renderMarkdown(report, { includeComments = false, version = "" }
 
 /* ------------------------- HTTP ------------------------- */
 
+/** Дані хоста, який не вдалося перевірити: у відповіді API порожні (щоб застарілі ключі не виглядали актуальними). */
+const EMPTY_HOST = { sshd_source: "unavailable", settings: {}, defaulted: [], keys: [], unreadable: [], skipped_lines: 0, coverage_days: null, truncated: false };
+
 export function mountHygiene(app, ctx) {
   let scanning = false;
 
@@ -269,8 +273,61 @@ export function mountHygiene(app, ctx) {
       staleDays,
       expected,
       report,
-      hosts: hosts.map((e) => ({ id: e.id, name: e.name, error: e.error, ...e.host })),
+      scanEveryHours: loadSoc().hygieneHours,
+      hosts: hosts.map((e) => ({ id: e.id, name: e.name, error: e.error, ...(e.error ? EMPTY_HOST : e.host) })),
     };
+  }
+
+  /**
+   * Сканує `targets`, зберігає результат, порівнює його з попереднім і піднімає інциденти про зміни (новий ключ, гірші налаштування).
+   * `want` — множина id для часткового скану (решта хостів лишається з попередніх даних) або null для повного.
+   */
+  async function runScan(targets, want, trigger) {
+    const startedAt = Date.now();
+    const fresh = await scanHosts(targets, ctx.conns);
+    const st = loadHygiene();
+    const prevHosts = st.scan?.hosts ?? [];
+    const prevAt = st.scan?.at ?? null;
+    const prevById = new Map(prevHosts.map((e) => [e.id, e]));
+
+    // Хост, який не вдалося перевірити, зберігає останні ДОБРІ дані. Інакше наступний успішний скан порівнювався б із порожнім
+    // і оголосив би «новими» всі ключі, а зміни під час збою лишились би непоміченими.
+    const hosts = fresh.map((e) => (e.error && prevById.get(e.id)?.host?.keys ? { ...e, host: prevById.get(e.id).host } : e));
+
+    const raise = loadSoc().autoIncidents !== false && !!ctx.addIncident;
+    const existing = ctx.incidents ? ctx.incidents() : [];
+    const specs = [];
+    if (raise) {
+      for (const e of fresh) {
+        const before = prevById.get(e.id);
+        if (before && !e.error) specs.push(...driftIncidents(before, e, { expected: st.expected ?? [], existing, now: startedAt, prevAt, nextAt: startedAt }));
+      }
+    }
+
+    const keep = want ? prevHosts.filter((e) => !want.has(e.id)) : [];
+    saveHygiene({ ...st, scan: { at: Date.now(), hosts: [...keep, ...hosts] } });
+    const ok = fresh.filter((h) => !h.error).length;
+    ctx.audit("hygiene.scan", `${targets.length} host(s)`, { trigger, ok, failed: fresh.length - ok, raised: specs.length });
+    for (const spec of specs) ctx.addIncident(spec);
+    return { ok, failed: fresh.length - ok, raised: specs.length };
+  }
+
+  /**
+   * Плановий скан: викликається з циклу перевірок двигуна. Працює, якщо в налаштуваннях SOC задано інтервал (години; 0 — вимкнено),
+   * є ядро, не йде інший скан і з минулого скану минув інтервал. Скануються лише підключені хости.
+   */
+  async function scheduled() {
+    const hours = loadSoc().hygieneHours;
+    if (!hours || !core.available() || scanning) return null;
+    if (Date.now() - (loadHygiene().scan?.at ?? 0) < hours * 3_600_000) return null;
+    const targets = ctx.hosts().filter((h) => ctx.conns.get(h.id)?.ready).slice(0, 500);
+    if (!targets.length) return null;
+    scanning = true;
+    try {
+      return await runScan(targets, new Set(targets.map((h) => h.id)), "scheduled");
+    } finally {
+      scanning = false;
+    }
   }
 
   app.get("/api/hygiene", (req, res) => res.json(view()));
@@ -284,12 +341,7 @@ export function mountHygiene(app, ctx) {
     if (!targets.length) return res.status(400).json({ error: "Немає хостів для перевірки" });
     scanning = true;
     try {
-      const hosts = await scanHosts(targets, ctx.conns);
-      // Часткове сканування (вибрані хости) оновлює лише їх; решта лишається з попередніх даних
-      const prev = want ? (loadHygiene().scan?.hosts ?? []).filter((e) => !want.has(e.id)) : [];
-      const st = loadHygiene();
-      saveHygiene({ ...st, scan: { at: Date.now(), hosts: [...prev, ...hosts] } });
-      ctx.audit("hygiene.scan", `${targets.length} host(s)`, { ok: hosts.filter((h) => !h.error).length, failed: hosts.filter((h) => h.error).length });
+      await runScan(targets, want, "manual");
       res.json(view());
     } catch (e) {
       res.status(500).json({ error: String(e?.message || e) });
@@ -323,4 +375,6 @@ export function mountHygiene(app, ctx) {
     if (format === "json") return res.json({ ...v.report, findings: maskFindings(v.report.findings, includeComments) });
     res.type("text/markdown").send(renderMarkdown(v.report, { includeComments, version: ctx.version }));
   });
+
+  return { scheduled };
 }

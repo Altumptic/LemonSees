@@ -68,7 +68,7 @@ WebSockets: `/ws/state` pushes host state to the UI (payload limit 64 KiB); `/ws
    It can go through a SOCKS5/Tor/HTTP proxy or a bastion. With the **kill switch** on and a proxy configured but down,
    connections fail instead of going out directly. Host keys are pinned on first use; a changed key blocks the host.
 2. **Metrics** (`collector.js`): one command per cycle (default every 5 seconds) returns CPU, memory, disk, load and so on.
-3. **Sweeps** (default every 5 minutes, configurable): the SSH brute-force counter, a light check of the last 3 hours for **suspicious logins** (a success after a run of failures from the same address; `suspects.js`), custom rules, file integrity. A finding that
+3. **Sweeps** (default every 5 minutes, configurable): the SSH brute-force counter, a light check of the last 3 hours for **suspicious logins** (a success after a run of failures from the same address; `suspects.js`; the Rust core is used when present, otherwise the equivalent `authfallback.js`), custom rules, file integrity, and the **scheduled SSH hygiene scan** (default every 24 hours; `hygiene.js`), whose result is compared with the previous scan of the same host (`hygienealerts.js`: new key, worse sshd setting). A finding that
    crosses a threshold becomes an **incident**, deduplicated by a stable key.
 4. **Incidents** (`index.js`, `extensions.js`): stored locally, mapped to MITRE ATT&CK by keyword, optionally forwarded to
    the integrations you configured. A failing integration is recorded and never blocks the engine.
@@ -102,7 +102,7 @@ How it is kept safe:
 - Tests: unit tests, a randomized robustness test, and `cargo-fuzz` targets for every parser, run in CI.
 
 **Fallbacks.** If the module is missing, threats, rules and file integrity fall back to the previous code paths (remote
-`awk`, remote `grep -e`, a JavaScript diff). SSH hygiene has **no** fallback: it reports that the core is required.
+`awk`, remote `grep -e`, a JavaScript diff). Suspicious-login detection falls back to `server/authfallback.js`, which a differential test keeps equivalent to the Rust code. SSH hygiene has **no** fallback: it reports that the core is required, so hygiene alerts and the scheduled scan are off without it.
 
 **What it does not do:** it is not dramatically faster than a well-written JavaScript parser for plain log counting (see
 [PERFORMANCE.md](PERFORMANCE.md)). Its value is linear-time regex, hard caps, identical behaviour on every platform, and

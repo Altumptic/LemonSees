@@ -54,6 +54,12 @@ host (SSH, read-only)         Node engine                    Rust core (WebAssem
 2. **Judge** (`GET /api/hygiene`): the stored hosts and your expected-keys list are evaluated by the core. Changing the
    expected list or the stale threshold re-evaluates instantly, with no new scan.
 
+3. **Compare** (since v3.5.0): the new scan of a host is compared with the previous one (`server/hygienealerts.js`). A new key, or
+   `PermitRootLogin`, `PasswordAuthentication` or `PermitEmptyPasswords` turning to `yes`, raises an incident and goes through
+   notifications. The first scan is only a baseline. Nothing is compared after a failed or truncated scan, for accounts whose
+   key file was unreadable, or when the settings came from different sources. A scan also runs on a schedule (*Settings → SOC*,
+   default every 24 hours, 0 = off). A failed scan keeps the last good data for the next comparison.
+
 The fingerprint is computed in the core (SHA-256 of the key blob, base64 without padding), as `ssh-keygen -l` does. Tests
 compare it with `ssh-keygen` output for Ed25519, ECDSA and RSA keys.
 
@@ -145,7 +151,8 @@ Audit-log entries: `hygiene.scan`, `hygiene.expected`, `hygiene.export`.
 - **Last use comes from logs.** It needs `Accepted publickey` lines in journald or `auth.log`/`secure`, and the
   `LogLevel` must be at least `INFO` (the default) for the key fingerprint to be logged.
 - **POSIX shell and Linux only**, like the rest of LemonSees.
-- **Needs the Rust core.** Without it the feature is off and says why; there is no slower fallback.
+- **Needs the Rust core.** Without it the feature is off and says why; there is no slower fallback. This includes the change alerts and the scheduled scan.
+- **Change alerts depend on the baseline.** A key added before the first scan is not "new". Removed keys and other setting changes are not alerted.
 - **Not validated on a real fleet yet.** The scripts were run under a strict POSIX shell with stub commands, and the
   parsers are tested with real keys and fuzzed, but a run on real servers from several distributions is the next
   milestone ([ROADMAP.md](../ROADMAP.md)).

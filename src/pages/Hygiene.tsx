@@ -127,6 +127,12 @@ export default function HygienePage() {
             <Kpi label={t("Невідомі ключі")} value={report.expected_declared ? unknown : "—"} icon={FileKey2} tone={unknown ? "critical" : "neutral"} sub={report.expected_declared ? undefined : t("список не задано")} />
           </div>
 
+          <p className="-mt-2 mb-6 text-[13px] text-muted-foreground">
+            {view && view.scanEveryHours > 0
+              ? `${t("Автоматична перевірка кожні")} ${view.scanEveryHours} ${t("год")}. ${t("Новий ключ чи погіршення налаштувань стають інцидентами.")}`
+              : t("Автоматична перевірка вимкнена. Увімкни її в Налаштуваннях.")}
+          </p>
+
           <Panel className="mb-6">
             <SectionHeader
               icon={ShieldAlert}

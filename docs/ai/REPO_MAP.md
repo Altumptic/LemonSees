@@ -55,6 +55,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `scripts/world-dots.mjs` | Генерує src/lib/worldDots.ts — крапкову маску суші (equirectangular) для карти атак. |
 | `server/agent.js` | Опційний агент LemonSees: легкий POSIX-sh колектор (лише читання, без root, без демонів). |
 | `server/auth.js` | Доступ у веб-режимі. Якщо задано LEMONSEES_TOKEN — усі /api та /ws вимагають сесії. |
+| `server/authfallback.js` | Запасний пошук підозрілих входів на JavaScript — коли Rust-ядро недоступне (немає .wasm, LEMONSEES_CORE=off, збій модуля). |
 | `server/collector.js` | Збирач метрик: один exec на цикл. |
 | `server/compliance.js` | Комплаєнс: автоматичні контролі (CIS-подібні) перевіряються по SSH, |
 | `server/config.js` | Зберігання списку хостів у config/hosts.json поряд із програмою. |
@@ -67,6 +68,7 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `server/geoip.js` | Гео-IP збагачення адрес атакуючих — OPT-IN (PSB P2 «least data»). |
 | `server/guard.js` | Захист периметра двигуна (PSB §5.1, §5.3): |
 | `server/hygiene.js` | SSH-гігієна парку (docs/features/ssh-hygiene.md): ефективні налаштування sshd, ключі в authorized_keys з відбитками, |
+| `server/hygienealerts.js` | Сповіщення про ЗМІНИ SSH-гігієни: новий ключ в authorized_keys і погіршення налаштувань sshd між двома сканами одного хоста. |
 | `server/index.js` | LemonSees by Altumptic — двигун SOC-платформи. |
 | `server/integrations.js` | Інтеграції LemonSees — повністю опційні: без них продукт працює автономно. |
 | `server/netops.js` | NDR та утиліти аналітика: активні зʼєднання, мережеві інструменти (dig/whois/ping/…), |
@@ -139,9 +141,13 @@ Regenerate: `npm run docs:map`. CI fails if this file is stale. For meaning and 
 | `src/pages/Wazuh.tsx` |  |
 | `src/styles.css` | Self-hosted variable fonts — жодних мережевих запитів, миттєвий старт в Electron |
 | `test/auth.test.js` | Авторизація веб-режиму: без сесії — 401, неправильний токен — 401, обмеження спроб — 429. |
+| `test/authfallback-nocore.test.js` | Підозрілі входи БЕЗ Rust-ядра: сповіщення не повинні від нього залежати. |
+| `test/authfallback.test.js` | JS-відповідник пошуку підозрілих входів (server/authfallback.js) мусить поводитись так само, як Rust-ядро. |
 | `test/core.test.js` | Тести Rust-ядра (WASM) та його інтеграції. Якщо .wasm не зібрано (npm run build:core) — тести ядра пропускаються, |
 | `test/hardening.test.js` | Регресійні тести на виправлення з аналізу CodeQL (chore/security-triage). |
+| `test/hygiene-alerts-e2e.test.js` | Наскрізно: скан → порівняння з попереднім → інциденти, з планувальником. Справжнє Rust-ядро, фейковий SSH-хост, фейковий Express. |
 | `test/hygiene.test.js` | SSH-гігієна: серверна частина (docs/features/ssh-hygiene.md). Тести ядра, що потребують .wasm, пропускаються без нього. |
+| `test/hygienealerts.test.js` | Сповіщення про зміни SSH-гігієни: що вважається зміною, яка серйозність, і головне: коли порівнювати НЕ можна. |
 | `test/security.test.js` | Негативні тести безпеки (PSB §7): fail-closed, цілісність шифрування, Host/Origin, розбір недовіреного вводу. |
 | `test/sshconfig.test.js` | Імпорт з ~/.ssh/config: семантика OpenSSH, безпека читання, стійкість до сміття. |
 | `test/suspects.test.js` | Підозрілі входи: серйозність, дедуплікація, збір журналу (одне джерело), наскрізно через ядро. |

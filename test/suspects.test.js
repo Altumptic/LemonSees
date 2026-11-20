@@ -159,8 +159,9 @@ test("the same events present in two sources are counted once", { skip: !have ||
   assert.equal(rep.total, 6, "six failures, not twelve");
 });
 
-test("without the Rust core the scan returns null instead of guessing", { skip: have }, async () => {
-  assert.equal(await scanSuspects(fakeConn([])), null);
+test("with the Rust core the scan reports which engine did the work", { skip: !have }, async () => {
+  const r = await scanSuspects(fakeConn([...failed("198.51.100.9", 12), accepted("198.51.100.9")]));
+  assert.equal(r.engine, "rust-wasm");
 });
 
 test("a host that fails to answer does not throw out of the scan", async () => {

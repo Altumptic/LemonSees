@@ -230,6 +230,7 @@ export type ThreatReport = {
 export type SocConfig = {
   autoIncidents: boolean;
   bruteThreshold: number;
+  hygieneHours?: number; // як часто (год) двигун сам скануватиме SSH-гігієну; 0 — вимкнено
   suspectThreshold?: number; // скільки невдалих спроб з однієї адреси перед успішним входом робить його підозрілим
   notifyDowntime?: boolean; // desktop-сповіщення про даунтайм моніторів
   retentionDays?: number; // скільки днів тримати аудит
@@ -314,6 +315,8 @@ export type HygieneView = {
   scanning: boolean;
   scannedAt: number | null;
   staleDays: number;
+  /** Інтервал планового скану, години; 0 — вимкнено. */
+  scanEveryHours: number;
   expected: ExpectedKey[];
   report: HygieneReport | null;
   hosts: HygieneHost[];

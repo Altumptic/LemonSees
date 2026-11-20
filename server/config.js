@@ -248,7 +248,7 @@ export function sanitizeIncident(input, existing = null) {
 
 /* ---------------- SOC-конфіг (пороги, автоінциденти) ---------------- */
 
-const SOC_DEFAULTS = { autoIncidents: true, bruteThreshold: 300, suspectThreshold: 10, notifyDowntime: true, retentionDays: 90, sweepMinutes: 5 };
+const SOC_DEFAULTS = { autoIncidents: true, bruteThreshold: 300, suspectThreshold: 10, hygieneHours: 24, notifyDowntime: true, retentionDays: 90, sweepMinutes: 5 };
 
 export function loadSoc() {
   try {
@@ -296,6 +296,8 @@ export function saveSoc(cfg) {
     autoIncidents: !!cfg.autoIncidents,
     bruteThreshold: Math.max(10, Math.min(100000, parseInt(cfg.bruteThreshold, 10) || SOC_DEFAULTS.bruteThreshold)),
     suspectThreshold: Math.max(3, Math.min(100, parseInt(cfg.suspectThreshold, 10) || SOC_DEFAULTS.suspectThreshold)),
+    // 0 — планове сканування SSH-гігієни вимкнено, тому `|| default` тут не підходить (0 хибне)
+    hygieneHours: Number.isFinite(parseInt(cfg.hygieneHours, 10)) ? Math.max(0, Math.min(168, parseInt(cfg.hygieneHours, 10))) : SOC_DEFAULTS.hygieneHours,
     notifyDowntime: cfg.notifyDowntime !== false,
     retentionDays: Math.max(7, Math.min(3650, parseInt(cfg.retentionDays, 10) || SOC_DEFAULTS.retentionDays)),
     sweepMinutes: Math.max(1, Math.min(120, parseInt(cfg.sweepMinutes, 10) || SOC_DEFAULTS.sweepMinutes)),
