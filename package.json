@@ -171,7 +171,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "d3-geo": "^3.1.2",
-    "electron": "^45.3.2",
+    "electron": "^45.4.1",
     "electron-builder": "^26.18.0",
     "tailwindcss": "^4.2.1",
     "topojson-client": "^3.1.0",
